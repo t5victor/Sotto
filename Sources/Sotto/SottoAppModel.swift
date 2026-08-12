@@ -179,3 +179,48 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    func refreshPermissions() {
+        microphonePermission = SottoPermissionService.microphoneStatus()
+        accessibilityPermission = SottoPermissionService.accessibilityStatus()
+    }
+
+    func requestMicrophonePermission() {
+        Task { [weak self] in
+            guard let self else { return }
+            self.microphonePermission = await SottoPermissionService.requestMicrophone()
+        }
+    }
+
+    func requestAccessibilityPermission() {
+        accessibilityPermission = SottoPermissionService.accessibilityStatus(prompt: true)
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            self?.refreshPermissions()
+        }
+    }
+
+    func openMicrophoneSettings() {
+        openPrivacySettings(anchor: "Privacy_Microphone")
+    }
+
+    func openAccessibilitySettings() {
+        openPrivacySettings(anchor: "Privacy_Accessibility")
+    }
+
+    func updateShortcut(_ shortcut: SottoShortcut) {
+        preferences.shortcut = shortcut
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            preferences.launchAtLogin = enabled
+        } catch {
+            presentFailure("No se pudo cambiar el inicio de sesión: \(error.localizedDescription)", hideAfter: nil)
+        }
+    }
+
