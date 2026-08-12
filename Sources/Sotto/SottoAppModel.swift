@@ -54,3 +54,49 @@ final class SottoAppModel: ObservableObject {
     private var isHoldShortcutPressed = false
     private var stopWhenRecorderStarts = false
 
+    init(directories: SottoDirectories = .live) {
+        self.directories = directories
+        self.settingsStore = JSONFileStore(
+            url: directories.preferencesFile,
+            defaultValue: .default
+        )
+        self.historyRepository = SottoHistoryRepository(url: directories.historyFile)
+        self.vocabularyRepository = SottoVocabularyRepository(url: directories.vocabularyFile)
+        self.parakeet = ParakeetService(directories: directories)
+        self.recorder = MicrophoneRecorder()
+        self.inserter = TextInsertionService()
+        self.hotKeyMonitor = GlobalHotKeyMonitor()
+
+        hotKeyMonitor.onPressed = { [weak self] in
+            self?.handleHotKeyPressed()
+        }
+        hotKeyMonitor.onReleased = { [weak self] in
+            self?.handleHotKeyReleased()
+        }
+    }
+
+    deinit {
+        modelUpdatesTask?.cancel()
+        microphoneEventsTask?.cancel()
+        downloadTask?.cancel()
+        resetTask?.cancel()
+        preferenceSaveTask?.cancel()
+    }
+
+    var accent: SottoAccent { preferences.accent }
+    var isListening: Bool { dictationState.isListening }
+    var isBusy: Bool { dictationState.isBusy }
+
+    var canStartDictation: Bool {
+        modelState.isReady && !dictationState.isBusy
+    }
+
+    var modelSizeDescription: String? {
+        let bytes: Int64
+        switch modelState {
+        case .installed(let value), .ready(let value): bytes = value
+        default: return nil
+        }
+        return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
