@@ -213,3 +213,86 @@ private func installSottoAudioTap(
         sink.consume(buffer)
     }
 }
+
+private final class AudioFileSink: @unchecked Sendable {
+    struct Snapshot {
+        let frames: Int64
+        let sampleRate: Double
+        let peak: Double
+        let error: Error?
+    }
+
+    private let lock = NSLock()
+    private let file: AVAudioFile
+    private let converter: AVAudioConverter
+    private let format: AVAudioFormat
+    private let eventHandler: @Sendable (MicrophoneEvent) -> Void
+    private var frames: Int64 = 0
+    private var peak: Double = 0
+    private var firstError: Error?
+    private var finished = false
+
+    init(
+        file: AVAudioFile,
+        converter: AVAudioConverter,
+        format: AVAudioFormat,
+        eventHandler: @escaping @Sendable (MicrophoneEvent) -> Void
+    ) {
+        self.file = file
+        self.converter = converter
+        self.format = format
+        self.eventHandler = eventHandler
+    }
+
+    func consume(_ input: AVAudioPCMBuffer) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !finished, firstError == nil else { return }
+
+        guard let mono = AVAudioPCMBuffer(
+            pcmFormat: format,
+            frameCapacity: max(input.frameCapacity, input.frameLength)
+        ) else { return }
+
+        do {
+            try converter.convert(to: mono, from: input)
+            try file.write(from: mono)
+            frames += Int64(mono.frameLength)
+
+            let level = Self.normalizedPeak(in: mono)
+            peak = max(peak, level)
+            eventHandler(.level(level))
+        } catch {
+            firstError = error
+            eventHandler(.failure(error.localizedDescription))
+        }
+    }
+
+    func finish() -> Snapshot {
+        lock.lock()
+        defer { lock.unlock() }
+        finished = true
+        return Snapshot(
+            frames: frames,
+            sampleRate: format.sampleRate,
+            peak: peak,
+            error: firstError
+        )
+    }
+
+    private static func normalizedPeak(in buffer: AVAudioPCMBuffer) -> Double {
+        guard let channel = buffer.floatChannelData?[0] else { return 0 }
+        let count = Int(buffer.frameLength)
+        guard count > 0 else { return 0 }
+
+        var value: Float = 0
+        for index in 0..<count {
+            value = max(value, abs(channel[index]))
+        }
+
+        // A logarithmic response makes quiet speech visible without pinning
+        // normal speech at 100 percent.
+        let decibels = 20 * log10(max(value, 0.000_01))
+        return min(max(Double((decibels + 55) / 55), 0), 1)
+    }
+}
