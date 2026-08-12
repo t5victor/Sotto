@@ -112,3 +112,29 @@ public actor ParakeetService {
         }
     }
 
+    public func prepare() async throws {
+        guard Self.isAppleSilicon else { throw ServiceError.unsupportedHardware }
+        if manager != nil {
+            transition(to: .ready(bytes: modelSize()))
+            return
+        }
+        guard AsrModels.modelsExist(
+            at: directories.parakeetV3,
+            version: .v3,
+            encoderPrecision: .int8
+        ) else {
+            transition(to: .notInstalled)
+            throw ServiceError.modelNotInstalled
+        }
+        ModelHub.offlineMode = true
+
+        do {
+            transition(to: .loading)
+            try await loadModels()
+        } catch {
+            manager = nil
+            transition(to: .failed(message: Self.userMessage(for: error)))
+            throw error
+        }
+    }
+
