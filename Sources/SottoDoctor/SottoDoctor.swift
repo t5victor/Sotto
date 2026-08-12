@@ -47,3 +47,29 @@ struct SottoDoctor {
             try await service.prepare()
             print("Parakeet model loaded successfully.")
 
+        case "transcribe":
+            guard arguments.count == 2 else { throw DoctorError.missingAudioPath }
+            let url = URL(fileURLWithPath: arguments[1]).standardizedFileURL
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                throw DoctorError.audioNotFound(url)
+            }
+            let result = try await service.transcribe(audioURL: url, language: .spanish)
+            let settingsStore = JSONFileStore(
+                url: directories.preferencesFile,
+                defaultValue: SottoPreferences.default
+            )
+            let vocabularyStore = SottoVocabularyRepository(url: directories.vocabularyFile)
+            let preferences = await settingsStore.load()
+            let vocabulary = await vocabularyStore.load()
+            let text = TextPostProcessor().process(
+                result.text,
+                preferences: preferences,
+                vocabulary: vocabulary
+            )
+            print("RAW_TEXT=\(result.text)")
+            print("TEXT=\(text)")
+            print("DURATION=\(String(format: "%.3f", result.duration))")
+            print("PROCESSING=\(String(format: "%.3f", result.processingTime))")
+            print("RTFX=\(String(format: "%.1f", result.realTimeFactor))")
+            print("CONFIDENCE=\(String(format: "%.3f", result.confidence))")
+
