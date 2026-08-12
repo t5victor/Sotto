@@ -555,3 +555,8 @@ private struct SottoEmptyState: View {
     }
 }
 
+private extension String {
+    var trimmed: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
