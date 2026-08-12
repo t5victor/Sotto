@@ -292,3 +292,60 @@ struct SottoShortcutsView: View {
     }
 }
 
+struct SottoAppearanceView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        SottoSettingsPage(
+            title: "Apariencia",
+            description: "La interfaz completa consume los mismos tokens semánticos."
+        ) {
+            SottoCard {
+                VStack(alignment: .leading, spacing: theme.spacing.lg) {
+                    SottoSectionHeader(
+                        "Color de énfasis",
+                        description: "El cambio se propaga a botones, iconos, etiquetas y overlay."
+                    )
+
+                    HStack(spacing: theme.spacing.md) {
+                        ForEach(SottoAccent.allCases) { accent in
+                            Button {
+                                model.preferences.accent = accent
+                            } label: {
+                                VStack(spacing: theme.spacing.sm) {
+                                    Circle()
+                                        .fill(accent.color)
+                                        .frame(width: 30, height: 30)
+                                        .overlay {
+                                            if model.accent == accent {
+                                                Image(systemName: "checkmark")
+                                                    .font(.system(size: 11, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                            }
+                                        }
+                                        .overlay {
+                                            Circle()
+                                                .strokeBorder(
+                                                    model.accent == accent ? theme.colors.foreground : .clear,
+                                                    lineWidth: 2
+                                                )
+                                                .padding(-4)
+                                        }
+                                    Text(accent.displayName)
+                                        .font(theme.typography.caption)
+                                        .foregroundStyle(theme.colors.mutedForeground)
+                                }
+                                .frame(width: 70)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Color \(accent.displayName)")
+                            .accessibilityAddTraits(model.accent == accent ? .isSelected : [])
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
