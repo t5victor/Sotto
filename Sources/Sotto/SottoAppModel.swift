@@ -281,3 +281,32 @@ final class SottoAppModel: ObservableObject {
         dictationState = .idle
     }
 
+    private func bootstrap() async {
+        do {
+            try directories.prepare()
+            _ = try directories.removeStaleRecordings(
+                olderThan: Date().addingTimeInterval(-24 * 60 * 60)
+            )
+        } catch {
+            presentFailure("No se pudo preparar la carpeta de Sotto: \(error.localizedDescription)", hideAfter: nil)
+            return
+        }
+
+        preferences = await settingsStore.load()
+        didLoadPreferences = true
+        history = await historyRepository.load()
+        vocabulary = await vocabularyRepository.load()
+        preferences.launchAtLogin = SMAppService.mainApp.status == .enabled
+        refreshPermissions()
+        configureHotKey()
+
+        let inspected = await parakeet.inspect()
+        if inspected.isInstalled {
+            do {
+                try await parakeet.prepare()
+            } catch {
+                // Model state already contains a user-facing recovery message.
+            }
+        }
+    }
+
