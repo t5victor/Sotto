@@ -141,3 +141,35 @@ public final class TextInsertionService {
     }
 }
 
+@MainActor
+private struct PasteboardSnapshot {
+    struct Item {
+        let values: [(NSPasteboard.PasteboardType, Data)]
+    }
+
+    let items: [Item]
+
+    static func capture() -> PasteboardSnapshot {
+        let values = (NSPasteboard.general.pasteboardItems ?? []).map { item in
+            Item(values: item.types.compactMap { type in
+                item.data(forType: type).map { (type, $0) }
+            })
+        }
+        return PasteboardSnapshot(items: values)
+    }
+
+    func restore() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let restoredItems = items.map { snapshot -> NSPasteboardItem in
+            let item = NSPasteboardItem()
+            for (type, data) in snapshot.values {
+                item.setData(data, forType: type)
+            }
+            return item
+        }
+        if !restoredItems.isEmpty {
+            pasteboard.writeObjects(restoredItems)
+        }
+    }
+}
