@@ -158,3 +158,80 @@ struct SottoHomeView: View {
         }
     }
 
+    private var statusLabel: String {
+        switch model.dictationState {
+        case .idle: model.modelState.isReady ? "Preparado" : model.modelState.title
+        case .preparing: "Preparando"
+        case .listening: "Micrófono activo"
+        case .transcribing: "Transcribiendo"
+        case .inserting: "Insertando"
+        case .completed(_, let outcome): outcome.displayName
+        case .failed: "Error"
+        }
+    }
+
+    private var statusIcon: String {
+        switch model.dictationState {
+        case .listening: "mic.fill"
+        case .transcribing: "waveform.badge.magnifyingglass"
+        case .failed: "exclamationmark.triangle.fill"
+        default: "checkmark.circle.fill"
+        }
+    }
+
+    private var statusTone: SottoBadgeTone {
+        switch model.dictationState {
+        case .failed: .destructive
+        case .listening, .transcribing, .inserting: .accent
+        default: model.modelState.isReady ? .success : model.modelState.tone
+        }
+    }
+
+    private var dictationTitle: String {
+        switch model.dictationState {
+        case .idle: model.modelState.isReady ? "Listo para dictar" : "Prepara el motor de voz"
+        case .preparing: "Preparando el micrófono"
+        case .listening: "Te estoy escuchando"
+        case .transcribing: "Convirtiendo voz en texto"
+        case .inserting: "Enviando el texto"
+        case .completed: "Dictado completado"
+        case .failed: "El dictado necesita atención"
+        }
+    }
+
+    private var dictationDescription: String {
+        if model.modelState.isReady {
+            return model.preferences.holdToTalk
+                ? "Mantén pulsado \(model.preferences.shortcut.displayName), habla y suelta para insertar el texto."
+                : "Pulsa \(model.preferences.shortcut.displayName) para iniciar y vuelve a pulsarlo para terminar."
+        }
+        return model.modelState.detail
+    }
+
+    private var recordingVisualState: SottoRecordingState {
+        switch model.dictationState {
+        case .listening: .listening
+        case .transcribing, .inserting: .transcribing
+        default: .idle
+        }
+    }
+
+    private var primaryActionTitle: String {
+        if model.isListening { return "Detener" }
+        if model.modelState.isReady { return "Empezar a dictar" }
+        if case .downloading = model.modelState { return "Descargando…" }
+        if case .loading = model.modelState { return "Cargando…" }
+        if case .validating = model.modelState { return "Validando…" }
+        return "Descargar Parakeet"
+    }
+
+    private var primaryActionDisabled: Bool {
+        if model.isListening { return false }
+        return switch model.modelState {
+        case .notInstalled, .failed: false
+        case .ready: false
+        default: true
+        }
+    }
+}
+
