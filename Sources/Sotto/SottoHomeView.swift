@@ -235,3 +235,41 @@ struct SottoHomeView: View {
     }
 }
 
+struct SottoPageHeader: View {
+    @Environment(\.sottoTheme) private var theme
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: theme.spacing.xs) {
+            Text(title)
+                .font(theme.typography.pageTitle)
+                .foregroundStyle(theme.colors.foreground)
+            Text(description)
+                .font(theme.typography.body)
+                .foregroundStyle(theme.colors.mutedForeground)
+        }
+    }
+}
+
+private struct SottoErrorBanner: View {
+    @Environment(\.sottoTheme) private var theme
+    let message: String
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: theme.spacing.md) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(theme.colors.destructive)
+            Text(message)
+                .font(theme.typography.body)
+                .foregroundStyle(theme.colors.foreground)
+            Spacer()
+            Button("Cerrar", action: dismiss)
+                .buttonStyle(.sotto(.ghost, size: .small))
+        }
+        .padding(theme.spacing.md)
+        .background(theme.colors.destructive.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+    }
+}
