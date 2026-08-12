@@ -71,3 +71,73 @@ public final class TextInsertionService {
         return .copied
     }
 
+    private func insertViaAccessibility(_ text: String, target: InsertionTargetInfo) -> Bool {
+        let application = AXUIElementCreateApplication(target.processIdentifier)
+        var focusedValue: CFTypeRef?
+        let focusedResult = AXUIElementCopyAttributeValue(
+            application,
+            kAXFocusedUIElementAttribute as CFString,
+            &focusedValue
+        )
+        guard focusedResult == .success, let focusedValue else { return false }
+        let focused = focusedValue as! AXUIElement
+
+        var settable = DarwinBoolean(false)
+        let check = AXUIElementIsAttributeSettable(
+            focused,
+            kAXSelectedTextAttribute as CFString,
+            &settable
+        )
+        guard check == .success, settable.boolValue else { return false }
+
+        let result = AXUIElementSetAttributeValue(
+            focused,
+            kAXSelectedTextAttribute as CFString,
+            text as CFTypeRef
+        )
+        return result == .success
+    }
+
+    private func pasteUsingKeyboard(_ text: String, target: InsertionTargetInfo) async -> Bool {
+        guard let application = NSRunningApplication(processIdentifier: target.processIdentifier) else {
+            return false
+        }
+
+        let snapshot = PasteboardSnapshot.capture()
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        guard pasteboard.setString(text, forType: .string) else { return false }
+        let sottoChangeCount = pasteboard.changeCount
+
+        application.activate(options: [])
+        try? await Task.sleep(for: .milliseconds(80))
+
+        guard NSWorkspace.shared.frontmostApplication?.processIdentifier
+                == target.processIdentifier
+        else {
+            snapshot.restore()
+            return false
+        }
+
+        guard let source = CGEventSource(stateID: .hidSystemState),
+              let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
+              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false)
+        else { return false }
+        keyDown.flags = .maskCommand
+        keyUp.flags = .maskCommand
+        keyDown.post(tap: .cghidEventTap)
+        keyUp.post(tap: .cghidEventTap)
+
+        try? await Task.sleep(for: .milliseconds(500))
+        if pasteboard.changeCount == sottoChangeCount {
+            snapshot.restore()
+        }
+        return true
+    }
+
+    private func writeToPasteboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+}
+
