@@ -51,3 +51,62 @@ public struct SottoTheme: Sendable {
             self.destructive = destructive
         }
     }
+
+    public struct Spacing: Equatable, Sendable {
+        public var xxs: CGFloat
+        public var xs: CGFloat
+        public var sm: CGFloat
+        public var md: CGFloat
+        public var lg: CGFloat
+        public var xl: CGFloat
+        public var xxl: CGFloat
+
+        public init(
+            xxs: CGFloat = 2,
+            xs: CGFloat = 4,
+            sm: CGFloat = 8,
+            md: CGFloat = 12,
+            lg: CGFloat = 16,
+            xl: CGFloat = 24,
+            xxl: CGFloat = 32
+        ) {
+            self.xxs = xxs
+            self.xs = xs
+            self.sm = sm
+            self.md = md
+            self.lg = lg
+            self.xl = xl
+            self.xxl = xxl
+        }
+    }
+
+    public struct Radii: Equatable, Sendable {
+        public var small: CGFloat
+        public var medium: CGFloat
+        public var large: CGFloat
+        public var pill: CGFloat
+
+        public init(
+            small: CGFloat = 6,
+            medium: CGFloat = 10,
+            large: CGFloat = 14,
+            pill: CGFloat = 999
+        ) {
+            self.small = small
+            self.medium = medium
+            self.large = large
+            self.pill = pill
+        }
+    }
+
+    public struct ControlHeights: Equatable, Sendable {
+        public var small: CGFloat
+        public var regular: CGFloat
+        public var large: CGFloat
+
+        public init(small: CGFloat = 28, regular: CGFloat = 34, large: CGFloat = 42) {
+            self.small = small
+            self.regular = regular
+            self.large = large
+        }
+    }
