@@ -1,0 +1,63 @@
+# Sotto
+
+Sotto is a native macOS dictation application that turns speech into text
+without sending audio to a transcription service. It records the microphone,
+runs NVIDIA Parakeet TDT 0.6B v3 locally through Core ML, cleans the result and
+inserts it into the application that was active when dictation began.
+
+Version 1.0 includes the complete desktop flow:
+
+- resumable model installation with byte progress, validation, offline reload
+  and safe deletion;
+- microphone capture to a private scratch recording with a live level meter;
+- local multilingual transcription in 25 languages on Apple Silicon;
+- editable vocabulary, conservative filler removal and text normalization;
+- global hold-to-talk or toggle shortcut (Option-Space by default);
+- direct Accessibility insertion, Command-V fallback and clipboard fallback;
+- non-activating overlay, menu bar controls and launch-at-login support;
+- local preferences and optional, bounded transcription history;
+- a source-owned SwiftUI design system inspired by shadcn/ui;
+- a diagnostic CLI, automated tests and a reproducible `.app` packager.
+
+## Requirements
+
+- an Apple Silicon Mac;
+- macOS 14 or newer;
+- about 500 MB of free space for the Parakeet Core ML model;
+- Xcode 16 or newer only when building from source.
+
+## Install and use
+
+Build the local release:
+
+```sh
+Scripts/build-app.sh release
+open dist/Sotto.app
+```
+
+On first launch:
+
+1. Open **Models** and select **Download model**. This is the only operation
+   that needs a network connection.
+2. Grant Microphone permission.
+3. Grant Accessibility permission if Sotto should insert text automatically.
+   Without it, completed text remains safely available on the clipboard.
+4. Hold **Option-Space**, speak, then release. Disable “Hold to dictate” to use
+   the same shortcut as an on/off toggle.
+
+The app captures the target application before showing its overlay, so the
+overlay never becomes the text destination.
+
+## Build and test
+
+```sh
+swift test
+swift run Sotto
+Scripts/build-app.sh release
+```
+
+`build-app.sh` creates an ad-hoc signed local build at `dist/Sotto.app` and a
+transport archive at `dist/Sotto-1.0.0.zip`. A public download can be signed and
+notarized with the publisher's Apple Developer identity without changing the
+application code; see [Documentation/Release.md](Documentation/Release.md).
+
