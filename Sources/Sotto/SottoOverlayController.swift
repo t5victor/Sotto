@@ -56,3 +56,101 @@ final class SottoOverlayController: SottoOverlayPresenting {
     }
 }
 
+private struct SottoOverlayView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        HStack(spacing: theme.spacing.md) {
+            stateIcon
+
+            VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                Text(title)
+                    .font(theme.typography.label)
+                    .foregroundStyle(theme.colors.foreground)
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(theme.typography.caption)
+                    .foregroundStyle(theme.colors.mutedForeground)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: theme.spacing.sm)
+
+            if model.dictationState.isListening {
+                SottoWaveform(level: model.audioLevel)
+                    .frame(width: 64, height: 24)
+                Button {
+                    model.cancelDictation()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.sotto(.ghost, size: .small))
+                .help("Cancelar dictado")
+            } else if case .failed = model.dictationState {
+                Button("Cerrar") {
+                    model.dismissFailure()
+                }
+                .buttonStyle(.sotto(.ghost, size: .small))
+            }
+        }
+        .padding(.horizontal, theme.spacing.lg)
+        .padding(.vertical, theme.spacing.md)
+        .frame(width: 350)
+        .frame(minHeight: 64)
+        .background(.ultraThickMaterial)
+        .overlay {
+            RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous)
+                .strokeBorder(theme.colors.border.opacity(0.85))
+        }
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous))
+        .shadow(color: .black.opacity(0.22), radius: 18, y: 8)
+        .padding(10)
+    }
+
+    @ViewBuilder
+    private var stateIcon: some View {
+        let (icon, color): (String, Color) = switch model.dictationState {
+        case .preparing: ("mic", theme.colors.accent)
+        case .listening: ("mic.fill", theme.colors.accent)
+        case .transcribing: ("waveform.badge.magnifyingglass", theme.colors.accent)
+        case .inserting: ("text.cursor", theme.colors.accent)
+        case .completed: ("checkmark", theme.colors.success)
+        case .failed: ("exclamationmark", theme.colors.destructive)
+        case .idle: ("waveform", theme.colors.mutedForeground)
+        }
+
+        Image(systemName: icon)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(color)
+            .frame(width: 30, height: 30)
+            .background(color.opacity(0.12))
+            .clipShape(Circle())
+    }
+
+    private var title: String {
+        switch model.dictationState {
+        case .idle: "Sotto está listo"
+        case .preparing: "Preparando micrófono"
+        case .listening: "Escuchando"
+        case .transcribing: "Transcribiendo en este Mac"
+        case .inserting: "Insertando texto"
+        case .completed(_, let outcome): outcome.displayName
+        case .failed: "No se pudo completar el dictado"
+        }
+    }
+
+    private var subtitle: String {
+        switch model.dictationState {
+        case .idle: model.preferences.shortcut.displayName
+        case .preparing: "Un momento…"
+        case .listening: model.preferences.holdToTalk ? "Suelta el atajo para terminar" : "Pulsa el atajo para terminar"
+        case .transcribing: "Parakeet TDT 0.6B v3"
+        case .inserting: "Volviendo a la aplicación anterior"
+        case .completed(let text, _): text
+        case .failed(let message): message
+        }
+    }
+}
+
