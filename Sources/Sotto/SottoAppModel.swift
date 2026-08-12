@@ -480,3 +480,54 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    private func cleanupCurrentRecording() {
+        if let currentRecordingURL {
+            try? FileManager.default.removeItem(at: currentRecordingURL)
+        }
+        currentRecordingURL = nil
+        currentTarget = nil
+        inserter.clearTarget()
+        isHoldShortcutPressed = false
+        stopWhenRecorderStarts = false
+        audioLevel = 0
+    }
+
+    private func presentFailure(_ message: String, hideAfter: TimeInterval?) {
+        dictationState = .failed(message: message)
+        overlayPresenter?.show()
+        if let hideAfter {
+            scheduleIdleReset(after: hideAfter)
+        }
+    }
+
+    private func scheduleIdleReset(after delay: TimeInterval) {
+        resetTask?.cancel()
+        resetTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled, let self else { return }
+            self.dictationState = .idle
+            self.overlayPresenter?.hide()
+        }
+    }
+
+    private func playSound(named name: String) {
+        guard preferences.playSounds else { return }
+        NSSound(named: NSSound.Name(name))?.play()
+    }
+
+    private func openPrivacySettings(anchor: String) {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    private static func userMessage(for error: Error) -> String {
+        if let localized = error as? LocalizedError,
+           let description = localized.errorDescription,
+           !description.isEmpty {
+            return description
+        }
+        return error.localizedDescription
+    }
+}
