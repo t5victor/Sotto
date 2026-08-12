@@ -170,3 +170,31 @@ public actor ParakeetService {
         )
     }
 
+    public func unload() async {
+        if let manager {
+            await manager.cleanup()
+        }
+        manager = nil
+        _ = inspect()
+    }
+
+    public func deleteModel() async throws {
+        if let manager {
+            await manager.cleanup()
+        }
+        manager = nil
+
+        let target = directories.parakeetV3.standardizedFileURL
+        let modelsRoot = directories.models.standardizedFileURL
+        guard target.deletingLastPathComponent() == modelsRoot,
+              target.lastPathComponent == "parakeet-tdt-0.6b-v3"
+        else {
+            throw CocoaError(.fileWriteInvalidFileName)
+        }
+
+        if FileManager.default.fileExists(atPath: target.path) {
+            try FileManager.default.removeItem(at: target)
+        }
+        transition(to: .notInstalled)
+    }
+
