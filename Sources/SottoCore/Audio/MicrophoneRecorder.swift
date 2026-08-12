@@ -165,3 +165,51 @@ public final class MicrophoneRecorder {
         )
     }
 
+    public func cancel() {
+        guard let engine else { return }
+        engine.stop()
+        engine.inputNode.removeTap(onBus: 0)
+        removeConfigurationObserver()
+        _ = sink?.finish()
+        if let recordingURL {
+            try? FileManager.default.removeItem(at: recordingURL)
+        }
+        self.engine = nil
+        self.sink = nil
+        self.recordingURL = nil
+    }
+
+    private func installConfigurationObserver(for engine: AVAudioEngine) {
+        removeConfigurationObserver()
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: .main
+        ) { [continuation] _ in
+            continuation.yield(
+                .failure("El dispositivo de audio cambió durante la grabación. Vuelve a intentarlo.")
+            )
+        }
+    }
+
+    private func removeConfigurationObserver() {
+        if let configurationObserver {
+            NotificationCenter.default.removeObserver(configurationObserver)
+            self.configurationObserver = nil
+        }
+    }
+}
+
+/// AVAudioEngine invokes its tap on a realtime audio queue. Keeping the tap
+/// closure outside `MicrophoneRecorder`'s MainActor isolation prevents Swift 6
+/// executor checks from trapping on that queue; `AudioFileSink` owns its own
+/// lock and is designed for this callback.
+private func installSottoAudioTap(
+    on input: AVAudioInputNode,
+    format: AVAudioFormat,
+    sink: AudioFileSink
+) {
+    input.installTap(onBus: 0, bufferSize: 2_048, format: format) { buffer, _ in
+        sink.consume(buffer)
+    }
+}
