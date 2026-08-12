@@ -73,3 +73,27 @@ struct SottoDoctor {
             print("RTFX=\(String(format: "%.1f", result.realTimeFactor))")
             print("CONFIDENCE=\(String(format: "%.3f", result.confidence))")
 
+        case "record":
+            guard arguments.count == 3,
+                  let seconds = Double(arguments[1]),
+                  (0.2...300).contains(seconds)
+            else { throw DoctorError.invalidRecordArguments }
+            let url = URL(fileURLWithPath: arguments[2]).standardizedFileURL
+            let audio = try await recordMicrophone(seconds: seconds, to: url)
+            print("AUDIO=\(audio.url.path)")
+            print("DURATION=\(String(format: "%.3f", audio.duration))")
+            print("FRAMES=\(audio.frameCount)")
+            print("PEAK=\(String(format: "%.3f", audio.peakLevel))")
+
+        case "insert":
+            let text = arguments.dropFirst().joined(separator: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { throw DoctorError.missingInsertionText }
+            let result = await insertIntoFrontmostApplication(text)
+            print("TARGET=\(result.target?.applicationName ?? "none")")
+            print("OUTCOME=\(result.outcome.rawValue)")
+
+        default:
+            throw DoctorError.unknownCommand(command)
+        }
+    }
