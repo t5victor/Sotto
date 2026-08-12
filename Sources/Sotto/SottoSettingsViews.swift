@@ -425,3 +425,87 @@ struct SottoPrivacyView: View {
     }
 }
 
+struct SottoHistoryView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+    @State private var confirmsHistoryDeletion = false
+
+    var body: some View {
+        SottoSettingsPage(
+            title: "Historial",
+            description: "Tus dictados guardados localmente en este Mac."
+        ) {
+            if model.history.isEmpty {
+                SottoCard {
+                    SottoEmptyState(
+                        systemImage: "clock.arrow.circlepath",
+                        title: "Aún no hay dictados",
+                        description: "Cuando completes uno aparecerá aquí para copiarlo o revisarlo."
+                    )
+                }
+            } else {
+                HStack {
+                    Text("\(model.history.count) dictados")
+                        .font(theme.typography.caption)
+                        .foregroundStyle(theme.colors.mutedForeground)
+                    Spacer()
+                    Button("Borrar historial") {
+                        confirmsHistoryDeletion = true
+                    }
+                    .buttonStyle(.sotto(.destructive, size: .small))
+                }
+
+                LazyVStack(spacing: theme.spacing.md) {
+                    ForEach(model.history) { record in
+                        SottoCard {
+                            VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                                HStack {
+                                    Text(record.createdAt, format: .dateTime.day().month().hour().minute())
+                                        .font(theme.typography.caption)
+                                        .foregroundStyle(theme.colors.mutedForeground)
+                                    if let app = record.targetApplication {
+                                        SottoBadge(app, tone: .neutral)
+                                    }
+                                    SottoBadge(record.insertionOutcome.displayName, tone: .success)
+                                    Spacer()
+                                    Button {
+                                        model.copyToPasteboard(record.text)
+                                    } label: {
+                                        Image(systemName: "doc.on.doc")
+                                    }
+                                    .buttonStyle(.sotto(.ghost, size: .small))
+                                    Button {
+                                        model.removeHistory(id: record.id)
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .buttonStyle(.sotto(.ghost, size: .small))
+                                }
+                                Text(record.text)
+                                    .font(theme.typography.body)
+                                    .foregroundStyle(theme.colors.foreground)
+                                    .textSelection(.enabled)
+                                Text("\(record.duration.formatted(.number.precision(.fractionLength(1)))) s de audio · \(record.processingTime.formatted(.number.precision(.fractionLength(2)))) s de proceso")
+                                    .font(theme.typography.caption)
+                                    .foregroundStyle(theme.colors.subtleForeground)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "¿Borrar todo el historial?",
+            isPresented: $confirmsHistoryDeletion,
+            titleVisibility: .visible
+        ) {
+            Button("Borrar historial", role: .destructive) {
+                model.clearHistory()
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Esta acción elimina del Mac todos los dictados guardados por Sotto.")
+        }
+    }
+}
+
