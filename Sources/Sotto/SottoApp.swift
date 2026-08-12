@@ -5,14 +5,22 @@ import SottoDesignSystem
 
 @MainActor
 final class SottoAppDelegate: NSObject, NSApplicationDelegate {
-    var onTerminate: (() -> Void)?
+    var onTerminate: (() async -> Void)?
+    private var isPreparingToTerminate = false
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
-        onTerminate?()
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let onTerminate else { return .terminateNow }
+        guard !isPreparingToTerminate else { return .terminateLater }
+        isPreparingToTerminate = true
+        Task { @MainActor in
+            await onTerminate()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 }
 
@@ -33,11 +41,16 @@ struct SottoApp: App {
     var body: some Scene {
         WindowGroup("Sotto", id: "main") {
             SottoRootView(model: model)
-                .sottoTheme(.standard.withAccent(model.accent.color))
+                .sottoTheme(
+                    .standard.withAccent(
+                        model.accent.color,
+                        foreground: model.accent.foregroundColor
+                    )
+                )
                 .frame(minWidth: 900, minHeight: 620)
                 .onAppear {
                     appDelegate.onTerminate = { [weak model] in
-                        model?.shutdown()
+                        await model?.shutdown()
                     }
                     model.refreshPermissions()
                 }
@@ -48,13 +61,23 @@ struct SottoApp: App {
 
         MenuBarExtra("Sotto", systemImage: model.isListening ? "mic.fill" : "waveform") {
             SottoMenuBarView(model: model)
-                .sottoTheme(.standard.withAccent(model.accent.color))
+                .sottoTheme(
+                    .standard.withAccent(
+                        model.accent.color,
+                        foreground: model.accent.foregroundColor
+                    )
+                )
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SottoAppearanceView(model: model)
-                .sottoTheme(.standard.withAccent(model.accent.color))
+                .sottoTheme(
+                    .standard.withAccent(
+                        model.accent.color,
+                        foreground: model.accent.foregroundColor
+                    )
+                )
                 .frame(width: 520, height: 390)
         }
     }

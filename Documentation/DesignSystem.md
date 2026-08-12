@@ -35,6 +35,11 @@ compact.radii = .init(small: 4, medium: 7, large: 10)
 
 Every component consuming semantic tokens updates automatically.
 
+Action and status colors are stored as explicit foreground/background pairs.
+The automated design-system test checks every light/dark pair against WCAG AA
+(at least 4.5:1) and APCA normal-text guidance (absolute Lc at least 60), so
+changing a theme token cannot silently reintroduce an unreadable 13 px label.
+
 ## Add a component
 
 1. Add the source under `Components` or `Patterns`.
@@ -48,4 +53,3 @@ Every component consuming semantic tokens updates automatically.
 
 Public components use the `Sotto` prefix to remain explicit at call sites and
 avoid collisions with SwiftUI or AppKit types.
-

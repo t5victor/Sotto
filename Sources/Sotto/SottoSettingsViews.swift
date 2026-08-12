@@ -6,6 +6,7 @@ struct SottoModelsView: View {
     @ObservedObject var model: SottoAppModel
     @Environment(\.sottoTheme) private var theme
     @State private var confirmsModelDeletion = false
+    @State private var confirmsModelRepair = false
 
     var body: some View {
         SottoSettingsPage(
@@ -87,12 +88,24 @@ struct SottoModelsView: View {
         } message: {
             Text("Podrás volver a descargarlo. Tus ajustes, vocabulario e historial no se borrarán.")
         }
+        .confirmationDialog(
+            "¿Reinstalar Parakeet?",
+            isPresented: $confirmsModelRepair,
+            titleVisibility: .visible
+        ) {
+            Button("Eliminar y volver a descargar", role: .destructive) {
+                model.reinstallModel()
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Sotto eliminará sólo la caché fija de Parakeet y descargará una copia limpia.")
+        }
     }
 
     @ViewBuilder
     private var modelControls: some View {
         switch model.modelState {
-        case .notInstalled, .failed:
+        case .notInstalled:
             HStack {
                 VStack(alignment: .leading, spacing: theme.spacing.xs) {
                     Text(model.modelState.detail)
@@ -104,6 +117,22 @@ struct SottoModelsView: View {
                 Spacer()
                 Button("Descargar modelo") {
                     model.installModel()
+                }
+                .buttonStyle(.sotto())
+            }
+
+        case .failed:
+            HStack {
+                VStack(alignment: .leading, spacing: theme.spacing.xs) {
+                    Text(model.modelState.detail)
+                        .font(theme.typography.body)
+                    Text("La reparación elimina la copia dañada antes de descargarla de nuevo.")
+                        .font(theme.typography.caption)
+                        .foregroundStyle(theme.colors.mutedForeground)
+                }
+                Spacer()
+                Button("Reinstalar modelo") {
+                    confirmsModelRepair = true
                 }
                 .buttonStyle(.sotto())
             }
@@ -260,7 +289,7 @@ struct SottoShortcutsView: View {
                     if let hotKeyError = model.hotKeyError {
                         Text(hotKeyError)
                             .font(theme.typography.caption)
-                            .foregroundStyle(theme.colors.destructive)
+                            .foregroundStyle(theme.colors.destructiveForeground)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
@@ -279,6 +308,28 @@ struct SottoShortcutsView: View {
                         systemImage: "speaker.wave.2",
                         isOn: $model.preferences.playSounds
                     )
+                    Divider()
+                    HStack {
+                        VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                            Text("Duración máxima")
+                                .font(theme.typography.label)
+                            Text("Sotto detiene y transcribe automáticamente al alcanzar el límite.")
+                                .font(theme.typography.body)
+                                .foregroundStyle(theme.colors.mutedForeground)
+                        }
+                        Spacer()
+                        Picker(
+                            "Duración máxima",
+                            selection: $model.preferences.maximumRecordingDuration
+                        ) {
+                            Text("2 minutos").tag(TimeInterval(120))
+                            Text("5 minutos").tag(TimeInterval(300))
+                            Text("10 minutos").tag(TimeInterval(600))
+                            Text("30 minutos").tag(TimeInterval(1_800))
+                        }
+                        .labelsHidden()
+                        .frame(width: 130)
+                    }
                 }
             }
         }
@@ -321,7 +372,7 @@ struct SottoAppearanceView: View {
                                             if model.accent == accent {
                                                 Image(systemName: "checkmark")
                                                     .font(.system(size: 11, weight: .bold))
-                                                    .foregroundStyle(.white)
+                                                    .foregroundStyle(accent.foregroundColor)
                                             }
                                         }
                                         .overlay {
@@ -408,6 +459,18 @@ struct SottoPrivacyView: View {
                         systemImage: "power",
                         isOn: launchAtLoginBinding
                     )
+                    if let message = model.launchAtLoginMessage {
+                        HStack(alignment: .firstTextBaseline, spacing: theme.spacing.sm) {
+                            Text(message)
+                                .font(theme.typography.caption)
+                                .foregroundStyle(theme.colors.warningForeground)
+                            Spacer()
+                            Button("Abrir ítems de inicio") {
+                                model.openLoginItemsSettings()
+                            }
+                            .buttonStyle(.sotto(.secondary, size: .small))
+                        }
+                    }
                 }
             }
         }

@@ -112,6 +112,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
     public var launchAtLogin: Bool
     public var holdToTalk: Bool
     public var shortcut: SottoShortcut
+    public var maximumRecordingDuration: TimeInterval
 
     public init(
         accent: SottoAccent = .violet,
@@ -124,7 +125,8 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         playSounds: Bool = true,
         launchAtLogin: Bool = false,
         holdToTalk: Bool = true,
-        shortcut: SottoShortcut = .defaultDictation
+        shortcut: SottoShortcut = .defaultDictation,
+        maximumRecordingDuration: TimeInterval = 300
     ) {
         self.accent = accent
         self.language = language
@@ -137,9 +139,68 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         self.launchAtLogin = launchAtLogin
         self.holdToTalk = holdToTalk
         self.shortcut = shortcut
+        self.maximumRecordingDuration = min(max(maximumRecordingDuration, 30), 1_800)
     }
 
     public static let `default` = SottoPreferences()
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case accent
+        case language
+        case removeFillers
+        case normalizeText
+        case insertAutomatically
+        case keepHistory
+        case historyLimit
+        case playSounds
+        case launchAtLogin
+        case holdToTalk
+        case shortcut
+        case maximumRecordingDuration
+    }
+
+    /// Decodes older preference files field by field. Adding a setting no
+    /// longer makes the whole file look corrupt and silently reset.
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self.default
+        self.init(
+            accent: try values.decodeIfPresent(SottoAccent.self, forKey: .accent) ?? defaults.accent,
+            language: try values.decodeIfPresent(SottoLanguage.self, forKey: .language) ?? defaults.language,
+            removeFillers: try values.decodeIfPresent(Bool.self, forKey: .removeFillers) ?? defaults.removeFillers,
+            normalizeText: try values.decodeIfPresent(Bool.self, forKey: .normalizeText) ?? defaults.normalizeText,
+            insertAutomatically: try values.decodeIfPresent(Bool.self, forKey: .insertAutomatically)
+                ?? defaults.insertAutomatically,
+            keepHistory: try values.decodeIfPresent(Bool.self, forKey: .keepHistory) ?? defaults.keepHistory,
+            historyLimit: try values.decodeIfPresent(Int.self, forKey: .historyLimit) ?? defaults.historyLimit,
+            playSounds: try values.decodeIfPresent(Bool.self, forKey: .playSounds) ?? defaults.playSounds,
+            launchAtLogin: try values.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? defaults.launchAtLogin,
+            holdToTalk: try values.decodeIfPresent(Bool.self, forKey: .holdToTalk) ?? defaults.holdToTalk,
+            shortcut: try values.decodeIfPresent(SottoShortcut.self, forKey: .shortcut) ?? defaults.shortcut,
+            maximumRecordingDuration: try values.decodeIfPresent(
+                TimeInterval.self,
+                forKey: .maximumRecordingDuration
+            ) ?? defaults.maximumRecordingDuration
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(2, forKey: .schemaVersion)
+        try values.encode(accent, forKey: .accent)
+        try values.encode(language, forKey: .language)
+        try values.encode(removeFillers, forKey: .removeFillers)
+        try values.encode(normalizeText, forKey: .normalizeText)
+        try values.encode(insertAutomatically, forKey: .insertAutomatically)
+        try values.encode(keepHistory, forKey: .keepHistory)
+        try values.encode(historyLimit, forKey: .historyLimit)
+        try values.encode(playSounds, forKey: .playSounds)
+        try values.encode(launchAtLogin, forKey: .launchAtLogin)
+        try values.encode(holdToTalk, forKey: .holdToTalk)
+        try values.encode(shortcut, forKey: .shortcut)
+        try values.encode(maximumRecordingDuration, forKey: .maximumRecordingDuration)
+    }
 }
 
 public struct VocabularyEntry: Codable, Equatable, Identifiable, Sendable {
@@ -158,6 +219,30 @@ public struct VocabularyEntry: Codable, Equatable, Identifiable, Sendable {
         spokenForm: "Soto",
         replacement: "Sotto"
     )
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case id
+        case spokenForm
+        case replacement
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+            spokenForm: try values.decode(String.self, forKey: .spokenForm),
+            replacement: try values.decode(String.self, forKey: .replacement)
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(1, forKey: .schemaVersion)
+        try values.encode(id, forKey: .id)
+        try values.encode(spokenForm, forKey: .spokenForm)
+        try values.encode(replacement, forKey: .replacement)
+    }
 }
 
 public struct SottoTranscript: Codable, Equatable, Sendable {
@@ -187,6 +272,7 @@ public struct SottoTranscript: Codable, Equatable, Sendable {
 public enum TextInsertionOutcome: String, Codable, Equatable, Sendable {
     case inserted
     case pasted
+    case pasteAttempted
     case copied
     case skipped
 
@@ -194,6 +280,7 @@ public enum TextInsertionOutcome: String, Codable, Equatable, Sendable {
         switch self {
         case .inserted: "Insertado"
         case .pasted: "Pegado"
+        case .pasteAttempted: "Pegado solicitado"
         case .copied: "Copiado"
         case .skipped: "Sin insertar"
         }
@@ -231,6 +318,58 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         self.confidence = confidence
         self.targetApplication = targetApplication
         self.insertionOutcome = insertionOutcome
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case id
+        case createdAt
+        case text
+        case rawText
+        case duration
+        case processingTime
+        case confidence
+        case targetApplication
+        case insertionOutcome
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        let text = try values.decode(String.self, forKey: .text)
+        self.init(
+            id: try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+            createdAt: try values.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date(),
+            text: text,
+            rawText: try values.decodeIfPresent(String.self, forKey: .rawText) ?? text,
+            duration: try values.decodeIfPresent(TimeInterval.self, forKey: .duration) ?? 0,
+            processingTime: try values.decodeIfPresent(
+                TimeInterval.self,
+                forKey: .processingTime
+            ) ?? 0,
+            confidence: try values.decodeIfPresent(Float.self, forKey: .confidence) ?? 0,
+            targetApplication: try values.decodeIfPresent(
+                String.self,
+                forKey: .targetApplication
+            ),
+            insertionOutcome: try values.decodeIfPresent(
+                TextInsertionOutcome.self,
+                forKey: .insertionOutcome
+            ) ?? .skipped
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(1, forKey: .schemaVersion)
+        try values.encode(id, forKey: .id)
+        try values.encode(createdAt, forKey: .createdAt)
+        try values.encode(text, forKey: .text)
+        try values.encode(rawText, forKey: .rawText)
+        try values.encode(duration, forKey: .duration)
+        try values.encode(processingTime, forKey: .processingTime)
+        try values.encode(confidence, forKey: .confidence)
+        try values.encodeIfPresent(targetApplication, forKey: .targetApplication)
+        try values.encode(insertionOutcome, forKey: .insertionOutcome)
     }
 }
 
@@ -273,6 +412,15 @@ public enum SottoDictationState: Equatable, Sendable {
         switch self {
         case .preparing, .listening, .transcribing, .inserting: true
         default: false
+        }
+    }
+
+    public var canCancel: Bool {
+        switch self {
+        case .preparing, .listening, .transcribing:
+            true
+        default:
+            false
         }
     }
 }

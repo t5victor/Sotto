@@ -35,11 +35,11 @@ struct SottoMenuBarView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Button(model.isListening ? "Detener dictado" : "Empezar a dictar") {
+            Button(menuActionTitle) {
                 model.toggleDictation()
             }
             .buttonStyle(.sotto(model.isListening ? .secondary : .primary, expands: true))
-            .disabled(!model.isListening && !model.canStartDictation)
+            .disabled(!model.dictationState.canCancel && !model.canStartDictation)
 
             if let transcript = model.lastTranscript {
                 Button {
@@ -95,5 +95,10 @@ struct SottoMenuBarView: View {
         default: .idle
         }
     }
-}
 
+    private var menuActionTitle: String {
+        if model.isListening { return "Detener dictado" }
+        if model.dictationState.canCancel { return "Cancelar dictado" }
+        return "Empezar a dictar"
+    }
+}

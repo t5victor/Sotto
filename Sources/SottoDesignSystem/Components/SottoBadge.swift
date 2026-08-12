@@ -34,22 +34,31 @@ public struct SottoBadge: View {
             Text(text)
         }
         .font(theme.typography.caption)
-        .foregroundStyle(toneColor)
+        .foregroundStyle(toneForeground)
         .padding(.horizontal, theme.spacing.sm)
         .padding(.vertical, theme.spacing.xs)
-        .background(toneColor.opacity(0.12))
+        .background(toneBackground)
         .clipShape(Capsule())
         .accessibilityElement(children: .combine)
     }
 
-    private var toneColor: Color {
+    private var toneForeground: Color {
         switch tone {
         case .neutral: theme.colors.mutedForeground
+        case .accent: theme.colors.accentForeground
+        case .success: theme.colors.successForeground
+        case .warning: theme.colors.warningForeground
+        case .destructive: theme.colors.destructiveForeground
+        }
+    }
+
+    private var toneBackground: Color {
+        switch tone {
+        case .neutral: theme.colors.mutedSurface
         case .accent: theme.colors.accent
-        case .success: theme.colors.success
-        case .warning: theme.colors.warning
-        case .destructive: theme.colors.destructive
+        case .success: theme.colors.successBackground
+        case .warning: theme.colors.warningBackground
+        case .destructive: theme.colors.destructiveBackground
         }
     }
 }
-

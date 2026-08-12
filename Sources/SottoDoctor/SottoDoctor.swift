@@ -56,9 +56,15 @@ struct SottoDoctor {
             let result = try await service.transcribe(audioURL: url, language: .spanish)
             let settingsStore = JSONFileStore(
                 url: directories.preferencesFile,
-                defaultValue: SottoPreferences.default
+                defaultValue: SottoPreferences.default,
+                managedRoot: directories.root,
+                managedDirectory: directories.state
             )
-            let vocabularyStore = SottoVocabularyRepository(url: directories.vocabularyFile)
+            let vocabularyStore = SottoVocabularyRepository(
+                url: directories.vocabularyFile,
+                managedRoot: directories.root,
+                managedDirectory: directories.state
+            )
             let preferences = await settingsStore.load()
             let vocabulary = await vocabularyStore.load()
             let text = TextPostProcessor().process(

@@ -31,7 +31,7 @@ Version 1.0 includes the complete desktop flow:
 Build the local release:
 
 ```sh
-Scripts/build-app.sh release
+Scripts/build-app.sh release local
 open dist/Sotto.app
 ```
 
@@ -45,19 +45,21 @@ On first launch:
 4. Hold **Option-Space**, speak, then release. Disable “Hold to dictate” to use
    the same shortcut as an on/off toggle.
 
-The app captures the target application before showing its overlay, so the
-overlay never becomes the text destination.
+The app captures the target application and its process identity before asking
+for microphone permission or showing its overlay, so neither macOS's permission
+UI nor Sotto itself becomes the text destination.
 
 ## Build and test
 
 ```sh
 swift test
 swift run Sotto
-Scripts/build-app.sh release
+Scripts/build-app.sh release local
 ```
 
 `build-app.sh` creates an ad-hoc signed local build at `dist/Sotto.app` and a
-transport archive at `dist/Sotto-1.0.0.zip`. A public download can be signed and
+transport archive at `dist/Sotto-1.0.0.zip`, plus its matching `.sha256`.
+A public download can be signed and
 notarized with the publisher's Apple Developer identity without changing the
 application code; see [Documentation/Release.md](Documentation/Release.md).
 
@@ -80,6 +82,7 @@ swift run SottoDoctor insert "Texto de prueba"
 Sources/
 ├── Sotto/                 SwiftUI app, menu bar and overlay
 ├── SottoCore/             audio, Parakeet, text, persistence and macOS services
+├── SottoAudioRingC/       lock-free C11 SPSC indices for realtime audio
 ├── SottoDesignSystem/     owned tokens, components and product patterns
 └── SottoDoctor/           runtime diagnostics
 Tests/

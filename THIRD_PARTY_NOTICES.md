@@ -6,6 +6,13 @@ Sotto uses [FluidAudio](https://github.com/FluidInference/FluidAudio), distribut
 under the Apache License 2.0. A copy of that license is available in Sotto's
 top-level `LICENSE` file and in the packaged app.
 
+FluidAudio links the following third-party components into Sotto:
+
+- **fastcluster**, © 2011 Daniel Müllner and subsequent changes © Google Inc.,
+  under its BSD-style license. The complete copyright notice, conditions and
+  disclaimer are reproduced in the packaged `ThirdPartyNotices.txt`.
+- **VBx clustering**, under the Apache License 2.0.
+
 ## NVIDIA Parakeet TDT 0.6B v3
 
 Sotto downloads and runs

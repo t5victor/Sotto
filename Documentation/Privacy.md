@@ -18,7 +18,10 @@ All application data is under `~/Library/Application Support/Sotto`:
   artifact set).
 - `State/preferences.json` contains UI and dictation preferences.
 - `State/vocabulary.json` contains user-defined replacements.
-- `State/history.json` contains completed text only when local history is on.
+- `State/history.json` is written only when local history is on. Each record
+  contains the recognized raw text, processed text, creation date, audio
+  duration, processing time, model confidence, destination application name
+  (when available) and insertion outcome. It does not contain audio.
 - `Recordings/` is transient. Sotto deletes audio after processing or
   cancellation and removes crash leftovers older than 24 hours at startup.
 
@@ -33,6 +36,20 @@ than surprising.
   active application. Without it, Sotto copies the completed text.
 - **Launch at login** is optional and managed with `SMAppService`.
 
-The Command-V fallback temporarily uses the system pasteboard. Sotto snapshots
-its existing items and restores them after the paste if no other application
-changes the pasteboard in the meantime.
+The Command-V fallback temporarily uses the system pasteboard only when it is
+empty. macOS provides no trustworthy size metadata for existing pasteboard
+values, so Sotto never materializes strings, images, files, rich text or
+promised/lazy values on the main actor merely to snapshot them. When the
+pasteboard already contains something, Sotto uses the explicit clipboard-copy
+fallback instead of simulating a paste. Because macOS exposes no API that
+confirms a synthetic Command-V changed the destination, history records that
+fallback as **Pegado solicitado**, not as a verified insertion.
+
+## Retention and recovery
+
+Recordings stop automatically at the duration selected in Settings (five
+minutes by default, configurable between two and thirty minutes). The user can
+cancel both capture and local transcription. Sotto deletes the temporary CAF on
+success, failure or cancellation and removes crash leftovers older than 24
+hours at startup. Managed state/model/recording paths reject symbolic links
+before reading, writing or deleting data.

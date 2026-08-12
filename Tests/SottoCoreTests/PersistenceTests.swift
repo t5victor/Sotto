@@ -79,6 +79,57 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(entries[0].replacement, "SOTTO")
     }
 
+    func testVocabularyIdentityMatchesPostProcessorDiacriticRules() async throws {
+        let root = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let repository = SottoVocabularyRepository(
+            url: root.appendingPathComponent("vocabulary.json"),
+            defaultEntries: []
+        )
+
+        _ = try await repository.upsert(
+            VocabularyEntry(spokenForm: "cafe", replacement: "Cafe")
+        )
+        let entries = try await repository.upsert(
+            VocabularyEntry(spokenForm: "café", replacement: "Café")
+        )
+
+        XCTAssertEqual(entries.count, 2)
+    }
+
+    func testLegacyPreferencesGainDefaultsWithoutResettingKnownValues() throws {
+        let legacy = Data(#"""
+        {
+          "accent": "coral",
+          "language": "es",
+          "historyLimit": 42
+        }
+        """#.utf8)
+
+        let decoded = try JSONDecoder().decode(SottoPreferences.self, from: legacy)
+
+        XCTAssertEqual(decoded.accent, .coral)
+        XCTAssertEqual(decoded.language, .spanish)
+        XCTAssertEqual(decoded.historyLimit, 42)
+        XCTAssertEqual(decoded.maximumRecordingDuration, 300)
+        XCTAssertTrue(decoded.insertAutomatically)
+    }
+
+    func testLegacyHistoryRecordMigratesMissingMetadata() throws {
+        let legacy = Data(#"""
+        {
+          "text": "Texto conservado"
+        }
+        """#.utf8)
+
+        let decoded = try JSONDecoder().decode(TranscriptionRecord.self, from: legacy)
+
+        XCTAssertEqual(decoded.text, "Texto conservado")
+        XCTAssertEqual(decoded.rawText, "Texto conservado")
+        XCTAssertEqual(decoded.duration, 0)
+        XCTAssertEqual(decoded.insertionOutcome, .skipped)
+    }
+
     func testStaleRecordingCleanupOnlyDeletesOldCAFRegularFiles() throws {
         let root = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -101,6 +152,88 @@ final class PersistenceTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: oldRecording.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: recentRecording.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: unrelated.path))
+    }
+
+    func testPrepareRejectsSymbolicLinkInManagedDirectoryChain() throws {
+        let root = temporaryDirectory()
+        let external = temporaryDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: external)
+        }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: external, withIntermediateDirectories: true)
+        let directories = SottoDirectories(root: root)
+        try FileManager.default.createSymbolicLink(
+            at: directories.state,
+            withDestinationURL: external
+        )
+
+        XCTAssertThrowsError(try directories.prepare()) { error in
+            guard case SottoManagedPathError.symbolicLink(let url) = error else {
+                return XCTFail("Expected symbolicLink, got \(error)")
+            }
+            XCTAssertEqual(url, directories.state)
+        }
+    }
+
+    func testManagedJSONStoreRefusesReplacedParentSymlink() async throws {
+        let root = temporaryDirectory()
+        let external = temporaryDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: external)
+        }
+        let directories = SottoDirectories(root: root)
+        try directories.prepare()
+        try FileManager.default.createDirectory(at: external, withIntermediateDirectories: true)
+        try FileManager.default.removeItem(at: directories.state)
+        try FileManager.default.createSymbolicLink(
+            at: directories.state,
+            withDestinationURL: external
+        )
+        let store = JSONFileStore(
+            url: directories.preferencesFile,
+            defaultValue: SottoPreferences.default,
+            managedRoot: directories.root,
+            managedDirectory: directories.state
+        )
+
+        do {
+            try await store.save(.default)
+            XCTFail("Expected symbolic-link rejection")
+        } catch SottoManagedPathError.symbolicLink(let url) {
+            XCTAssertEqual(url.standardizedFileURL.path, directories.state.standardizedFileURL.path)
+        }
+        XCTAssertFalse(
+            FileManager.default.fileExists(
+                atPath: external.appendingPathComponent("preferences.json").path
+            )
+        )
+    }
+
+    func testRecordingCleanupRefusesReplacedParentSymlink() throws {
+        let root = temporaryDirectory()
+        let external = temporaryDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: external)
+        }
+        let directories = SottoDirectories(root: root)
+        try directories.prepare()
+        try FileManager.default.createDirectory(at: external, withIntermediateDirectories: true)
+        let marker = external.appendingPathComponent("old.caf")
+        try Data("outside".utf8).write(to: marker)
+        try FileManager.default.removeItem(at: directories.recordings)
+        try FileManager.default.createSymbolicLink(
+            at: directories.recordings,
+            withDestinationURL: external
+        )
+
+        XCTAssertThrowsError(
+            try directories.removeStaleRecordings(olderThan: .distantFuture)
+        )
+        XCTAssertTrue(FileManager.default.fileExists(atPath: marker.path))
     }
 
     private func temporaryDirectory() -> URL {

@@ -106,6 +106,19 @@ public struct SottoDirectories: Sendable {
     /// Validates the model cache and every existing descendant. Model loading
     /// must never traverse a link planted inside the otherwise valid cache.
     public func validateModelTree(fileManager: FileManager = .default) throws {
+        let target = try validateModelTarget(fileManager: fileManager)
+        guard fileManager.fileExists(atPath: target.path) else { return }
+        try validateManagedDirectory(target, fileManager: fileManager)
+        try Self.ensureTreeContainsNoSymbolicLinks(at: target, fileManager: fileManager)
+    }
+
+    /// Validates only the fixed model directory itself. This is sufficient for
+    /// deletion: removing a directory unlinks symbolic-link children rather
+    /// than following them, while the fixed target must never itself be a link.
+    @discardableResult
+    public func validateModelTarget(
+        fileManager: FileManager = .default
+    ) throws -> URL {
         try validateManagedDirectory(models, fileManager: fileManager)
         let target = parakeetV3.standardizedFileURL
         guard target.deletingLastPathComponent() == models.standardizedFileURL,
@@ -116,9 +129,7 @@ public struct SottoDirectories: Sendable {
         guard !Self.isSymbolicLink(target, fileManager: fileManager) else {
             throw SottoManagedPathError.symbolicLink(target)
         }
-        guard fileManager.fileExists(atPath: target.path) else { return }
-        try validateManagedDirectory(target, fileManager: fileManager)
-        try Self.ensureTreeContainsNoSymbolicLinks(at: target, fileManager: fileManager)
+        return target
     }
 
     public func validateManagedDirectory(

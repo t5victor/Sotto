@@ -55,8 +55,10 @@ public struct SottoButtonStyle: ButtonStyle {
 
     private var foregroundColor: Color {
         switch variant {
-        case .primary, .destructive:
+        case .primary:
             theme.colors.accentForeground
+        case .destructive:
+            theme.colors.destructiveButtonForeground
         case .secondary, .ghost:
             theme.colors.foreground
         }
@@ -105,4 +107,3 @@ public extension ButtonStyle where Self == SottoButtonStyle {
         SottoButtonStyle(variant, size: size, expands: expands)
     }
 }
-

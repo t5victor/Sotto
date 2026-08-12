@@ -68,7 +68,7 @@ public struct SottoRecordingPill: View {
         switch state {
         case .idle: theme.colors.mutedForeground
         case .listening: theme.colors.accent
-        case .transcribing: theme.colors.success
+        case .transcribing: theme.colors.successForeground
         }
     }
 }
@@ -93,4 +93,3 @@ private struct SottoLevelMeter: View {
         .accessibilityHidden(true)
     }
 }
-

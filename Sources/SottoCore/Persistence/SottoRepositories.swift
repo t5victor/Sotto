@@ -3,8 +3,17 @@ import Foundation
 public actor SottoHistoryRepository {
     private let store: JSONFileStore<[TranscriptionRecord]>
 
-    public init(url: URL) {
-        self.store = JSONFileStore(url: url, defaultValue: [])
+    public init(
+        url: URL,
+        managedRoot: URL? = nil,
+        managedDirectory: URL? = nil
+    ) {
+        self.store = JSONFileStore(
+            url: url,
+            defaultValue: [],
+            managedRoot: managedRoot,
+            managedDirectory: managedDirectory
+        )
     }
 
     public func load() async -> [TranscriptionRecord] {
@@ -49,8 +58,18 @@ public actor SottoVocabularyRepository {
 
     private let store: JSONFileStore<[VocabularyEntry]>
 
-    public init(url: URL, defaultEntries: [VocabularyEntry] = [.sotto]) {
-        self.store = JSONFileStore(url: url, defaultValue: defaultEntries)
+    public init(
+        url: URL,
+        defaultEntries: [VocabularyEntry] = [.sotto],
+        managedRoot: URL? = nil,
+        managedDirectory: URL? = nil
+    ) {
+        self.store = JSONFileStore(
+            url: url,
+            defaultValue: defaultEntries,
+            managedRoot: managedRoot,
+            managedDirectory: managedDirectory
+        )
     }
 
     public func load() async -> [VocabularyEntry] {
@@ -67,9 +86,9 @@ public actor SottoVocabularyRepository {
         guard !replacement.isEmpty else { throw VocabularyError.emptyReplacement }
 
         var entries = await load()
-        let normalized = spoken.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        let normalized = spoken.folding(options: [.caseInsensitive], locale: .current)
         if let index = entries.firstIndex(where: {
-            $0.spokenForm.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            $0.spokenForm.folding(options: [.caseInsensitive], locale: .current)
                 == normalized
         }) {
             entries[index] = VocabularyEntry(

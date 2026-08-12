@@ -23,8 +23,10 @@ flowchart LR
 
 `SottoAppModel` is the MainActor state machine coordinating this flow. The model
 runtime and JSON stores are actors. The Core Audio tap runs outside MainActor on
-the realtime audio queue and hands data to a locked sink; UI updates travel back
-through a bounded `AsyncStream`.
+the realtime audio queue. It copies into a preallocated single-producer/
+single-consumer ring whose indices use C11 atomics; conversion, file I/O,
+metering, allocation and `AsyncStream` delivery happen on a dedicated worker.
+Queue saturation is an explicit recording error rather than silent word loss.
 
 ## Model lifecycle
 
@@ -36,7 +38,9 @@ and requests the int8 Parakeet v3 Core ML artifacts.
 Installation allows the network only while `AsrModels.download` resolves and
 validates the artifacts. Once loaded, `ModelHub.offlineMode` is enabled. Normal
 startup inspects the exact expected files and loads only from the application
-support directory. Deletion is constrained to that exact model child folder.
+support directory. Every managed path component and model descendant rejects
+symbolic links. Deletion is constrained to the exact fixed model child folder,
+and a failed cache has an explicit delete-and-reinstall recovery action.
 
 The model lives outside the app bundle so upgrades do not duplicate it:
 
@@ -56,24 +60,29 @@ symbolic links.
 
 ## Text insertion
 
-Before recording, `TextInsertionService` remembers the frontmost process. A
-non-activating `NSPanel` can therefore show status without stealing focus.
+Before requesting microphone permission, `TextInsertionService` remembers the
+frontmost process, including PID, bundle identifier, launch date and executable
+URL. It revalidates that identity before AX and keyboard events. A non-activating
+`NSPanel` can therefore show status without stealing focus.
 Insertion uses this ordered strategy:
 
 1. Set `AXSelectedText` on the focused accessibility element.
-2. Temporarily place the text on the pasteboard, reactivate the captured app and
-   synthesize Command-V. Restore the previous pasteboard after the paste event.
+2. If the pasteboard is empty, temporarily place the text there, reactivate the
+   captured app and synthesize Command-V. The synthetic event is reported as an
+   attempt because macOS cannot confirm that the target accepted it.
 3. Leave the text copied if neither automatic route is available.
 
-Every outcome is explicit (`inserted`, `pasted`, `copied`, `skipped`) and can be
-recorded in local history.
+Every outcome is explicit (`inserted`, legacy `pasted`, `pasteAttempted`,
+`copied`, `skipped`) and can be recorded in local history.
 
 ## Persistence and recovery
 
-Preferences, vocabulary and history are atomically encoded JSON. A malformed
-file is moved aside with a timestamped `.corrupt-…json` name and defaults are
-loaded, avoiding a startup loop while preserving evidence for recovery. History
-is newest-first and bounded between 10 and 1,000 entries.
+Preferences, vocabulary and history are versioned, atomically encoded JSON.
+Older records decode field by field with defaults for newly introduced values.
+A malformed file is moved aside with a timestamped `.corrupt-…json` name and
+defaults are loaded, avoiding a startup loop while preserving evidence for
+recovery. Managed stores refuse a substituted symlink parent. History is
+newest-first and bounded between 10 and 1,000 entries.
 
 ## Design system
 

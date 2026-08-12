@@ -19,6 +19,11 @@ struct SottoHomeView: View {
                         model.dismissFailure()
                     }
                 }
+                if let notice = model.notice {
+                    SottoNoticeBanner(message: notice) {
+                        model.dismissNotice()
+                    }
+                }
 
                 dictationCard
 
@@ -57,11 +62,7 @@ struct SottoHomeView: View {
 
                     HStack(spacing: theme.spacing.sm) {
                         Button(primaryActionTitle) {
-                            if model.modelState.isInstalled {
-                                model.toggleDictation()
-                            } else {
-                                model.installModel()
-                            }
+                            performPrimaryAction()
                         }
                         .buttonStyle(.sotto(model.isListening ? .secondary : .primary))
                         .disabled(primaryActionDisabled)
@@ -218,19 +219,33 @@ struct SottoHomeView: View {
 
     private var primaryActionTitle: String {
         if model.isListening { return "Detener" }
+        if model.dictationState.canCancel { return "Cancelar" }
         if model.modelState.isReady { return "Empezar a dictar" }
         if case .downloading = model.modelState { return "Descargando…" }
         if case .loading = model.modelState { return "Cargando…" }
         if case .validating = model.modelState { return "Validando…" }
+        if case .failed = model.modelState { return "Reinstalar Parakeet" }
         return "Descargar Parakeet"
     }
 
     private var primaryActionDisabled: Bool {
-        if model.isListening { return false }
+        if model.dictationState.canCancel { return false }
         return switch model.modelState {
         case .notInstalled, .failed: false
         case .ready: false
         default: true
+        }
+    }
+
+    private func performPrimaryAction() {
+        if model.dictationState.canCancel {
+            model.toggleDictation()
+        } else if case .failed = model.modelState {
+            model.reinstallModel()
+        } else if model.modelState.isInstalled {
+            model.toggleDictation()
+        } else {
+            model.installModel()
         }
     }
 }
@@ -260,7 +275,7 @@ private struct SottoErrorBanner: View {
     var body: some View {
         HStack(spacing: theme.spacing.md) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(theme.colors.destructive)
+                .foregroundStyle(theme.colors.destructiveForeground)
             Text(message)
                 .font(theme.typography.body)
                 .foregroundStyle(theme.colors.foreground)
@@ -269,7 +284,29 @@ private struct SottoErrorBanner: View {
                 .buttonStyle(.sotto(.ghost, size: .small))
         }
         .padding(theme.spacing.md)
-        .background(theme.colors.destructive.opacity(0.1))
+        .background(theme.colors.destructiveBackground)
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+    }
+}
+
+private struct SottoNoticeBanner: View {
+    @Environment(\.sottoTheme) private var theme
+    let message: String
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: theme.spacing.md) {
+            Image(systemName: "info.circle.fill")
+                .foregroundStyle(theme.colors.warningForeground)
+            Text(message)
+                .font(theme.typography.body)
+                .foregroundStyle(theme.colors.foreground)
+            Spacer()
+            Button("Cerrar", action: dismiss)
+                .buttonStyle(.sotto(.ghost, size: .small))
+        }
+        .padding(theme.spacing.md)
+        .background(theme.colors.warningBackground)
         .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
     }
 }

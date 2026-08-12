@@ -28,7 +28,12 @@ final class SottoOverlayController: SottoOverlayPresenting {
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(.standard.withAccent(model.accent.color))
+                .sottoTheme(
+                    .standard.withAccent(
+                        model.accent.color,
+                        foreground: model.accent.foregroundColor
+                    )
+                )
         )
     }
 
@@ -36,7 +41,12 @@ final class SottoOverlayController: SottoOverlayPresenting {
         guard let model else { return }
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(.standard.withAccent(model.accent.color))
+                .sottoTheme(
+                    .standard.withAccent(
+                        model.accent.color,
+                        foreground: model.accent.foregroundColor
+                    )
+                )
         )
         positionPanel()
         panel.orderFrontRegardless()
@@ -78,9 +88,11 @@ private struct SottoOverlayView: View {
 
             Spacer(minLength: theme.spacing.sm)
 
-            if model.dictationState.isListening {
-                SottoWaveform(level: model.audioLevel)
-                    .frame(width: 64, height: 24)
+            if model.dictationState.canCancel {
+                if model.dictationState.isListening {
+                    SottoWaveform(level: model.audioLevel)
+                        .frame(width: 64, height: 24)
+                }
                 Button {
                     model.cancelDictation()
                 } label: {
@@ -116,8 +128,8 @@ private struct SottoOverlayView: View {
         case .listening: ("mic.fill", theme.colors.accent)
         case .transcribing: ("waveform.badge.magnifyingglass", theme.colors.accent)
         case .inserting: ("text.cursor", theme.colors.accent)
-        case .completed: ("checkmark", theme.colors.success)
-        case .failed: ("exclamationmark", theme.colors.destructive)
+        case .completed: ("checkmark", theme.colors.successForeground)
+        case .failed: ("exclamationmark", theme.colors.destructiveForeground)
         case .idle: ("waveform", theme.colors.mutedForeground)
         }
 

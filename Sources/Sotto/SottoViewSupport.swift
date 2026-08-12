@@ -5,10 +5,19 @@ import SwiftUI
 extension SottoAccent {
     var color: Color {
         switch self {
-        case .violet: Color(red: 0.45, green: 0.34, blue: 0.95)
-        case .blue: Color(red: 0.16, green: 0.48, blue: 0.92)
-        case .coral: Color(red: 0.91, green: 0.34, blue: 0.28)
-        case .green: Color(red: 0.16, green: 0.62, blue: 0.40)
+        case .violet: SottoPalette.violetAccent.background.color
+        case .blue: SottoPalette.blueAccent.background.color
+        case .coral: SottoPalette.coralAccent.background.color
+        case .green: SottoPalette.greenAccent.background.color
+        }
+    }
+
+    var foregroundColor: Color {
+        switch self {
+        case .violet: SottoPalette.violetAccent.foreground.color
+        case .blue: SottoPalette.blueAccent.foreground.color
+        case .coral: SottoPalette.coralAccent.foreground.color
+        case .green: SottoPalette.greenAccent.foreground.color
         }
     }
 }

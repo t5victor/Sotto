@@ -57,6 +57,11 @@ public actor ParakeetService {
         guard Self.isAppleSilicon else {
             return transition(to: .failed(message: ServiceError.unsupportedHardware.localizedDescription))
         }
+        do {
+            try directories.validateModelTree()
+        } catch {
+            return transition(to: .failed(message: Self.userMessage(for: error)))
+        }
 
         let exists = AsrModels.modelsExist(
             at: directories.parakeetV3,
@@ -73,9 +78,13 @@ public actor ParakeetService {
         state
     }
 
-    public func install() async throws {
+    public func install(replacingExisting: Bool = false) async throws {
         guard Self.isAppleSilicon else { throw ServiceError.unsupportedHardware }
         try directories.prepare()
+        if replacingExisting {
+            try await deleteModel()
+        }
+        try directories.validateModelTree()
         ModelHub.offlineMode = false
         lastProgressPercent = -1
         lastProgressDetail = ""
@@ -100,6 +109,7 @@ public actor ParakeetService {
             )
             try Task.checkCancellation()
             transition(to: .validating)
+            try directories.validateModelTree()
             try await loadModels()
         } catch is CancellationError {
             manager = nil
@@ -118,6 +128,7 @@ public actor ParakeetService {
             transition(to: .ready(bytes: modelSize()))
             return
         }
+        try directories.validateModelTree()
         guard AsrModels.modelsExist(
             at: directories.parakeetV3,
             version: .v3,
@@ -142,9 +153,6 @@ public actor ParakeetService {
         audioURL: URL,
         language: SottoLanguage
     ) async throws -> SottoTranscript {
-        try await prepare()
-        guard let manager else { throw ServiceError.modelNotInstalled }
-
         let audioFile: AVAudioFile
         do {
             audioFile = try AVAudioFile(forReading: audioURL)
@@ -153,12 +161,18 @@ public actor ParakeetService {
         }
         guard audioFile.length > 0 else { throw ServiceError.emptyAudio }
 
+        try Task.checkCancellation()
+        try await prepare()
+        try Task.checkCancellation()
+        guard let manager else { throw ServiceError.modelNotInstalled }
+
         var decoderState = try TdtDecoderState(decoderLayers: await manager.decoderLayerCount)
         let result = try await manager.transcribe(
             audioURL,
             decoderState: &decoderState,
             language: language.fluidLanguage
         )
+        try Task.checkCancellation()
         let text = result.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !text.isEmpty else { throw ServiceError.emptyTranscript }
 
@@ -184,13 +198,7 @@ public actor ParakeetService {
         }
         manager = nil
 
-        let target = directories.parakeetV3.standardizedFileURL
-        let modelsRoot = directories.models.standardizedFileURL
-        guard target.deletingLastPathComponent() == modelsRoot,
-              target.lastPathComponent == "parakeet-tdt-0.6b-v3"
-        else {
-            throw CocoaError(.fileWriteInvalidFileName)
-        }
+        let target = try directories.validateModelTarget()
 
         if FileManager.default.fileExists(atPath: target.path) {
             try FileManager.default.removeItem(at: target)
@@ -199,6 +207,7 @@ public actor ParakeetService {
     }
 
     private func loadModels() async throws {
+        try directories.validateModelTree()
         let config = ASRConfig(
             streamingEnabled: true,
             streamingThreshold: 480_000,

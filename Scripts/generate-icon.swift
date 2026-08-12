@@ -6,16 +6,13 @@ import ImageIO
 import UniformTypeIdentifiers
 
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-let iconset = root.appendingPathComponent(
-    "Sources/Sotto/Resources/AppIcon.iconset",
+let iconset = FileManager.default.temporaryDirectory.appendingPathComponent(
+    "Sotto-AppIcon-\(UUID().uuidString).iconset",
     isDirectory: true
 )
+defer { try? FileManager.default.removeItem(at: iconset) }
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
-let assetCatalogIcon = root.appendingPathComponent(
-    "Sources/Sotto/Resources/Assets.xcassets/AppIcon.appiconset",
-    isDirectory: true
-)
-try FileManager.default.createDirectory(at: assetCatalogIcon, withIntermediateDirectories: true)
+let output = root.appendingPathComponent("Sources/Sotto/Resources/AppIcon.icns")
 
 let outputs: [(String, Int)] = [
     ("icon_16x16.png", 16),
@@ -103,17 +100,24 @@ for (name, size) in outputs {
     }
 
     guard let image = context.makeImage() else { fatalError("Unable to render icon") }
-    for directory in [iconset, assetCatalogIcon] {
-        let destinationURL = directory.appendingPathComponent(name) as CFURL
-        guard let destination = CGImageDestinationCreateWithURL(
-            destinationURL,
-            UTType.png.identifier as CFString,
-            1,
-            nil
-        ) else { fatalError("Unable to create PNG destination") }
-        CGImageDestinationAddImage(destination, image, nil)
-        guard CGImageDestinationFinalize(destination) else { fatalError("Unable to write \(name)") }
-    }
+    let destinationURL = iconset.appendingPathComponent(name) as CFURL
+    guard let destination = CGImageDestinationCreateWithURL(
+        destinationURL,
+        UTType.png.identifier as CFString,
+        1,
+        nil
+    ) else { fatalError("Unable to create PNG destination") }
+    CGImageDestinationAddImage(destination, image, nil)
+    guard CGImageDestinationFinalize(destination) else { fatalError("Unable to write \(name)") }
 }
 
-print(iconset.path)
+let iconutil = Process()
+iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
+iconutil.arguments = ["-c", "icns", "-o", output.path, iconset.path]
+try iconutil.run()
+iconutil.waitUntilExit()
+guard iconutil.terminationStatus == 0 else {
+    fatalError("iconutil failed with status \(iconutil.terminationStatus)")
+}
+
+print(output.path)

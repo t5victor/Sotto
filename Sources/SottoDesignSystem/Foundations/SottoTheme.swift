@@ -1,6 +1,111 @@
 import AppKit
 import SwiftUI
 
+public struct SottoSRGB: Equatable, Sendable {
+    public let red: Double
+    public let green: Double
+    public let blue: Double
+
+    public init(red: Double, green: Double, blue: Double) {
+        self.red = red
+        self.green = green
+        self.blue = blue
+    }
+
+    public var color: Color {
+        Color(red: red, green: green, blue: blue)
+    }
+
+    fileprivate var nsColor: NSColor {
+        NSColor(srgbRed: red, green: green, blue: blue, alpha: 1)
+    }
+}
+
+public struct SottoColorPair: Equatable, Sendable {
+    public let background: SottoSRGB
+    public let foreground: SottoSRGB
+
+    public init(background: SottoSRGB, foreground: SottoSRGB) {
+        self.background = background
+        self.foreground = foreground
+    }
+}
+
+public struct SottoAdaptiveColorPair: Equatable, Sendable {
+    public let light: SottoColorPair
+    public let dark: SottoColorPair
+
+    public init(light: SottoColorPair, dark: SottoColorPair) {
+        self.light = light
+        self.dark = dark
+    }
+}
+
+public enum SottoPalette {
+    public static let violetAccent = SottoColorPair(
+        background: SottoSRGB(red: 0.45, green: 0.34, blue: 0.95),
+        foreground: SottoSRGB(red: 1, green: 1, blue: 1)
+    )
+    public static let blueAccent = SottoColorPair(
+        background: SottoSRGB(red: 30.0 / 255, green: 101.0 / 255, blue: 200.0 / 255),
+        foreground: SottoSRGB(red: 1, green: 1, blue: 1)
+    )
+    public static let coralAccent = SottoColorPair(
+        background: SottoSRGB(red: 201.0 / 255, green: 67.0 / 255, blue: 55.0 / 255),
+        foreground: SottoSRGB(red: 1, green: 1, blue: 1)
+    )
+    public static let greenAccent = SottoColorPair(
+        background: SottoSRGB(red: 22.0 / 255, green: 125.0 / 255, blue: 75.0 / 255),
+        foreground: SottoSRGB(red: 1, green: 1, blue: 1)
+    )
+    public static let destructiveAction = SottoColorPair(
+        background: SottoSRGB(red: 196.0 / 255, green: 46.0 / 255, blue: 55.0 / 255),
+        foreground: SottoSRGB(red: 1, green: 1, blue: 1)
+    )
+    public static let successStatus = SottoAdaptiveColorPair(
+        light: SottoColorPair(
+            background: SottoSRGB(red: 232.0 / 255, green: 246.0 / 255, blue: 238.0 / 255),
+            foreground: SottoSRGB(red: 17.0 / 255, green: 96.0 / 255, blue: 51.0 / 255)
+        ),
+        dark: SottoColorPair(
+            background: SottoSRGB(red: 23.0 / 255, green: 52.0 / 255, blue: 36.0 / 255),
+            foreground: SottoSRGB(red: 169.0 / 255, green: 239.0 / 255, blue: 199.0 / 255)
+        )
+    )
+    public static let warningStatus = SottoAdaptiveColorPair(
+        light: SottoColorPair(
+            background: SottoSRGB(red: 255.0 / 255, green: 243.0 / 255, blue: 214.0 / 255),
+            foreground: SottoSRGB(red: 107.0 / 255, green: 71.0 / 255, blue: 0)
+        ),
+        dark: SottoColorPair(
+            background: SottoSRGB(red: 60.0 / 255, green: 46.0 / 255, blue: 18.0 / 255),
+            foreground: SottoSRGB(red: 255.0 / 255, green: 216.0 / 255, blue: 135.0 / 255)
+        )
+    )
+    public static let destructiveStatus = SottoAdaptiveColorPair(
+        light: SottoColorPair(
+            background: SottoSRGB(red: 252.0 / 255, green: 235.0 / 255, blue: 236.0 / 255),
+            foreground: SottoSRGB(red: 143.0 / 255, green: 29.0 / 255, blue: 40.0 / 255)
+        ),
+        dark: SottoColorPair(
+            background: SottoSRGB(red: 64.0 / 255, green: 29.0 / 255, blue: 33.0 / 255),
+            foreground: SottoSRGB(red: 255.0 / 255, green: 185.0 / 255, blue: 191.0 / 255)
+        )
+    )
+
+    public static let accentPairs = [
+        violetAccent,
+        blueAccent,
+        coralAccent,
+        greenAccent,
+    ]
+    public static let statusPairs = [
+        successStatus,
+        warningStatus,
+        destructiveStatus,
+    ]
+}
+
 /// The complete set of visual decisions used by Sotto components.
 ///
 /// Like shadcn/ui, the values and components live in the application repository.
@@ -18,8 +123,15 @@ public struct SottoTheme: Sendable {
         public var accent: Color
         public var accentForeground: Color
         public var success: Color
+        public var successForeground: Color
+        public var successBackground: Color
         public var warning: Color
+        public var warningForeground: Color
+        public var warningBackground: Color
         public var destructive: Color
+        public var destructiveButtonForeground: Color
+        public var destructiveForeground: Color
+        public var destructiveBackground: Color
 
         public init(
             canvas: Color,
@@ -33,8 +145,15 @@ public struct SottoTheme: Sendable {
             accent: Color,
             accentForeground: Color,
             success: Color,
+            successForeground: Color,
+            successBackground: Color,
             warning: Color,
-            destructive: Color
+            warningForeground: Color,
+            warningBackground: Color,
+            destructive: Color,
+            destructiveButtonForeground: Color,
+            destructiveForeground: Color,
+            destructiveBackground: Color
         ) {
             self.canvas = canvas
             self.surface = surface
@@ -47,8 +166,15 @@ public struct SottoTheme: Sendable {
             self.accent = accent
             self.accentForeground = accentForeground
             self.success = success
+            self.successForeground = successForeground
+            self.successBackground = successBackground
             self.warning = warning
+            self.warningForeground = warningForeground
+            self.warningBackground = warningBackground
             self.destructive = destructive
+            self.destructiveButtonForeground = destructiveButtonForeground
+            self.destructiveForeground = destructiveForeground
+            self.destructiveBackground = destructiveBackground
         }
     }
 
@@ -179,11 +305,36 @@ public struct SottoTheme: Sendable {
                 foreground: Color(nsColor: .labelColor),
                 mutedForeground: Color(nsColor: .secondaryLabelColor),
                 subtleForeground: Color(nsColor: .tertiaryLabelColor),
-                accent: Color(red: 0.45, green: 0.34, blue: 0.95),
-                accentForeground: .white,
+                accent: SottoPalette.violetAccent.background.color,
+                accentForeground: SottoPalette.violetAccent.foreground.color,
                 success: Color(red: 0.18, green: 0.64, blue: 0.39),
+                successForeground: dynamicColor(
+                    light: SottoPalette.successStatus.light.foreground.nsColor,
+                    dark: SottoPalette.successStatus.dark.foreground.nsColor
+                ),
+                successBackground: dynamicColor(
+                    light: SottoPalette.successStatus.light.background.nsColor,
+                    dark: SottoPalette.successStatus.dark.background.nsColor
+                ),
                 warning: Color(red: 0.90, green: 0.58, blue: 0.12),
-                destructive: Color(red: 0.88, green: 0.25, blue: 0.28)
+                warningForeground: dynamicColor(
+                    light: SottoPalette.warningStatus.light.foreground.nsColor,
+                    dark: SottoPalette.warningStatus.dark.foreground.nsColor
+                ),
+                warningBackground: dynamicColor(
+                    light: SottoPalette.warningStatus.light.background.nsColor,
+                    dark: SottoPalette.warningStatus.dark.background.nsColor
+                ),
+                destructive: SottoPalette.destructiveAction.background.color,
+                destructiveButtonForeground: SottoPalette.destructiveAction.foreground.color,
+                destructiveForeground: dynamicColor(
+                    light: SottoPalette.destructiveStatus.light.foreground.nsColor,
+                    dark: SottoPalette.destructiveStatus.dark.foreground.nsColor
+                ),
+                destructiveBackground: dynamicColor(
+                    light: SottoPalette.destructiveStatus.light.background.nsColor,
+                    dark: SottoPalette.destructiveStatus.dark.background.nsColor
+                )
             )
         )
     }
@@ -194,6 +345,15 @@ public struct SottoTheme: Sendable {
         copy.colors.accentForeground = foreground
         return copy
     }
+}
+
+private func dynamicColor(light: NSColor, dark: NSColor) -> Color {
+    Color(
+        nsColor: NSColor(name: nil) { appearance in
+            let match = appearance.bestMatch(from: [.darkAqua, .aqua])
+            return match == .darkAqua ? dark : light
+        }
+    )
 }
 
 private struct SottoThemeKey: EnvironmentKey {

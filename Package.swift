@@ -20,10 +20,15 @@ let package = Package(
         ),
     ],
     targets: [
+        .target(
+            name: "SottoAudioRingC",
+            publicHeadersPath: "include"
+        ),
         .target(name: "SottoDesignSystem"),
         .target(
             name: "SottoCore",
             dependencies: [
+                "SottoAudioRingC",
                 .product(name: "FluidAudio", package: "FluidAudio"),
             ]
         ),
@@ -34,8 +39,6 @@ let package = Package(
                 "SottoDesignSystem",
             ],
             exclude: [
-                "Resources/AppIcon.iconset",
-                "Resources/Assets.xcassets",
                 "Resources/AppIcon.icns",
                 "Resources/Info.plist",
                 "Resources/Sotto.entitlements",
@@ -53,7 +56,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SottoCoreTests",
-            dependencies: ["SottoCore"]
+            dependencies: ["SottoCore", "SottoAudioRingC"]
         ),
     ]
 )
