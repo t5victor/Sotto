@@ -533,3 +533,25 @@ struct SottoSettingsPage<Content: View>: View {
     }
 }
 
+private struct SottoEmptyState: View {
+    @Environment(\.sottoTheme) private var theme
+    let systemImage: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(spacing: theme.spacing.sm) {
+            Image(systemName: systemImage)
+                .font(.system(size: 22))
+                .foregroundStyle(theme.colors.subtleForeground)
+            Text(title)
+                .font(theme.typography.label)
+            Text(description)
+                .font(theme.typography.body)
+                .foregroundStyle(theme.colors.mutedForeground)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, minHeight: 120)
+    }
+}
+
