@@ -250,3 +250,72 @@ public actor ParakeetService {
             )
         )
     }
+
+    private func reportLoading(_ progress: DownloadProgress) {
+        _ = progress
+        if case .ready = state { return }
+        transition(to: .loading)
+    }
+
+    @discardableResult
+    private func transition(to newState: SottoModelState) -> SottoModelState {
+        guard newState != state else { return state }
+        state = newState
+        continuation.yield(newState)
+        return newState
+    }
+
+    private func modelSize() -> Int64 {
+        DirectorySize.bytes(at: directories.parakeetV3)
+    }
+
+    private static var isAppleSilicon: Bool {
+        #if arch(arm64)
+        true
+        #else
+        false
+        #endif
+    }
+
+    private static func userMessage(for error: Error) -> String {
+        if let localized = error as? LocalizedError,
+           let description = localized.errorDescription,
+           !description.isEmpty {
+            return description
+        }
+        return error.localizedDescription
+    }
+}
+
+private extension SottoLanguage {
+    var fluidLanguage: Language? {
+        switch self {
+        case .automatic: nil
+        case .bulgarian: .bulgarian
+        case .croatian: .croatian
+        case .czech: .czech
+        case .danish: .danish
+        case .dutch: .dutch
+        case .english: .english
+        case .estonian: .estonian
+        case .finnish: .finnish
+        case .french: .french
+        case .german: .german
+        case .greek: .greek
+        case .hungarian: .hungarian
+        case .italian: .italian
+        case .latvian: .latvian
+        case .lithuanian: .lithuanian
+        case .maltese: .maltese
+        case .polish: .polish
+        case .portuguese: .portuguese
+        case .romanian: .romanian
+        case .russian: .russian
+        case .slovak: .slovak
+        case .slovenian: .slovenian
+        case .spanish: .spanish
+        case .swedish: .swedish
+        case .ukrainian: .ukrainian
+        }
+    }
+}
