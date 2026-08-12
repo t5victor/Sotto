@@ -233,3 +233,55 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         self.insertionOutcome = insertionOutcome
     }
 }
+
+public enum SottoModelState: Equatable, Sendable {
+    case checking
+    case notInstalled
+    case installed(bytes: Int64)
+    case downloading(progress: Double, detail: String)
+    case validating
+    case loading
+    case ready(bytes: Int64)
+    case failed(message: String)
+
+    public var isInstalled: Bool {
+        switch self {
+        case .installed, .loading, .ready: true
+        default: false
+        }
+    }
+
+    public var isReady: Bool {
+        if case .ready = self { true } else { false }
+    }
+}
+
+public enum SottoDictationState: Equatable, Sendable {
+    case idle
+    case preparing
+    case listening(startedAt: Date)
+    case transcribing
+    case inserting
+    case completed(text: String, outcome: TextInsertionOutcome)
+    case failed(message: String)
+
+    public var isListening: Bool {
+        if case .listening = self { true } else { false }
+    }
+
+    public var isBusy: Bool {
+        switch self {
+        case .preparing, .listening, .transcribing, .inserting: true
+        default: false
+        }
+    }
+}
+
+public enum SottoPermissionStatus: String, Codable, Equatable, Sendable {
+    case notDetermined
+    case granted
+    case denied
+    case restricted
+
+    public var isGranted: Bool { self == .granted }
+}
