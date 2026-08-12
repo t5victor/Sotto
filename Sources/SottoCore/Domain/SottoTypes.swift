@@ -141,3 +141,45 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
 
     public static let `default` = SottoPreferences()
 }
+
+public struct VocabularyEntry: Codable, Equatable, Identifiable, Sendable {
+    public let id: UUID
+    public var spokenForm: String
+    public var replacement: String
+
+    public init(id: UUID = UUID(), spokenForm: String, replacement: String) {
+        self.id = id
+        self.spokenForm = spokenForm
+        self.replacement = replacement
+    }
+
+    public static let sotto = VocabularyEntry(
+        id: UUID(uuidString: "5A5B0924-220A-4DA0-8C97-D1B31E39BB85")!,
+        spokenForm: "Soto",
+        replacement: "Sotto"
+    )
+}
+
+public struct SottoTranscript: Codable, Equatable, Sendable {
+    public let text: String
+    public let confidence: Float
+    public let duration: TimeInterval
+    public let processingTime: TimeInterval
+
+    public init(
+        text: String,
+        confidence: Float,
+        duration: TimeInterval,
+        processingTime: TimeInterval
+    ) {
+        self.text = text
+        self.confidence = confidence
+        self.duration = duration
+        self.processingTime = processingTime
+    }
+
+    public var realTimeFactor: Double {
+        guard processingTime > 0 else { return 0 }
+        return duration / processingTime
+    }
+}
