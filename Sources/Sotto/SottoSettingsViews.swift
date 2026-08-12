@@ -349,3 +349,79 @@ struct SottoAppearanceView: View {
     }
 }
 
+struct SottoPrivacyView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        SottoSettingsPage(
+            title: "Privacidad",
+            description: "La voz y los textos permanecen en este Mac."
+        ) {
+            SottoCard {
+                VStack(spacing: theme.spacing.lg) {
+                    SottoPermissionRow(
+                        "Micrófono",
+                        description: "Necesario para capturar tu voz.",
+                        systemImage: "mic",
+                        state: model.microphonePermission.designState,
+                        actionTitle: model.microphonePermission == .notDetermined ? "Permitir" : permissionAction(model.microphonePermission)
+                    ) {
+                        if model.microphonePermission == .notDetermined {
+                            model.requestMicrophonePermission()
+                        } else {
+                            model.openMicrophoneSettings()
+                        }
+                    }
+                    Divider()
+                    SottoPermissionRow(
+                        "Accesibilidad",
+                        description: "Permite insertar el texto en la aplicación activa.",
+                        systemImage: "accessibility",
+                        state: model.accessibilityPermission.designState,
+                        actionTitle: permissionAction(model.accessibilityPermission)
+                    ) {
+                        if model.accessibilityPermission == .granted {
+                            model.openAccessibilitySettings()
+                        } else {
+                            model.requestAccessibilityPermission()
+                        }
+                    }
+                    Divider()
+                    SottoToggleRow(
+                        "Insertar automáticamente",
+                        description: "Sin Accesibilidad, el texto se copia al portapapeles.",
+                        systemImage: "text.cursor",
+                        isOn: $model.preferences.insertAutomatically
+                    )
+                    Divider()
+                    SottoToggleRow(
+                        "Guardar historial local",
+                        description: "Conserva los últimos dictados en Application Support/Sotto.",
+                        systemImage: "clock.arrow.circlepath",
+                        isOn: $model.preferences.keepHistory
+                    )
+                    Divider()
+                    SottoToggleRow(
+                        "Abrir al iniciar sesión",
+                        description: "Mantiene Sotto disponible en la barra de menús.",
+                        systemImage: "power",
+                        isOn: launchAtLoginBinding
+                    )
+                }
+            }
+        }
+    }
+
+    private func permissionAction(_ status: SottoPermissionStatus) -> String? {
+        status == .granted ? "Ajustes" : "Configurar"
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { model.preferences.launchAtLogin },
+            set: { model.setLaunchAtLogin($0) }
+        )
+    }
+}
+
