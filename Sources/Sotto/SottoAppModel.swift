@@ -147,3 +147,35 @@ final class SottoAppModel: ObservableObject {
         overlayPresenter?.hide()
     }
 
+    func installModel() {
+        guard downloadTask == nil else { return }
+        downloadTask = Task { [weak self] in
+            guard let self else { return }
+            defer { self.downloadTask = nil }
+            do {
+                try await self.parakeet.install()
+            } catch is CancellationError {
+                return
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func cancelModelDownload() {
+        downloadTask?.cancel()
+        downloadTask = nil
+    }
+
+    func deleteModel() {
+        guard !dictationState.isBusy else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.parakeet.deleteModel()
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
