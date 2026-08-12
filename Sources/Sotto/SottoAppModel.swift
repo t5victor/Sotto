@@ -410,3 +410,25 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    private func handleHotKeyPressed() {
+        if preferences.holdToTalk {
+            guard !dictationState.isBusy else { return }
+            isHoldShortcutPressed = true
+            stopWhenRecorderStarts = false
+            Task { [weak self] in await self?.startDictation(triggeredByHold: true) }
+        } else {
+            toggleDictation()
+        }
+    }
+
+    private func handleHotKeyReleased() {
+        guard preferences.holdToTalk else { return }
+        isHoldShortcutPressed = false
+        if case .preparing = dictationState {
+            stopWhenRecorderStarts = true
+            return
+        }
+        guard dictationState.isListening else { return }
+        Task { [weak self] in await self?.stopDictation() }
+    }
+
