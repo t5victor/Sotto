@@ -61,3 +61,41 @@ transport archive at `dist/Sotto-1.0.0.zip`. A public download can be signed and
 notarized with the publisher's Apple Developer identity without changing the
 application code; see [Documentation/Release.md](Documentation/Release.md).
 
+## Diagnostics
+
+`SottoDoctor` exercises the same `SottoCore` services as the UI:
+
+```sh
+swift run SottoDoctor doctor
+swift run SottoDoctor install-model
+swift run SottoDoctor validate-model
+swift run SottoDoctor record 5 /tmp/sotto-test.caf
+swift run SottoDoctor transcribe /path/to/audio
+swift run SottoDoctor insert "Texto de prueba"
+```
+
+## Project map
+
+```text
+Sources/
+├── Sotto/                 SwiftUI app, menu bar and overlay
+├── SottoCore/             audio, Parakeet, text, persistence and macOS services
+├── SottoDesignSystem/     owned tokens, components and product patterns
+└── SottoDoctor/           runtime diagnostics
+Tests/
+├── SottoCoreTests/
+└── SottoDesignSystemTests/
+```
+
+More detail:
+
+- [Architecture](Documentation/Architecture.md)
+- [Privacy model](Documentation/Privacy.md)
+- [Design system](Documentation/DesignSystem.md)
+- [Release process](Documentation/Release.md)
+- [Version 1.0 validation](Documentation/Validation.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+Sotto is licensed under Apache License 2.0. The separately downloaded Parakeet
+model is licensed under CC BY 4.0; attribution is included in the app and in the
+third-party notices.
