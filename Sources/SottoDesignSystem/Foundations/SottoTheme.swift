@@ -110,3 +110,38 @@ public struct SottoTheme: Sendable {
             self.large = large
         }
     }
+
+    public struct Typography: Sendable {
+        public var pageTitle: Font
+        public var sectionTitle: Font
+        public var body: Font
+        public var label: Font
+        public var caption: Font
+
+        public init(
+            pageTitle: Font = .system(size: 26, weight: .semibold, design: .rounded),
+            sectionTitle: Font = .system(size: 15, weight: .semibold),
+            body: Font = .system(size: 13),
+            label: Font = .system(size: 13, weight: .medium),
+            caption: Font = .system(size: 11, weight: .medium)
+        ) {
+            self.pageTitle = pageTitle
+            self.sectionTitle = sectionTitle
+            self.body = body
+            self.label = label
+            self.caption = caption
+        }
+    }
+
+    public struct Motion: Equatable, Sendable {
+        public var fast: Double
+        public var regular: Double
+        public var slow: Double
+
+        public init(fast: Double = 0.12, regular: Double = 0.2, slow: Double = 0.32) {
+            self.fast = fast
+            self.regular = regular
+            self.slow = slow
+        }
+    }
+
