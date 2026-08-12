@@ -97,3 +97,87 @@ struct SottoDoctor {
             throw DoctorError.unknownCommand(command)
         }
     }
+
+    private static func printState(_ state: SottoModelState) {
+        switch state {
+        case .checking:
+            print("MODEL checking")
+        case .notInstalled:
+            print("MODEL not-installed")
+        case .installed(let bytes):
+            print("MODEL installed bytes=\(bytes)")
+        case .downloading(let progress, let detail):
+            print("MODEL downloading \(Int(progress * 100))% \(detail)")
+        case .validating:
+            print("MODEL validating")
+        case .loading:
+            print("MODEL loading")
+        case .ready(let bytes):
+            print("MODEL ready bytes=\(bytes)")
+        case .failed(let message):
+            print("MODEL failed \(message)")
+        }
+    }
+
+    private static var architecture: String {
+        #if arch(arm64)
+        "arm64 (Apple Silicon)"
+        #else
+        "unsupported"
+        #endif
+    }
+
+    private static func message(for error: Error) -> String {
+        if let localized = error as? LocalizedError,
+           let description = localized.errorDescription {
+            return description
+        }
+        return error.localizedDescription
+    }
+
+    @MainActor
+    private static func recordMicrophone(seconds: Double, to url: URL) async throws -> RecordedAudio {
+        let recorder = MicrophoneRecorder()
+        do {
+            try recorder.start(writingTo: url)
+            try await Task.sleep(for: .seconds(seconds))
+            return try recorder.stop()
+        } catch {
+            recorder.cancel()
+            throw error
+        }
+    }
+
+    @MainActor
+    private static func insertIntoFrontmostApplication(
+        _ text: String
+    ) async -> (target: InsertionTargetInfo?, outcome: TextInsertionOutcome) {
+        let inserter = TextInsertionService()
+        let target = inserter.captureTarget()
+        let outcome = await inserter.insert(text, automatically: true)
+        return (target, outcome)
+    }
+
+    private enum DoctorError: LocalizedError {
+        case missingAudioPath
+        case invalidRecordArguments
+        case missingInsertionText
+        case audioNotFound(URL)
+        case unknownCommand(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .missingAudioPath:
+                "Uso: swift run SottoDoctor transcribe /ruta/al/audio"
+            case .invalidRecordArguments:
+                "Uso: swift run SottoDoctor record SEGUNDOS /ruta/de/salida.caf (0,2–300 s)"
+            case .missingInsertionText:
+                "Uso: swift run SottoDoctor insert TEXTO"
+            case .audioNotFound(let url):
+                "No existe el audio: \(url.path)"
+            case .unknownCommand(let command):
+                "Comando desconocido: \(command). Usa doctor, install-model, validate-model, record, transcribe o insert."
+            }
+        }
+    }
+}
