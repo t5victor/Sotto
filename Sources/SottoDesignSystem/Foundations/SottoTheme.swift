@@ -145,3 +145,71 @@ public struct SottoTheme: Sendable {
         }
     }
 
+    public var colors: Colors
+    public var spacing: Spacing
+    public var radii: Radii
+    public var controlHeights: ControlHeights
+    public var typography: Typography
+    public var motion: Motion
+
+    public init(
+        colors: Colors,
+        spacing: Spacing = .init(),
+        radii: Radii = .init(),
+        controlHeights: ControlHeights = .init(),
+        typography: Typography = .init(),
+        motion: Motion = .init()
+    ) {
+        self.colors = colors
+        self.spacing = spacing
+        self.radii = radii
+        self.controlHeights = controlHeights
+        self.typography = typography
+        self.motion = motion
+    }
+
+    public static var standard: SottoTheme {
+        SottoTheme(
+            colors: Colors(
+                canvas: Color(nsColor: .windowBackgroundColor),
+                surface: Color(nsColor: .controlBackgroundColor),
+                raisedSurface: Color(nsColor: .textBackgroundColor),
+                mutedSurface: Color(nsColor: .underPageBackgroundColor),
+                border: Color(nsColor: .separatorColor),
+                foreground: Color(nsColor: .labelColor),
+                mutedForeground: Color(nsColor: .secondaryLabelColor),
+                subtleForeground: Color(nsColor: .tertiaryLabelColor),
+                accent: Color(red: 0.45, green: 0.34, blue: 0.95),
+                accentForeground: .white,
+                success: Color(red: 0.18, green: 0.64, blue: 0.39),
+                warning: Color(red: 0.90, green: 0.58, blue: 0.12),
+                destructive: Color(red: 0.88, green: 0.25, blue: 0.28)
+            )
+        )
+    }
+
+    public func withAccent(_ accent: Color, foreground: Color = .white) -> SottoTheme {
+        var copy = self
+        copy.colors.accent = accent
+        copy.colors.accentForeground = foreground
+        return copy
+    }
+}
+
+private struct SottoThemeKey: EnvironmentKey {
+    static let defaultValue = SottoTheme.standard
+}
+
+public extension EnvironmentValues {
+    var sottoTheme: SottoTheme {
+        get { self[SottoThemeKey.self] }
+        set { self[SottoThemeKey.self] = newValue }
+    }
+}
+
+public extension View {
+    func sottoTheme(_ theme: SottoTheme) -> some View {
+        environment(\.sottoTheme, theme)
+            .tint(theme.colors.accent)
+    }
+}
