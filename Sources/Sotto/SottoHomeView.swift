@@ -80,3 +80,57 @@ struct SottoHomeView: View {
         }
     }
 
+    private var modelCard: some View {
+        SottoCard {
+            VStack(alignment: .leading, spacing: theme.spacing.md) {
+                SottoSectionHeader(
+                    "Motor de voz",
+                    description: "El reconocimiento ocurre en este Mac."
+                )
+                Divider()
+                HStack(spacing: theme.spacing.md) {
+                    Image(systemName: "cpu.fill")
+                        .foregroundStyle(theme.colors.accent)
+                        .frame(width: 34, height: 34)
+                        .background(theme.colors.accent.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
+
+                    VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                        Text("Parakeet TDT 0.6B v3")
+                            .font(theme.typography.label)
+                        Text(model.modelSizeDescription.map { "25 idiomas · \($0)" } ?? "25 idiomas · Apple Silicon")
+                            .font(theme.typography.body)
+                            .foregroundStyle(theme.colors.mutedForeground)
+                    }
+                    Spacer()
+                    SottoBadge(model.modelState.title, tone: model.modelState.tone)
+                }
+            }
+        }
+    }
+
+    private var behaviorCard: some View {
+        SottoCard {
+            VStack(alignment: .leading, spacing: theme.spacing.md) {
+                SottoSectionHeader(
+                    "Comportamiento",
+                    description: "Ajustes aplicados a cada dictado."
+                )
+                Divider()
+                SottoToggleRow(
+                    "Normalizar texto",
+                    description: "Limpia espacios y puntuación.",
+                    systemImage: "textformat",
+                    isOn: $model.preferences.normalizeText
+                )
+                Divider()
+                SottoToggleRow(
+                    "Eliminar muletillas",
+                    description: "Quita sonidos como «eh» o «mmm».",
+                    systemImage: "sparkles",
+                    isOn: $model.preferences.removeFillers
+                )
+            }
+        }
+    }
+
