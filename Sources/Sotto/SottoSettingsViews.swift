@@ -218,3 +218,77 @@ struct SottoVocabularyView: View {
     }
 }
 
+struct SottoShortcutsView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        SottoSettingsPage(
+            title: "Atajos",
+            description: "Inicia el dictado sin apartar las manos del teclado."
+        ) {
+            SottoCard {
+                VStack(spacing: theme.spacing.lg) {
+                    HStack(spacing: theme.spacing.md) {
+                        Image(systemName: "command")
+                            .foregroundStyle(theme.colors.accent)
+                            .frame(width: 32, height: 32)
+                            .background(theme.colors.accent.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
+
+                        VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                            Text("Atajo global")
+                                .font(theme.typography.label)
+                            Text("Funciona incluso cuando Sotto no es la aplicación activa.")
+                                .font(theme.typography.body)
+                                .foregroundStyle(theme.colors.mutedForeground)
+                        }
+                        Spacer()
+                        Picker("Atajo", selection: shortcutBinding) {
+                            Text("⌥ Espacio").tag(SottoShortcut.defaultDictation)
+                            Text("⌃ ⌥ Espacio").tag(
+                                SottoShortcut(keyCode: 49, carbonModifiers: 6_144, displayName: "⌃ ⌥ Espacio")
+                            )
+                            Text("⌃ ⇧ Espacio").tag(
+                                SottoShortcut(keyCode: 49, carbonModifiers: 5_120, displayName: "⌃ ⇧ Espacio")
+                            )
+                        }
+                        .labelsHidden()
+                        .frame(width: 150)
+                    }
+
+                    if let hotKeyError = model.hotKeyError {
+                        Text(hotKeyError)
+                            .font(theme.typography.caption)
+                            .foregroundStyle(theme.colors.destructive)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    Divider()
+
+                    SottoToggleRow(
+                        "Mantener para dictar",
+                        description: "Suelta el atajo para detener la grabación.",
+                        systemImage: "hand.tap",
+                        isOn: $model.preferences.holdToTalk
+                    )
+                    Divider()
+                    SottoToggleRow(
+                        "Sonidos de estado",
+                        description: "Confirma el inicio y el final del dictado.",
+                        systemImage: "speaker.wave.2",
+                        isOn: $model.preferences.playSounds
+                    )
+                }
+            }
+        }
+    }
+
+    private var shortcutBinding: Binding<SottoShortcut> {
+        Binding(
+            get: { model.preferences.shortcut },
+            set: { model.updateShortcut($0) }
+        )
+    }
+}
+
