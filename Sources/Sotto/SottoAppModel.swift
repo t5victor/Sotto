@@ -100,3 +100,50 @@ final class SottoAppModel: ObservableObject {
         return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 
+    func attachOverlayPresenter(_ presenter: SottoOverlayPresenting) {
+        overlayPresenter = presenter
+    }
+
+    func start() {
+        guard !didStart else { return }
+        didStart = true
+
+        observeModelUpdates()
+        observeMicrophoneEvents()
+
+        Task { [weak self] in
+            await self?.bootstrap()
+        }
+    }
+
+    func shutdown() {
+        hotKeyMonitor.unregisterHotKey()
+        downloadTask?.cancel()
+        if recorder.isRecording {
+            recorder.cancel()
+        }
+        overlayPresenter?.hide()
+        Task { await parakeet.unload() }
+    }
+
+    func toggleDictation() {
+        if dictationState.isListening {
+            Task { [weak self] in await self?.stopDictation() }
+        } else if !dictationState.isBusy {
+            Task { [weak self] in await self?.startDictation(triggeredByHold: false) }
+        }
+    }
+
+    func cancelDictation() {
+        guard dictationState.isListening else { return }
+        recorder.cancel()
+        currentRecordingURL = nil
+        currentTarget = nil
+        inserter.clearTarget()
+        isHoldShortcutPressed = false
+        stopWhenRecorderStarts = false
+        audioLevel = 0
+        dictationState = .idle
+        overlayPresenter?.hide()
+    }
+
