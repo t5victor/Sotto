@@ -134,3 +134,27 @@ struct SottoHomeView: View {
         }
     }
 
+    private func recentCard(_ record: TranscriptionRecord) -> some View {
+        SottoCard(style: .muted) {
+            VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                HStack {
+                    SottoSectionHeader("Último dictado")
+                    Spacer()
+                    SottoBadge(record.insertionOutcome.displayName, tone: .success)
+                    Button {
+                        model.copyToPasteboard(record.text)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    .buttonStyle(.sotto(.ghost, size: .small))
+                    .help("Copiar")
+                }
+                Text(record.text)
+                    .font(theme.typography.body)
+                    .foregroundStyle(theme.colors.foreground)
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+
