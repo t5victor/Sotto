@@ -72,3 +72,43 @@ public actor ParakeetService {
     public func currentState() -> SottoModelState {
         state
     }
+
+    public func install() async throws {
+        guard Self.isAppleSilicon else { throw ServiceError.unsupportedHardware }
+        try directories.prepare()
+        ModelHub.offlineMode = false
+        lastProgressPercent = -1
+        lastProgressDetail = ""
+        maximumDownloadProgress = 0
+        let downloadID = UUID()
+        activeDownloadID = downloadID
+        defer {
+            if activeDownloadID == downloadID {
+                activeDownloadID = nil
+            }
+        }
+
+        do {
+            transition(to: .downloading(progress: 0, detail: "Preparando descarga"))
+            _ = try await AsrModels.download(
+                to: directories.parakeetV3,
+                version: .v3,
+                encoderPrecision: .int8,
+                progressHandler: { [weak self] progress in
+                    Task { await self?.reportDownload(progress, downloadID: downloadID) }
+                }
+            )
+            try Task.checkCancellation()
+            transition(to: .validating)
+            try await loadModels()
+        } catch is CancellationError {
+            manager = nil
+            _ = inspect()
+            throw CancellationError()
+        } catch {
+            manager = nil
+            transition(to: .failed(message: Self.userMessage(for: error)))
+            throw error
+        }
+    }
+
