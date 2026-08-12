@@ -90,3 +90,63 @@ struct SottoModelsView: View {
     }
 
     @ViewBuilder
+    private var modelControls: some View {
+        switch model.modelState {
+        case .notInstalled, .failed:
+            HStack {
+                VStack(alignment: .leading, spacing: theme.spacing.xs) {
+                    Text(model.modelState.detail)
+                        .font(theme.typography.body)
+                    Text("La descarga puede ocupar varios cientos de MB.")
+                        .font(theme.typography.caption)
+                        .foregroundStyle(theme.colors.mutedForeground)
+                }
+                Spacer()
+                Button("Descargar modelo") {
+                    model.installModel()
+                }
+                .buttonStyle(.sotto())
+            }
+
+        case .downloading(let progress, let detail):
+            VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                HStack {
+                    Text(detail)
+                        .font(theme.typography.label)
+                    Spacer()
+                    Text(progress, format: .percent.precision(.fractionLength(0)))
+                        .font(theme.typography.caption.monospacedDigit())
+                }
+                ProgressView(value: progress)
+                    .tint(theme.colors.accent)
+                Button("Cancelar") {
+                    model.cancelModelDownload()
+                }
+                .buttonStyle(.sotto(.secondary, size: .small))
+            }
+
+        case .checking, .validating, .loading:
+            HStack(spacing: theme.spacing.md) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(model.modelState.detail)
+                    .font(theme.typography.body)
+                    .foregroundStyle(theme.colors.mutedForeground)
+            }
+
+        case .installed, .ready:
+            HStack {
+                Text(model.modelState.detail)
+                    .font(theme.typography.body)
+                    .foregroundStyle(theme.colors.mutedForeground)
+                Spacer()
+                Button("Eliminar modelo") {
+                    confirmsModelDeletion = true
+                }
+                .buttonStyle(.sotto(.destructive, size: .small))
+                .disabled(model.isBusy)
+            }
+        }
+    }
+}
+
