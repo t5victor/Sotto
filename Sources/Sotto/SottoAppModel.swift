@@ -432,3 +432,51 @@ final class SottoAppModel: ObservableObject {
         Task { [weak self] in await self?.stopDictation() }
     }
 
+    private func observeModelUpdates() {
+        let updates = parakeet.updates
+        modelUpdatesTask = Task { [weak self] in
+            for await state in updates {
+                guard !Task.isCancelled else { return }
+                self?.modelState = state
+            }
+        }
+    }
+
+    private func observeMicrophoneEvents() {
+        let events = recorder.events
+        microphoneEventsTask = Task { [weak self] in
+            for await event in events {
+                guard !Task.isCancelled, let self else { return }
+                switch event {
+                case .level(let level):
+                    self.audioLevel = level
+                case .failure(let message):
+                    if self.dictationState.isListening {
+                        self.recorder.cancel()
+                        self.cleanupCurrentRecording()
+                        self.presentFailure(message, hideAfter: nil)
+                    }
+                }
+            }
+        }
+    }
+
+    private func configureHotKey() {
+        do {
+            try hotKeyMonitor.register(preferences.shortcut)
+            hotKeyError = nil
+        } catch {
+            hotKeyError = Self.userMessage(for: error)
+        }
+    }
+
+    private func persistPreferences() {
+        preferenceSaveTask?.cancel()
+        let snapshot = preferences
+        preferenceSaveTask = Task { [settingsStore] in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled else { return }
+            try? await settingsStore.save(snapshot)
+        }
+    }
+
