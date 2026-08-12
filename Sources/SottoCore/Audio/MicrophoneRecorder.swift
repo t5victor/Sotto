@@ -134,3 +134,34 @@ public final class MicrophoneRecorder {
         installConfigurationObserver(for: engine)
     }
 
+    public func stop() throws -> RecordedAudio {
+        guard let engine, let sink, let recordingURL else {
+            throw RecorderError.notRecording
+        }
+
+        engine.stop()
+        engine.inputNode.removeTap(onBus: 0)
+        removeConfigurationObserver()
+        let snapshot = sink.finish()
+
+        self.engine = nil
+        self.sink = nil
+        self.recordingURL = nil
+
+        if let error = snapshot.error {
+            throw RecorderError.writeFailed(error)
+        }
+        let duration = Double(snapshot.frames) / snapshot.sampleRate
+        guard duration >= 0.18 else {
+            try? FileManager.default.removeItem(at: recordingURL)
+            throw RecorderError.recordingTooShort
+        }
+
+        return RecordedAudio(
+            url: recordingURL,
+            duration: duration,
+            frameCount: snapshot.frames,
+            peakLevel: snapshot.peak
+        )
+    }
+
