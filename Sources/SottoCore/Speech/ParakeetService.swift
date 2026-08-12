@@ -138,3 +138,35 @@ public actor ParakeetService {
         }
     }
 
+    public func transcribe(
+        audioURL: URL,
+        language: SottoLanguage
+    ) async throws -> SottoTranscript {
+        try await prepare()
+        guard let manager else { throw ServiceError.modelNotInstalled }
+
+        let audioFile: AVAudioFile
+        do {
+            audioFile = try AVAudioFile(forReading: audioURL)
+        } catch {
+            throw ServiceError.unreadableAudio(audioURL)
+        }
+        guard audioFile.length > 0 else { throw ServiceError.emptyAudio }
+
+        var decoderState = try TdtDecoderState(decoderLayers: await manager.decoderLayerCount)
+        let result = try await manager.transcribe(
+            audioURL,
+            decoderState: &decoderState,
+            language: language.fluidLanguage
+        )
+        let text = result.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !text.isEmpty else { throw ServiceError.emptyTranscript }
+
+        return SottoTranscript(
+            text: text,
+            confidence: result.confidence,
+            duration: result.duration,
+            processingTime: result.processingTime
+        )
+    }
+
