@@ -150,3 +150,71 @@ struct SottoModelsView: View {
     }
 }
 
+struct SottoVocabularyView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+    @State private var spokenForm = ""
+    @State private var replacement = ""
+
+    var body: some View {
+        SottoSettingsPage(
+            title: "Vocabulario",
+            description: "Corrige nombres, marcas y términos después del reconocimiento local."
+        ) {
+            SottoCard {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
+                    SottoSectionHeader(
+                        "Añadir sustitución",
+                        description: "Indica lo que Parakeet suele oír y cómo debe escribirse."
+                    )
+                    HStack(spacing: theme.spacing.sm) {
+                        TextField("Forma hablada", text: $spokenForm)
+                            .textFieldStyle(.roundedBorder)
+                        Image(systemName: "arrow.right")
+                            .foregroundStyle(theme.colors.subtleForeground)
+                        TextField("Escribir como", text: $replacement)
+                            .textFieldStyle(.roundedBorder)
+                        Button("Añadir") {
+                            model.addVocabulary(spokenForm: spokenForm, replacement: replacement)
+                            spokenForm = ""
+                            replacement = ""
+                        }
+                        .buttonStyle(.sotto())
+                        .disabled(spokenForm.trimmed.isEmpty || replacement.trimmed.isEmpty)
+                    }
+
+                    Divider()
+
+                    if model.vocabulary.isEmpty {
+                        SottoEmptyState(
+                            systemImage: "text.book.closed",
+                            title: "Sin términos todavía",
+                            description: "Puedes empezar con nombres propios o palabras técnicas."
+                        )
+                    } else {
+                        ForEach(model.vocabulary) { entry in
+                            HStack(spacing: theme.spacing.md) {
+                                Text(entry.spokenForm)
+                                    .font(theme.typography.body)
+                                Image(systemName: "arrow.right")
+                                    .foregroundStyle(theme.colors.subtleForeground)
+                                Text(entry.replacement)
+                                    .font(theme.typography.label)
+                                Spacer()
+                                Button {
+                                    model.removeVocabulary(id: entry.id)
+                                } label: {
+                                    Image(systemName: "trash")
+                                }
+                                .buttonStyle(.sotto(.ghost, size: .small))
+                                .help("Eliminar término")
+                            }
+                            if entry.id != model.vocabulary.last?.id { Divider() }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
