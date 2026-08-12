@@ -154,3 +154,20 @@ private struct SottoOverlayView: View {
     }
 }
 
+private struct SottoWaveform: View {
+    @Environment(\.sottoTheme) private var theme
+    let level: Double
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 3) {
+            ForEach(0..<9, id: \.self) { index in
+                let shape = Double([0.35, 0.55, 0.8, 1, 0.7, 0.92, 0.58, 0.78, 0.4][index])
+                Capsule()
+                    .fill(theme.colors.accent)
+                    .frame(width: 3, height: max(4, 22 * max(0.12, level) * shape))
+            }
+        }
+        .animation(.easeOut(duration: theme.motion.fast), value: level)
+        .accessibilityHidden(true)
+    }
+}
