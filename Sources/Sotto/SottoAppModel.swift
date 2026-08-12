@@ -224,3 +224,60 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    func addVocabulary(spokenForm: String, replacement: String) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.vocabulary = try await self.vocabularyRepository.upsert(
+                    VocabularyEntry(spokenForm: spokenForm, replacement: replacement)
+                )
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func removeVocabulary(id: UUID) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.vocabulary = try await self.vocabularyRepository.remove(id: id)
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func removeHistory(id: UUID) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.history = try await self.historyRepository.remove(id: id)
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func clearHistory() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.historyRepository.clear()
+                self.history = []
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func copyToPasteboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    func dismissFailure() {
+        guard case .failed = dictationState else { return }
+        dictationState = .idle
+    }
+
