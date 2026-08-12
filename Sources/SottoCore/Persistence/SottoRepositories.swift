@@ -33,3 +33,65 @@ public actor SottoHistoryRepository {
         try await store.save([])
     }
 }
+
+public actor SottoVocabularyRepository {
+    public enum VocabularyError: LocalizedError {
+        case emptySpokenForm
+        case emptyReplacement
+
+        public var errorDescription: String? {
+            switch self {
+            case .emptySpokenForm: "La forma hablada no puede estar vacía."
+            case .emptyReplacement: "El texto de sustitución no puede estar vacío."
+            }
+        }
+    }
+
+    private let store: JSONFileStore<[VocabularyEntry]>
+
+    public init(url: URL, defaultEntries: [VocabularyEntry] = [.sotto]) {
+        self.store = JSONFileStore(url: url, defaultValue: defaultEntries)
+    }
+
+    public func load() async -> [VocabularyEntry] {
+        await store.load().sorted {
+            $0.spokenForm.localizedCaseInsensitiveCompare($1.spokenForm) == .orderedAscending
+        }
+    }
+
+    @discardableResult
+    public func upsert(_ entry: VocabularyEntry) async throws -> [VocabularyEntry] {
+        let spoken = entry.spokenForm.trimmingCharacters(in: .whitespacesAndNewlines)
+        let replacement = entry.replacement.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !spoken.isEmpty else { throw VocabularyError.emptySpokenForm }
+        guard !replacement.isEmpty else { throw VocabularyError.emptyReplacement }
+
+        var entries = await load()
+        let normalized = spoken.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        if let index = entries.firstIndex(where: {
+            $0.spokenForm.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+                == normalized
+        }) {
+            entries[index] = VocabularyEntry(
+                id: entries[index].id,
+                spokenForm: spoken,
+                replacement: replacement
+            )
+        } else {
+            entries.append(VocabularyEntry(id: entry.id, spokenForm: spoken, replacement: replacement))
+        }
+        entries.sort {
+            $0.spokenForm.localizedCaseInsensitiveCompare($1.spokenForm) == .orderedAscending
+        }
+        try await store.save(entries)
+        return entries
+    }
+
+    @discardableResult
+    public func remove(id: UUID) async throws -> [VocabularyEntry] {
+        var entries = await load()
+        entries.removeAll { $0.id == id }
+        try await store.save(entries)
+        return entries
+    }
+}
