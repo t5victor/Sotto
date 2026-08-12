@@ -80,3 +80,64 @@ public enum SottoLanguage: String, Codable, CaseIterable, Identifiable, Sendable
         }
     }
 }
+
+public struct SottoShortcut: Codable, Equatable, Hashable, Sendable {
+    public var keyCode: UInt32
+    public var carbonModifiers: UInt32
+    public var displayName: String
+
+    public init(keyCode: UInt32, carbonModifiers: UInt32, displayName: String) {
+        self.keyCode = keyCode
+        self.carbonModifiers = carbonModifiers
+        self.displayName = displayName
+    }
+
+    /// Option + Space. Carbon's `optionKey` value is 2048.
+    public static let defaultDictation = SottoShortcut(
+        keyCode: 49,
+        carbonModifiers: 2_048,
+        displayName: "⌥ Espacio"
+    )
+}
+
+public struct SottoPreferences: Codable, Equatable, Sendable {
+    public var accent: SottoAccent
+    public var language: SottoLanguage
+    public var removeFillers: Bool
+    public var normalizeText: Bool
+    public var insertAutomatically: Bool
+    public var keepHistory: Bool
+    public var historyLimit: Int
+    public var playSounds: Bool
+    public var launchAtLogin: Bool
+    public var holdToTalk: Bool
+    public var shortcut: SottoShortcut
+
+    public init(
+        accent: SottoAccent = .violet,
+        language: SottoLanguage = .automatic,
+        removeFillers: Bool = true,
+        normalizeText: Bool = true,
+        insertAutomatically: Bool = true,
+        keepHistory: Bool = true,
+        historyLimit: Int = 100,
+        playSounds: Bool = true,
+        launchAtLogin: Bool = false,
+        holdToTalk: Bool = true,
+        shortcut: SottoShortcut = .defaultDictation
+    ) {
+        self.accent = accent
+        self.language = language
+        self.removeFillers = removeFillers
+        self.normalizeText = normalizeText
+        self.insertAutomatically = insertAutomatically
+        self.keepHistory = keepHistory
+        self.historyLimit = min(max(historyLimit, 10), 1_000)
+        self.playSounds = playSounds
+        self.launchAtLogin = launchAtLogin
+        self.holdToTalk = holdToTalk
+        self.shortcut = shortcut
+    }
+
+    public static let `default` = SottoPreferences()
+}
