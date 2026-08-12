@@ -53,3 +53,31 @@ The model lives outside the app bundle so upgrades do not duplicate it:
 Successful, cancelled and failed dictations remove their CAF file. Startup also
 removes stale CAF files older than 24 hours while ignoring unrelated files and
 symbolic links.
+
+## Text insertion
+
+Before recording, `TextInsertionService` remembers the frontmost process. A
+non-activating `NSPanel` can therefore show status without stealing focus.
+Insertion uses this ordered strategy:
+
+1. Set `AXSelectedText` on the focused accessibility element.
+2. Temporarily place the text on the pasteboard, reactivate the captured app and
+   synthesize Command-V. Restore the previous pasteboard after the paste event.
+3. Leave the text copied if neither automatic route is available.
+
+Every outcome is explicit (`inserted`, `pasted`, `copied`, `skipped`) and can be
+recorded in local history.
+
+## Persistence and recovery
+
+Preferences, vocabulary and history are atomically encoded JSON. A malformed
+file is moved aside with a timestamped `.corrupt-…json` name and defaults are
+loaded, avoiding a startup loop while preserving evidence for recovery. History
+is newest-first and bounded between 10 and 1,000 entries.
+
+## Design system
+
+The component source is owned by the repository, like shadcn/ui rather than a
+binary UI dependency. Semantic colors, spacing, radii, typography, control sizes
+and motion are injected once through `EnvironmentValues.sottoTheme`. See
+[DesignSystem.md](DesignSystem.md).
