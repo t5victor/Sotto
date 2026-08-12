@@ -198,3 +198,55 @@ public actor ParakeetService {
         transition(to: .notInstalled)
     }
 
+    private func loadModels() async throws {
+        let config = ASRConfig(
+            streamingEnabled: true,
+            streamingThreshold: 480_000,
+            melChunkContext: false,
+            dualDecodeArbitration: true
+        )
+        let models = try await AsrModels.load(
+            from: directories.parakeetV3,
+            version: .v3,
+            encoderPrecision: .int8,
+            progressHandler: { [weak self] progress in
+                Task { await self?.reportLoading(progress) }
+            }
+        )
+        try Task.checkCancellation()
+        manager = AsrManager(config: config, models: models)
+        ModelHub.offlineMode = true
+        transition(to: .ready(bytes: modelSize()))
+    }
+
+    private func reportDownload(_ progress: DownloadProgress, downloadID: UUID) {
+        guard activeDownloadID == downloadID else { return }
+        let detail: String
+        switch progress.phase {
+        case .listing:
+            detail = "Consultando archivos"
+        case .downloading(let completed, let total):
+            detail = total > 0
+                ? "Descargando archivo \(min(completed + 1, total)) de \(total)"
+                : "Comprobando la caché local"
+        case .compiling(let modelName):
+            let name = modelName.replacingOccurrences(of: ".mlmodelc", with: "")
+            detail = name.isEmpty ? "Finalizando el modelo" : "Preparando \(name)"
+        }
+        maximumDownloadProgress = max(
+            maximumDownloadProgress,
+            min(max(progress.fractionCompleted, 0), 1)
+        )
+        let fraction = maximumDownloadProgress
+        let percent = Int((fraction * 100).rounded(.down))
+        guard percent != lastProgressPercent || detail != lastProgressDetail else { return }
+        lastProgressPercent = percent
+        lastProgressDetail = detail
+
+        transition(
+            to: .downloading(
+                progress: fraction,
+                detail: detail
+            )
+        )
+    }
