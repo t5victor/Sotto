@@ -509,3 +509,27 @@ struct SottoHistoryView: View {
     }
 }
 
+struct SottoSettingsPage<Content: View>: View {
+    @Environment(\.sottoTheme) private var theme
+    let title: String
+    let description: String
+    @ViewBuilder let content: Content
+
+    init(title: String, description: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.description = description
+        self.content = content()
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: theme.spacing.xl) {
+                SottoPageHeader(title: title, description: description)
+                content
+            }
+            .frame(maxWidth: 780, alignment: .leading)
+            .padding(theme.spacing.xxl)
+        }
+    }
+}
+
