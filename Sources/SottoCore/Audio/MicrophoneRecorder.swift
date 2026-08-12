@@ -74,3 +74,63 @@ public final class MicrophoneRecorder {
         engine?.isRunning == true && sink != nil
     }
 
+    public func start(writingTo url: URL) throws {
+        guard !isRecording else { throw RecorderError.alreadyRecording }
+
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        if FileManager.default.fileExists(atPath: url.path) {
+            try FileManager.default.removeItem(at: url)
+        }
+
+        let engine = AVAudioEngine()
+        let input = engine.inputNode
+        let inputFormat = input.outputFormat(forBus: 0)
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            throw RecorderError.invalidInputFormat
+        }
+        guard let monoFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: inputFormat.sampleRate,
+            channels: 1,
+            interleaved: false
+        ) else {
+            throw RecorderError.cannotCreateMonoFormat
+        }
+        guard let converter = AVAudioConverter(from: inputFormat, to: monoFormat) else {
+            throw RecorderError.cannotCreateConverter
+        }
+
+        let file = try AVAudioFile(
+            forWriting: url,
+            settings: monoFormat.settings,
+            commonFormat: monoFormat.commonFormat,
+            interleaved: monoFormat.isInterleaved
+        )
+        let sink = AudioFileSink(
+            file: file,
+            converter: converter,
+            format: monoFormat,
+            eventHandler: { [continuation] event in
+                continuation.yield(event)
+            }
+        )
+
+        installSottoAudioTap(on: input, format: inputFormat, sink: sink)
+
+        engine.prepare()
+        do {
+            try engine.start()
+        } catch {
+            input.removeTap(onBus: 0)
+            throw RecorderError.engineStartFailed(error)
+        }
+
+        self.engine = engine
+        self.sink = sink
+        self.recordingURL = url
+        installConfigurationObserver(for: engine)
+    }
+
