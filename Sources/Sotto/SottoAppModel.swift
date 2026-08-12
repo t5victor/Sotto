@@ -310,3 +310,46 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    private func startDictation(triggeredByHold: Bool) async {
+        guard !dictationState.isBusy else { return }
+        guard modelState.isReady else {
+            let message = modelState.isInstalled
+                ? "Parakeet todavía se está preparando."
+                : "Descarga Parakeet para empezar a dictar."
+            presentFailure(message, hideAfter: 2)
+            return
+        }
+
+        dictationState = .preparing
+        microphonePermission = await SottoPermissionService.requestMicrophone()
+        guard microphonePermission.isGranted else {
+            presentFailure(
+                "Sotto necesita permiso para usar el micrófono. Puedes concederlo en Privacidad y seguridad.",
+                hideAfter: nil
+            )
+            return
+        }
+
+        resetTask?.cancel()
+        currentTarget = inserter.captureTarget()
+        let recordingURL = directories.newRecordingURL()
+        currentRecordingURL = recordingURL
+
+        do {
+            try recorder.start(writingTo: recordingURL)
+            audioLevel = 0
+            dictationState = .listening(startedAt: Date())
+            overlayPresenter?.show()
+            playSound(named: "Tink")
+            if triggeredByHold && (!isHoldShortcutPressed || stopWhenRecorderStarts) {
+                stopWhenRecorderStarts = false
+                await stopDictation()
+            }
+        } catch {
+            currentRecordingURL = nil
+            currentTarget = nil
+            inserter.clearTarget()
+            presentFailure(Self.userMessage(for: error), hideAfter: nil)
+        }
+    }
+
