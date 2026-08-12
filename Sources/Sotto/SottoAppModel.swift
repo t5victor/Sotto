@@ -353,3 +353,60 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    private func stopDictation() async {
+        guard dictationState.isListening else { return }
+
+        do {
+            let audio = try recorder.stop()
+            currentRecordingURL = audio.url
+            audioLevel = 0
+            dictationState = .transcribing
+            overlayPresenter?.show()
+            playSound(named: "Pop")
+
+            let transcript = try await parakeet.transcribe(
+                audioURL: audio.url,
+                language: preferences.language
+            )
+            let processed = postProcessor.process(
+                transcript.text,
+                preferences: preferences,
+                vocabulary: vocabulary
+            )
+            guard !processed.isEmpty else { throw ParakeetService.ServiceError.emptyTranscript }
+
+            dictationState = .inserting
+            let outcome = await inserter.insert(
+                processed,
+                automatically: preferences.insertAutomatically
+            )
+            lastTranscript = processed
+
+            if preferences.keepHistory {
+                let record = TranscriptionRecord(
+                    text: processed,
+                    rawText: transcript.text,
+                    duration: transcript.duration,
+                    processingTime: transcript.processingTime,
+                    confidence: transcript.confidence,
+                    targetApplication: currentTarget?.applicationName,
+                    insertionOutcome: outcome
+                )
+                history = try await historyRepository.add(
+                    record,
+                    limit: preferences.historyLimit
+                )
+            }
+
+            try? FileManager.default.removeItem(at: audio.url)
+            currentRecordingURL = nil
+            currentTarget = nil
+            dictationState = .completed(text: processed, outcome: outcome)
+            playSound(named: "Glass")
+            scheduleIdleReset(after: 1.25)
+        } catch {
+            cleanupCurrentRecording()
+            presentFailure(Self.userMessage(for: error), hideAfter: 2.5)
+        }
+    }
+
