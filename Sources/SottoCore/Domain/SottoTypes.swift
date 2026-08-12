@@ -183,3 +183,53 @@ public struct SottoTranscript: Codable, Equatable, Sendable {
         return duration / processingTime
     }
 }
+
+public enum TextInsertionOutcome: String, Codable, Equatable, Sendable {
+    case inserted
+    case pasted
+    case copied
+    case skipped
+
+    public var displayName: String {
+        switch self {
+        case .inserted: "Insertado"
+        case .pasted: "Pegado"
+        case .copied: "Copiado"
+        case .skipped: "Sin insertar"
+        }
+    }
+}
+
+public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
+    public let id: UUID
+    public let createdAt: Date
+    public let text: String
+    public let rawText: String
+    public let duration: TimeInterval
+    public let processingTime: TimeInterval
+    public let confidence: Float
+    public let targetApplication: String?
+    public let insertionOutcome: TextInsertionOutcome
+
+    public init(
+        id: UUID = UUID(),
+        createdAt: Date = Date(),
+        text: String,
+        rawText: String,
+        duration: TimeInterval,
+        processingTime: TimeInterval,
+        confidence: Float,
+        targetApplication: String?,
+        insertionOutcome: TextInsertionOutcome
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.text = text
+        self.rawText = rawText
+        self.duration = duration
+        self.processingTime = processingTime
+        self.confidence = confidence
+        self.targetApplication = targetApplication
+        self.insertionOutcome = insertionOutcome
+    }
+}
