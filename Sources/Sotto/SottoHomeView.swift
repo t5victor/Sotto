@@ -99,8 +99,8 @@ struct SottoHomeView: View {
         SottoCard {
             VStack(alignment: .leading, spacing: theme.spacing.md) {
                 SottoSectionHeader(
-                    "Comportamiento",
-                    description: "Ajustes aplicados a cada dictado."
+                    "Texto",
+                    description: "Limpia el texto antes de insertarlo."
                 )
                 SottoDivider()
                 SottoToggleRow(
@@ -147,7 +147,7 @@ struct SottoHomeView: View {
     private var dictationTitle: String {
         switch model.dictationState {
         case .idle: model.modelState.isReady ? "Listo para dictar" : "Prepara el dictado"
-        case .preparing: "Preparando el micrófono"
+        case .preparing: "Preparando el dictado"
         case .listening: "Escuchando"
         case .transcribing: "Transcribiendo"
         case .inserting: "Insertando"

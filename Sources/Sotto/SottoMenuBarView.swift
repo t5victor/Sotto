@@ -24,11 +24,9 @@ struct SottoMenuBarView: View {
             }
 
             if model.dictationState == .transcribing || model.dictationState == .inserting {
-                SottoCard(style: .muted, padding: theme.spacing.md) {
-                    SottoActivityLabel(
-                        model.dictationState == .inserting ? "Insertando texto" : "Transcribiendo"
-                    )
-                }
+                SottoActivityLabel(
+                    model.dictationState == .inserting ? "Insertando texto" : "Transcribiendo"
+                )
             } else if model.modelState.isReady {
                 SottoRecordingPill(
                     state: recordingState,

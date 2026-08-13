@@ -394,7 +394,7 @@ struct SottoPrivacyView: View {
                     SottoDivider()
                     SottoToggleRow(
                         "Insertar automáticamente",
-                        description: "Sin este permiso, Sotto copia el texto.",
+                        description: "Si está desactivado, Sotto copia el texto.",
                         systemImage: "text.cursor",
                         isOn: $model.preferences.insertAutomatically
                     )
