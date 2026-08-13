@@ -113,6 +113,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
     public var holdToTalk: Bool
     public var shortcut: SottoShortcut
     public var maximumRecordingDuration: TimeInterval
+    public var hasCompletedOnboarding: Bool
 
     public init(
         accent: SottoAccent = .blue,
@@ -126,7 +127,8 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         launchAtLogin: Bool = false,
         holdToTalk: Bool = true,
         shortcut: SottoShortcut = .defaultDictation,
-        maximumRecordingDuration: TimeInterval = 300
+        maximumRecordingDuration: TimeInterval = 300,
+        hasCompletedOnboarding: Bool = false
     ) {
         self.accent = accent
         self.language = language
@@ -140,6 +142,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         self.holdToTalk = holdToTalk
         self.shortcut = shortcut
         self.maximumRecordingDuration = min(max(maximumRecordingDuration, 30), 1_800)
+        self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 
     public static let `default` = SottoPreferences()
@@ -158,6 +161,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         case holdToTalk
         case shortcut
         case maximumRecordingDuration
+        case hasCompletedOnboarding
     }
 
     /// Decodes older preference files field by field. Adding a setting no
@@ -165,6 +169,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = Self.default
+        let storedSchemaVersion = try values.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 0
         self.init(
             accent: try values.decodeIfPresent(SottoAccent.self, forKey: .accent) ?? defaults.accent,
             language: try values.decodeIfPresent(SottoLanguage.self, forKey: .language) ?? defaults.language,
@@ -181,13 +186,19 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
             maximumRecordingDuration: try values.decodeIfPresent(
                 TimeInterval.self,
                 forKey: .maximumRecordingDuration
-            ) ?? defaults.maximumRecordingDuration
+            ) ?? defaults.maximumRecordingDuration,
+            // Version 4 is the first version that could complete onboarding.
+            // Older files, including files written by the initial migration,
+            // must see it once instead of being treated as already configured.
+            hasCompletedOnboarding: storedSchemaVersion >= 4
+                ? (try values.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false)
+                : false
         )
     }
 
     public func encode(to encoder: Encoder) throws {
         var values = encoder.container(keyedBy: CodingKeys.self)
-        try values.encode(2, forKey: .schemaVersion)
+        try values.encode(4, forKey: .schemaVersion)
         try values.encode(accent, forKey: .accent)
         try values.encode(language, forKey: .language)
         try values.encode(removeFillers, forKey: .removeFillers)
@@ -200,6 +211,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
         try values.encode(holdToTalk, forKey: .holdToTalk)
         try values.encode(shortcut, forKey: .shortcut)
         try values.encode(maximumRecordingDuration, forKey: .maximumRecordingDuration)
+        try values.encode(hasCompletedOnboarding, forKey: .hasCompletedOnboarding)
     }
 }
 

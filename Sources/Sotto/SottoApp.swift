@@ -41,7 +41,7 @@ struct SottoApp: App {
 
     var body: some Scene {
         WindowGroup("Sotto", id: "main") {
-            SottoRootView(model: model)
+            SottoAppContentView(model: model)
                 .sottoTheme(.standard)
                 .frame(minWidth: 900, minHeight: 620)
                 .onAppear {

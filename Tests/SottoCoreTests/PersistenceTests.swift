@@ -13,6 +13,7 @@ final class PersistenceTests: XCTestCase {
         expected.language = .spanish
         expected.accent = .coral
         expected.historyLimit = 42
+        expected.hasCompletedOnboarding = true
         try await store.save(expected)
 
         let loaded = await store.load()
@@ -113,6 +114,20 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(decoded.historyLimit, 42)
         XCTAssertEqual(decoded.maximumRecordingDuration, 300)
         XCTAssertTrue(decoded.insertAutomatically)
+        XCTAssertFalse(decoded.hasCompletedOnboarding)
+    }
+
+    func testInitialOnboardingMigrationDoesNotPreserveTemporaryCompletionFlag() throws {
+        let initialMigration = Data(#"""
+        {
+          "schemaVersion": 3,
+          "hasCompletedOnboarding": true
+        }
+        """#.utf8)
+
+        let decoded = try JSONDecoder().decode(SottoPreferences.self, from: initialMigration)
+
+        XCTAssertFalse(decoded.hasCompletedOnboarding)
     }
 
     func testLegacyHistoryRecordMigratesMissingMetadata() throws {

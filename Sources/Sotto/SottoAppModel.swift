@@ -32,6 +32,7 @@ final class SottoAppModel: ObservableObject {
     @Published private(set) var hotKeyError: String?
     @Published private(set) var notice: String?
     @Published private(set) var launchAtLoginMessage: String?
+    @Published private(set) var isBootstrapped = false
 
     private let directories: SottoDirectories
     private let settingsStore: JSONFileStore<SottoPreferences>
@@ -104,6 +105,14 @@ final class SottoAppModel: ObservableObject {
 
     var canStartDictation: Bool {
         modelState.isReady && !dictationState.isBusy
+    }
+
+    var shouldShowOnboarding: Bool {
+        isBootstrapped && !preferences.hasCompletedOnboarding
+    }
+
+    func completeOnboarding() {
+        preferences.hasCompletedOnboarding = true
     }
 
     func attachOverlayPresenter(_ presenter: SottoOverlayPresenting) {
@@ -324,6 +333,7 @@ final class SottoAppModel: ObservableObject {
             )
         } catch {
             presentFailure("No se pudo preparar la carpeta de Sotto: \(error.localizedDescription)", hideAfter: nil)
+            isBootstrapped = true
             return
         }
 
@@ -336,6 +346,7 @@ final class SottoAppModel: ObservableObject {
         configureHotKey()
 
         let inspected = await parakeet.inspect()
+        isBootstrapped = true
         if inspected.isInstalled {
             do {
                 try await parakeet.prepare()
