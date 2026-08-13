@@ -13,6 +13,12 @@ let iconset = FileManager.default.temporaryDirectory.appendingPathComponent(
 defer { try? FileManager.default.removeItem(at: iconset) }
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 let output = root.appendingPathComponent("Sources/Sotto/Resources/AppIcon.icns")
+let backgroundURL = root.appendingPathComponent("Assets/Sotto-icon-background.png")
+guard let imageSource = CGImageSourceCreateWithURL(backgroundURL as CFURL, nil),
+      let backgroundImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+else {
+    fatalError("Unable to load icon background at \(backgroundURL.path)")
+}
 
 let outputs: [(String, Int)] = [
     ("icon_16x16.png", 16),
@@ -49,42 +55,25 @@ for (name, size) in outputs {
     context.addPath(CGPath(roundedRect: plate, cornerWidth: corner, cornerHeight: corner, transform: nil))
     context.clip()
 
-    let colors = [
-        CGColor(red: 0.19, green: 0.12, blue: 0.48, alpha: 1),
-        CGColor(red: 0.48, green: 0.30, blue: 0.96, alpha: 1),
-        CGColor(red: 0.67, green: 0.39, blue: 0.98, alpha: 1),
-    ] as CFArray
-    let locations: [CGFloat] = [0, 0.55, 1]
-    let gradient = CGGradient(
-        colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: colors,
-        locations: locations
-    )!
-    context.drawLinearGradient(
-        gradient,
-        start: CGPoint(x: side * 0.12, y: side * 0.95),
-        end: CGPoint(x: side * 0.88, y: side * 0.05),
-        options: []
+    let imageWidth = CGFloat(backgroundImage.width)
+    let imageHeight = CGFloat(backgroundImage.height)
+    let scale = max(side / imageWidth, side / imageHeight)
+    let scaledSize = CGSize(width: imageWidth * scale, height: imageHeight * scale)
+    let imageRect = CGRect(
+        x: (side - scaledSize.width) / 2,
+        y: (side - scaledSize.height) / 2,
+        width: scaledSize.width,
+        height: scaledSize.height
     )
-
-    let glow = CGGradient(
-        colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: [
-            CGColor(red: 1, green: 1, blue: 1, alpha: 0.24),
-            CGColor(red: 1, green: 1, blue: 1, alpha: 0),
-        ] as CFArray,
-        locations: [0, 1]
-    )!
-    context.drawRadialGradient(
-        glow,
-        startCenter: CGPoint(x: side * 0.32, y: side * 0.76),
-        startRadius: 0,
-        endCenter: CGPoint(x: side * 0.32, y: side * 0.76),
-        endRadius: side * 0.58,
-        options: []
-    )
+    context.interpolationQuality = .high
+    context.draw(backgroundImage, in: imageRect)
     context.restoreGState()
 
+    context.setShadow(
+        offset: CGSize(width: 0, height: -side * 0.012),
+        blur: side * 0.028,
+        color: CGColor(red: 0.03, green: 0.12, blue: 0.01, alpha: 0.46)
+    )
     context.setStrokeColor(CGColor(gray: 1, alpha: 0.95))
     context.setLineCap(.round)
     context.setLineWidth(side * 0.067)
@@ -98,6 +87,7 @@ for (name, size) in outputs {
         context.addLine(to: CGPoint(x: x, y: side * 0.5 + half))
         context.strokePath()
     }
+    context.setShadow(offset: .zero, blur: 0, color: nil)
 
     guard let image = context.makeImage() else { fatalError("Unable to render icon") }
     let destinationURL = iconset.appendingPathComponent(name) as CFURL
@@ -111,13 +101,35 @@ for (name, size) in outputs {
     guard CGImageDestinationFinalize(destination) else { fatalError("Unable to write \(name)") }
 }
 
-let iconutil = Process()
-iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
-iconutil.arguments = ["-c", "icns", "-o", output.path, iconset.path]
-try iconutil.run()
-iconutil.waitUntilExit()
-guard iconutil.terminationStatus == 0 else {
-    fatalError("iconutil failed with status \(iconutil.terminationStatus)")
+func bigEndianData(_ value: UInt32) -> Data {
+    var value = value.bigEndian
+    return withUnsafeBytes(of: &value) { Data($0) }
 }
+
+// Assemble the modern PNG-backed ICNS entries directly. This keeps the
+// generator reproducible on macOS versions whose iconutil rejects iconsets.
+let icnsEntries: [(String, String)] = [
+    ("ic11", "icon_16x16@2x.png"),
+    ("ic12", "icon_32x32@2x.png"),
+    ("ic07", "icon_128x128.png"),
+    ("ic13", "icon_128x128@2x.png"),
+    ("ic08", "icon_256x256.png"),
+    ("ic14", "icon_256x256@2x.png"),
+    ("ic09", "icon_512x512.png"),
+    ("ic10", "icon_512x512@2x.png"),
+]
+
+var payload = Data()
+for (type, name) in icnsEntries {
+    let png = try Data(contentsOf: iconset.appendingPathComponent(name))
+    payload.append(Data(type.utf8))
+    payload.append(bigEndianData(UInt32(png.count + 8)))
+    payload.append(png)
+}
+
+var icns = Data("icns".utf8)
+icns.append(bigEndianData(UInt32(payload.count + 8)))
+icns.append(payload)
+try icns.write(to: output, options: [.atomic])
 
 print(output.path)
