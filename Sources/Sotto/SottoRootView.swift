@@ -244,12 +244,11 @@ private struct SottoSidebar: View {
                     }
                 }
             } label: {
-                SottoIcon("slider.horizontal.3", size: 16, weight: .regular)
-                    .foregroundStyle(theme.colors.mutedForeground)
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
+                SottoSidebarIconLabel(systemImage: "slider.horizontal.3")
             }
             .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .tint(theme.colors.mutedForeground)
             .buttonStyle(SottoSidebarButtonStyle())
             .frame(width: 28, height: 28)
             .help(SottoLocalization.string("common.settings"))
@@ -492,10 +491,7 @@ private struct SottoSidebarIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            SottoIcon(systemImage, size: 16, weight: .regular)
-                .foregroundStyle(isHovered ? theme.colors.foreground : theme.colors.mutedForeground)
-                .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+            SottoSidebarIconLabel(systemImage: systemImage, isHovered: isHovered)
         }
         .buttonStyle(SottoSidebarButtonStyle())
         .onHover { isHovered = $0 }
@@ -505,6 +501,20 @@ private struct SottoSidebarIconButton: View {
         )
         .help(help)
         .accessibilityLabel(help)
+    }
+}
+
+private struct SottoSidebarIconLabel: View {
+    let systemImage: String
+    var isHovered = false
+
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        SottoIcon(systemImage, size: 16, weight: .regular)
+            .foregroundStyle(isHovered ? theme.colors.foreground : theme.colors.mutedForeground)
+            .frame(width: 28, height: 28)
+            .contentShape(Rectangle())
     }
 }
 
