@@ -205,7 +205,9 @@ private struct SottoSidebar: View {
                 onCreate: createProject
             )
             .sottoTheme(.standard)
-            .frame(width: 560, height: 410)
+            .frame(width: 520, height: 360)
+            .fixedSize()
+            .modifier(SottoFittedSheetSizing())
         }
         .animation(
             reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.regular),
@@ -411,8 +413,8 @@ private struct SottoSidebarSection: View {
 
                 if let actionTitle, let action {
                     Button(action: action) {
-                        if isCompact, let actionSystemImage {
-                            SottoIcon(actionSystemImage, size: 15, weight: .regular)
+                        if let actionSystemImage {
+                            SottoIcon(actionSystemImage, size: isCompact ? 15 : 14, weight: .regular)
                         } else {
                             Text(actionTitle)
                                 .font(theme.typography.sidebarItem)
@@ -427,6 +429,17 @@ private struct SottoSidebarSection: View {
             .padding(.horizontal, theme.spacing.sm)
             .frame(height: isCompact ? 28 : 30)
 
+            content
+        }
+    }
+}
+
+private struct SottoFittedSheetSizing: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, *) {
+            content.presentationSizing(.fitted)
+        } else {
             content
         }
     }
