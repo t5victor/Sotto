@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import SottoDesignSystem
+import SottoLocalization
 
 @MainActor
 final class SottoOverlayController: SottoOverlayPresenting {
@@ -91,9 +92,9 @@ private struct SottoOverlayView: View {
                     SottoIcon("xmark", size: 12)
                 }
                 .buttonStyle(SottoOverlayIconButtonStyle())
-                .help("Cancelar dictado")
+                .help(SottoLocalization.string("overlay.cancel_dictation"))
             } else if case .failed = model.dictationState {
-                Button("Cerrar") {
+                Button(SottoLocalization.string("overlay.close")) {
                     model.dismissFailure()
                 }
                 .buttonStyle(SottoOverlayTextButtonStyle())
@@ -132,23 +133,26 @@ private struct SottoOverlayView: View {
 
     private var title: String {
         switch model.dictationState {
-        case .idle: "Listo para dictar"
-        case .preparing: "Preparando micrófono"
-        case .listening: "Escuchando"
-        case .transcribing: "Transcribiendo"
-        case .inserting: "Insertando texto"
+        case .idle: SottoLocalization.string("overlay.ready")
+        case .preparing: SottoLocalization.string("overlay.preparing")
+        case .listening: SottoLocalization.string("overlay.listening")
+        case .transcribing: SottoLocalization.string("overlay.transcribing")
+        case .inserting: SottoLocalization.string("overlay.inserting")
         case .completed(_, let outcome): outcome.displayName
-        case .failed: "No se pudo completar el dictado"
+        case .failed: SottoLocalization.string("overlay.failed")
         }
     }
 
     private var subtitle: String {
         switch model.dictationState {
-        case .idle: model.preferences.shortcut.displayName
-        case .preparing: "Un momento…"
-        case .listening: model.preferences.holdToTalk ? "Suelta el atajo para terminar" : "Pulsa el atajo para terminar"
-        case .transcribing: "Transcribiendo"
-        case .inserting: "Volviendo a la aplicación anterior"
+        case .idle: model.preferences.shortcut.localizedDisplayName
+        case .preparing: SottoLocalization.string("overlay.moment")
+        case .listening:
+            model.preferences.holdToTalk
+                ? SottoLocalization.string("overlay.hold_to_talk")
+                : SottoLocalization.string("overlay.toggle_to_talk")
+        case .transcribing: SottoLocalization.string("overlay.transcribing")
+        case .inserting: SottoLocalization.string("overlay.returning")
         case .completed(let text, _): text
         case .failed(let message): message
         }

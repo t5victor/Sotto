@@ -71,6 +71,22 @@ mkdir -p "$APP_RESOURCE_BUNDLE"
 cp -R "$RESOURCE_BUNDLE/Fonts" "$APP_RESOURCE_BUNDLE/Fonts"
 cp -R "$RESOURCE_BUNDLE/FontLicenses" "$APP_RESOURCE_BUNDLE/FontLicenses"
 
+for language in es en fr pt; do
+  if [[ -f "$RESOURCE_BUNDLE/$language.lproj/InfoPlist.strings" ]]; then
+    mkdir -p "$APP_BUNDLE/Contents/Resources/$language.lproj"
+    cp "$RESOURCE_BUNDLE/$language.lproj/InfoPlist.strings" \
+      "$APP_BUNDLE/Contents/Resources/$language.lproj/InfoPlist.strings"
+  fi
+done
+
+LOCALIZATION_RESOURCE_BUNDLE="$BIN_DIR/Sotto_SottoLocalization.bundle"
+if [[ ! -d "$LOCALIZATION_RESOURCE_BUNDLE" ]]; then
+  print -u2 "Missing SwiftPM localization resource bundle: $LOCALIZATION_RESOURCE_BUNDLE"
+  exit 1
+fi
+cp -R "$LOCALIZATION_RESOURCE_BUNDLE" \
+  "$APP_BUNDLE/Contents/Resources/Sotto_SottoLocalization.bundle"
+
 ICON="$PROJECT_ROOT/Sources/Sotto/Resources/AppIcon.icns"
 if [[ -f "$ICON" ]]; then
   cp "$ICON" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"

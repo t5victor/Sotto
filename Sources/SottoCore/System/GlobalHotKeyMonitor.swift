@@ -1,5 +1,6 @@
 import Carbon.HIToolbox
 import Foundation
+import SottoLocalization
 
 private final class HotKeyCallbackBox: @unchecked Sendable {
     let handler: @Sendable (UInt32) -> Void
@@ -29,9 +30,9 @@ public final class GlobalHotKeyMonitor {
         public var errorDescription: String? {
             switch self {
             case .eventHandler(let status):
-                "No se pudo preparar el atajo global (código \(status))."
+                SottoLocalization.format("error.hotkey.event_handler", Int64(status))
             case .registration(let status):
-                "El atajo está ocupado por otra aplicación (código \(status))."
+                SottoLocalization.format("error.hotkey.registration", Int64(status))
             }
         }
     }

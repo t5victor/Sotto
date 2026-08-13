@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 enum SottoOnboardingStep: Int, CaseIterable, Identifiable, Equatable, Hashable {
@@ -11,20 +12,17 @@ enum SottoOnboardingStep: Int, CaseIterable, Identifiable, Equatable, Hashable {
 
     var title: String {
         switch self {
-        case .welcome: "Tu voz, en cualquier app."
-        case .engine: "Prepara el motor de voz"
-        case .permissions: "Dale a Sotto lo necesario"
+        case .welcome: SottoLocalization.string("onboarding.step.welcome.title")
+        case .engine: SottoLocalization.string("onboarding.step.engine.title")
+        case .permissions: SottoLocalization.string("onboarding.step.permissions.title")
         }
     }
 
     var description: String {
         switch self {
-        case .welcome:
-            "Pulsa un atajo, habla y sigue trabajando. Sotto se ocupa del resto."
-        case .engine:
-            "Sotto usa Parakeet para convertir tus dictados en texto. Comprueba si ya está disponible o descárgalo ahora."
-        case .permissions:
-            "El micrófono es necesario para dictar. Accesibilidad permite insertar el texto directamente en la app activa."
+        case .welcome: SottoLocalization.string("onboarding.step.welcome.description")
+        case .engine: SottoLocalization.string("onboarding.step.engine.description")
+        case .permissions: SottoLocalization.string("onboarding.step.permissions.description")
         }
     }
 }
@@ -54,10 +52,10 @@ private struct SottoStartupView: View {
         VStack(spacing: theme.spacing.md) {
             SottoIcon("waveform", size: 22, weight: .medium)
                 .foregroundStyle(theme.colors.accentInk)
-            Text("Preparando Sotto")
+            Text(SottoLocalization.string("onboarding.startup_title"))
                 .font(theme.typography.sectionTitle)
                 .foregroundStyle(theme.colors.foreground)
-            SottoActivityLabel("Comprobando la instalación…")
+            SottoActivityLabel(SottoLocalization.string("onboarding.startup_activity"))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colors.surface)
@@ -121,12 +119,12 @@ struct SottoOnboardingView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, theme.spacing.xl)
 
-            Text("Habla.\nSotto escribe.")
+            Text(SottoLocalization.string("onboarding.aside.title"))
                 .font(.custom("Inter", size: 30).weight(.semibold))
                 .tracking(-0.7)
                 .foregroundStyle(theme.colors.foreground)
 
-            Text("Dicta en cualquier aplicación de tu Mac.")
+            Text(SottoLocalization.string("onboarding.aside.description"))
                 .font(theme.typography.body)
                 .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.mutedForeground)
@@ -136,8 +134,8 @@ struct SottoOnboardingView: View {
             Spacer()
 
             HStack(spacing: theme.spacing.sm) {
-                SottoShortcutKeyView(label: model.preferences.shortcut.displayName)
-                Text("Atajo para dictar")
+                SottoShortcutKeyView(label: model.preferences.shortcut.localizedDisplayName)
+                Text(SottoLocalization.string("onboarding.aside.shortcut"))
                     .font(theme.typography.caption)
                     .foregroundStyle(theme.colors.mutedForeground)
             }
@@ -150,7 +148,7 @@ struct SottoOnboardingView: View {
         HStack {
             Spacer()
 
-            Button("Omitir") {
+            Button(SottoLocalization.string("onboarding.skip")) {
                 model.completeOnboarding()
             }
             .buttonStyle(.sotto(.ghost, size: .small))
@@ -189,20 +187,23 @@ struct SottoOnboardingView: View {
         VStack(alignment: .leading, spacing: 0) {
             SottoOnboardingFeatureRow(
                 systemImage: "keyboard",
-                title: "Pulsa el atajo",
-                description: "Usa \(model.preferences.shortcut.displayName) para empezar."
+                title: SottoLocalization.string("onboarding.feature.shortcut.title"),
+                description: SottoLocalization.format(
+                    "onboarding.feature.shortcut.description",
+                    model.preferences.shortcut.localizedDisplayName
+                )
             )
             SottoDivider()
             SottoOnboardingFeatureRow(
                 systemImage: "waveform",
-                title: "Habla con naturalidad",
-                description: "Sotto limpia el texto y corrige tus términos habituales."
+                title: SottoLocalization.string("onboarding.feature.natural.title"),
+                description: SottoLocalization.string("onboarding.feature.natural.description")
             )
             SottoDivider()
             SottoOnboardingFeatureRow(
                 systemImage: "arrow.uturn.backward",
-                title: "Sigue trabajando",
-                description: "El texto vuelve a la aplicación que estabas usando."
+                title: SottoLocalization.string("onboarding.feature.continue.title"),
+                description: SottoLocalization.string("onboarding.feature.continue.description")
             )
         }
     }
@@ -214,7 +215,7 @@ struct SottoOnboardingView: View {
                     SottoOnboardingProcessVisual(state: model.modelState)
 
                     VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                        Text("Parakeet")
+                        Text(SottoLocalization.string("onboarding.engine.name"))
                             .font(theme.typography.sectionTitle)
                             .foregroundStyle(theme.colors.foreground)
                         HStack(spacing: theme.spacing.xs) {
@@ -279,8 +280,8 @@ struct SottoOnboardingView: View {
     private var permissionsContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             SottoOnboardingPermissionRow(
-                title: "Micrófono",
-                description: "Necesario para escuchar tu voz.",
+                title: SottoLocalization.string("onboarding.permission.microphone.title"),
+                description: SottoLocalization.string("onboarding.permission.microphone.description"),
                 systemImage: "mic",
                 status: model.microphonePermission,
                 isRequired: true,
@@ -296,8 +297,8 @@ struct SottoOnboardingView: View {
             SottoDivider()
 
             SottoOnboardingPermissionRow(
-                title: "Accesibilidad",
-                description: "Permite insertar el texto directamente en la app activa.",
+                title: SottoLocalization.string("onboarding.permission.accessibility.title"),
+                description: SottoLocalization.string("onboarding.permission.accessibility.description"),
                 systemImage: "accessibility",
                 status: model.accessibilityPermission,
                 isRequired: false,
@@ -328,7 +329,7 @@ struct SottoOnboardingView: View {
 
             HStack(spacing: theme.spacing.md) {
                 if step != .welcome {
-                    Button("Atrás") {
+                    Button(SottoLocalization.string("common.back")) {
                         move(to: SottoOnboardingStep(rawValue: step.rawValue - 1) ?? .welcome)
                     }
                     .buttonStyle(.sotto(.ghost, size: .small))
@@ -344,21 +345,29 @@ struct SottoOnboardingView: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Paso \(step.rawValue + 1) de \(SottoOnboardingStep.allCases.count)")
+        .accessibilityLabel(
+            SottoLocalization.format(
+                "onboarding.step_indicator",
+                Int64(step.rawValue + 1),
+                Int64(SottoOnboardingStep.allCases.count)
+            )
+        )
     }
 
     private var primaryActionTitle: String {
         switch step {
-        case .welcome: "Configurar Sotto"
+        case .welcome: SottoLocalization.string("onboarding.action.configure")
         case .engine:
             switch model.modelState {
-            case .notInstalled: "Descargar Parakeet"
-            case .failed: "Reintentar descarga"
-            case .ready: "Continuar"
-            default: "Preparando…"
+            case .notInstalled: SottoLocalization.string("common.download")
+            case .failed: SottoLocalization.string("common.retry_download")
+            case .ready: SottoLocalization.string("onboarding.action.continue")
+            default: SottoLocalization.string("onboarding.engine.progress.preparing")
             }
         case .permissions:
-            model.microphonePermission.isGranted ? "Empezar a dictar" : "Terminar por ahora"
+            model.microphonePermission.isGranted
+                ? SottoLocalization.string("onboarding.action.start")
+                : SottoLocalization.string("onboarding.action.finish_later")
         }
     }
 
@@ -402,24 +411,24 @@ struct SottoOnboardingView: View {
 
     private var engineStatusDescription: String {
         switch model.modelState {
-        case .checking: "Estamos buscando Parakeet en este Mac."
-        case .notInstalled: "No hemos encontrado Parakeet. Descárgalo para poder continuar."
-        case .installed: "Hemos encontrado los archivos de Parakeet y vamos a comprobarlos."
-        case .downloading: "Descargando Parakeet y preparando sus archivos."
-        case .validating: "La descarga ha terminado. Estamos verificando Parakeet."
-        case .loading: "Parakeet está descargado. Estamos cargando el motor."
-        case .ready: "Parakeet está verificado y listo para convertir voz en texto."
-        case .failed: "No hemos podido verificar Parakeet. Puedes volver a intentarlo."
+        case .checking: SottoLocalization.string("onboarding.engine.status.checking")
+        case .notInstalled: SottoLocalization.string("onboarding.engine.status.not_installed")
+        case .installed: SottoLocalization.string("onboarding.engine.status.installed")
+        case .downloading: SottoLocalization.string("onboarding.engine.status.downloading")
+        case .validating: SottoLocalization.string("onboarding.engine.status.validating")
+        case .loading: SottoLocalization.string("onboarding.engine.status.loading")
+        case .ready: SottoLocalization.string("onboarding.engine.status.ready")
+        case .failed: SottoLocalization.string("onboarding.engine.status.failed")
         }
     }
 
     private var engineProgressDescription: String {
         switch model.modelState {
-        case .checking: "Buscando el motor…"
-        case .installed: "Comprobando los archivos encontrados…"
-        case .validating: "Verificando la descarga…"
-        case .loading: "Cargando el motor…"
-        default: "Preparando…"
+        case .checking: SottoLocalization.string("onboarding.engine.progress.checking")
+        case .installed: SottoLocalization.string("onboarding.engine.progress.installed")
+        case .validating: SottoLocalization.string("onboarding.engine.progress.validating")
+        case .loading: SottoLocalization.string("onboarding.engine.progress.loading")
+        default: SottoLocalization.string("onboarding.engine.progress.preparing")
         }
     }
 
@@ -432,10 +441,11 @@ struct SottoOnboardingView: View {
 
     private var engineDetectionLabel: String {
         switch model.modelState {
-        case .checking: "Comprobando"
-        case .notInstalled: "No detectado"
-        case .installed, .downloading, .validating, .loading, .ready: "Detectado"
-        case .failed: "No verificado"
+        case .checking: SottoLocalization.string("onboarding.engine.detection.checking")
+        case .notInstalled: SottoLocalization.string("onboarding.engine.detection.not_detected")
+        case .installed, .downloading, .validating, .loading, .ready:
+            SottoLocalization.string("onboarding.engine.detection.detected")
+        case .failed: SottoLocalization.string("onboarding.engine.detection.not_verified")
         }
     }
 
@@ -470,9 +480,12 @@ struct SottoOnboardingView: View {
         required: Bool
     ) -> String? {
         switch status {
-        case .notDetermined: required ? "Permitir" : "Configurar"
+        case .notDetermined:
+            required
+                ? SottoLocalization.string("common.allow")
+                : SottoLocalization.string("common.configure")
         case .granted: nil
-        case .denied, .restricted: "Abrir ajustes"
+        case .denied, .restricted: SottoLocalization.string("common.open_settings")
         }
     }
 }
@@ -642,9 +655,9 @@ private struct SottoOnboardingPermissionRow: View {
     }
 
     private var statusLabel: String {
-        if status.isGranted { return "Listo" }
-        if isRequired { return "Necesario" }
-        return "Opcional"
+        if status.isGranted { return SottoLocalization.string("onboarding.permission.ready") }
+        if isRequired { return SottoLocalization.string("onboarding.permission.required") }
+        return SottoLocalization.string("onboarding.permission.optional")
     }
 
     private var statusIcon: String {

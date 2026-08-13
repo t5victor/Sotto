@@ -1,4 +1,5 @@
 import Foundation
+import SottoLocalization
 
 public actor SottoHistoryRepository {
     private let store: JSONFileStore<[TranscriptionRecord]>
@@ -77,7 +78,7 @@ public actor SottoProjectRepository {
 
         public var errorDescription: String? {
             switch self {
-            case .emptyName: "El proyecto necesita un nombre."
+            case .emptyName: SottoLocalization.string("error.project.empty_name")
             }
         }
     }
@@ -162,8 +163,8 @@ public actor SottoVocabularyRepository {
 
         public var errorDescription: String? {
             switch self {
-            case .emptySpokenForm: "La forma hablada no puede estar vacía."
-            case .emptyReplacement: "El texto de sustitución no puede estar vacío."
+            case .emptySpokenForm: SottoLocalization.string("error.vocabulary.empty_spoken_form")
+            case .emptyReplacement: SottoLocalization.string("error.vocabulary.empty_replacement")
             }
         }
     }

@@ -1,4 +1,5 @@
 import Foundation
+import SottoLocalization
 
 public actor JSONFileStore<Value: Codable & Sendable> {
     public enum StoreError: LocalizedError {
@@ -7,7 +8,7 @@ public actor JSONFileStore<Value: Codable & Sendable> {
         public var errorDescription: String? {
             switch self {
             case .parentIsNotDirectory(let url):
-                "No se puede guardar el estado porque \(url.path) no es una carpeta."
+                SottoLocalization.format("error.store.parent_not_directory", url.path)
             }
         }
     }

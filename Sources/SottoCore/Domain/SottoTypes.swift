@@ -1,4 +1,5 @@
 import Foundation
+import SottoLocalization
 
 public enum SottoAccent: String, Codable, CaseIterable, Identifiable, Sendable {
     case violet
@@ -10,10 +11,10 @@ public enum SottoAccent: String, Codable, CaseIterable, Identifiable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .violet: "Violeta"
-        case .blue: "Azul"
-        case .coral: "Coral"
-        case .green: "Verde"
+        case .violet: SottoLocalization.string("accent.violet")
+        case .blue: SottoLocalization.string("accent.blue")
+        case .coral: SottoLocalization.string("accent.coral")
+        case .green: SottoLocalization.string("accent.green")
         }
     }
 }
@@ -51,32 +52,32 @@ public enum SottoLanguage: String, Codable, CaseIterable, Identifiable, Sendable
 
     public var displayName: String {
         switch self {
-        case .automatic: "Detectar automáticamente"
-        case .bulgarian: "Búlgaro"
-        case .croatian: "Croata"
-        case .czech: "Checo"
-        case .danish: "Danés"
-        case .dutch: "Neerlandés"
-        case .english: "Inglés"
-        case .estonian: "Estonio"
-        case .finnish: "Finés"
-        case .french: "Francés"
-        case .german: "Alemán"
-        case .greek: "Griego"
-        case .hungarian: "Húngaro"
-        case .italian: "Italiano"
-        case .latvian: "Letón"
-        case .lithuanian: "Lituano"
-        case .maltese: "Maltés"
-        case .polish: "Polaco"
-        case .portuguese: "Portugués"
-        case .romanian: "Rumano"
-        case .russian: "Ruso"
-        case .slovak: "Eslovaco"
-        case .slovenian: "Esloveno"
-        case .spanish: "Español"
-        case .swedish: "Sueco"
-        case .ukrainian: "Ucraniano"
+        case .automatic: SottoLocalization.string("language.automatic")
+        case .bulgarian: SottoLocalization.string("language.bulgarian")
+        case .croatian: SottoLocalization.string("language.croatian")
+        case .czech: SottoLocalization.string("language.czech")
+        case .danish: SottoLocalization.string("language.danish")
+        case .dutch: SottoLocalization.string("language.dutch")
+        case .english: SottoLocalization.string("language.english")
+        case .estonian: SottoLocalization.string("language.estonian")
+        case .finnish: SottoLocalization.string("language.finnish")
+        case .french: SottoLocalization.string("language.french")
+        case .german: SottoLocalization.string("language.german")
+        case .greek: SottoLocalization.string("language.greek")
+        case .hungarian: SottoLocalization.string("language.hungarian")
+        case .italian: SottoLocalization.string("language.italian")
+        case .latvian: SottoLocalization.string("language.latvian")
+        case .lithuanian: SottoLocalization.string("language.lithuanian")
+        case .maltese: SottoLocalization.string("language.maltese")
+        case .polish: SottoLocalization.string("language.polish")
+        case .portuguese: SottoLocalization.string("language.portuguese")
+        case .romanian: SottoLocalization.string("language.romanian")
+        case .russian: SottoLocalization.string("language.russian")
+        case .slovak: SottoLocalization.string("language.slovak")
+        case .slovenian: SottoLocalization.string("language.slovenian")
+        case .spanish: SottoLocalization.string("language.spanish")
+        case .swedish: SottoLocalization.string("language.swedish")
+        case .ukrainian: SottoLocalization.string("language.ukrainian")
         }
     }
 }
@@ -90,6 +91,13 @@ public struct SottoShortcut: Codable, Equatable, Hashable, Sendable {
         self.keyCode = keyCode
         self.carbonModifiers = carbonModifiers
         self.displayName = displayName
+    }
+
+    public var localizedDisplayName: String {
+        let localizedSpace = SottoLocalization.string("shortcut.space")
+        return displayName
+            .replacingOccurrences(of: "Espacio", with: localizedSpace)
+            .replacingOccurrences(of: "Space", with: localizedSpace)
     }
 
     /// Option + Space. Carbon's `optionKey` value is 2048.
@@ -290,11 +298,11 @@ public enum TextInsertionOutcome: String, Codable, Equatable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .inserted: "Insertado"
-        case .pasted: "Pegado"
-        case .pasteAttempted: "Pegado solicitado"
-        case .copied: "Copiado"
-        case .skipped: "Sin insertar"
+        case .inserted: SottoLocalization.string("outcome.inserted")
+        case .pasted: SottoLocalization.string("outcome.pasted")
+        case .pasteAttempted: SottoLocalization.string("outcome.paste_attempted")
+        case .copied: SottoLocalization.string("outcome.copied")
+        case .skipped: SottoLocalization.string("outcome.skipped")
         }
     }
 }

@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 struct SottoHomeView: View {
@@ -11,8 +12,8 @@ struct SottoHomeView: View {
             VStack(alignment: .leading, spacing: 20) {
                 SottoReveal {
                     SottoPageHeader(
-                        title: "Habla. Sotto escribe.",
-                        description: "Dicta en cualquier aplicación de tu Mac."
+                        title: SottoLocalization.string("home.title"),
+                        description: SottoLocalization.string("home.description")
                     )
                 }
 
@@ -69,7 +70,7 @@ struct SottoHomeView: View {
                         .buttonStyle(.sotto(model.isListening ? .secondary : .primary))
                         .disabled(primaryActionDisabled)
 
-                        SottoShortcutKey(model.preferences.shortcut.displayName)
+                        SottoShortcutKey(model.preferences.shortcut.localizedDisplayName)
                     }
                 }
 
@@ -84,13 +85,13 @@ struct SottoHomeView: View {
     private var dictationActivity: some View {
         switch model.dictationState {
         case .preparing:
-            SottoActivityLabel("Preparando")
+            SottoActivityLabel(SottoLocalization.string("home.activity.preparing"))
         case .listening:
             SottoRecordingPill(state: .listening, level: model.audioLevel)
         case .transcribing:
-            SottoActivityLabel("Transcribiendo")
+            SottoActivityLabel(SottoLocalization.string("home.activity.transcribing"))
         case .inserting:
-            SottoActivityLabel("Insertando")
+            SottoActivityLabel(SottoLocalization.string("home.activity.inserting"))
         default: EmptyView()
         }
     }
@@ -99,20 +100,20 @@ struct SottoHomeView: View {
         SottoCard {
             VStack(alignment: .leading, spacing: theme.spacing.md) {
                 SottoSectionHeader(
-                    "Texto",
-                    description: "Limpia el texto antes de insertarlo."
+                    SottoLocalization.string("home.section.text"),
+                    description: SottoLocalization.string("home.section.text_description")
                 )
                 SottoDivider()
                 SottoToggleRow(
-                    "Normalizar texto",
-                    description: "Limpia espacios y puntuación.",
+                    SottoLocalization.string("home.normalize.title"),
+                    description: SottoLocalization.string("home.normalize.description"),
                     systemImage: "textformat",
                     isOn: $model.preferences.normalizeText
                 )
                 SottoDivider()
                 SottoToggleRow(
-                    "Eliminar muletillas",
-                    description: "Quita sonidos como «eh» o «mmm».",
+                    SottoLocalization.string("home.fillers.title"),
+                    description: SottoLocalization.string("home.fillers.description"),
                     systemImage: "sparkles",
                     isOn: $model.preferences.removeFillers
                 )
@@ -124,7 +125,7 @@ struct SottoHomeView: View {
         SottoCard(style: .muted) {
             VStack(alignment: .leading, spacing: theme.spacing.sm) {
                 HStack {
-                    SottoSectionHeader("Último dictado")
+                    SottoSectionHeader(SottoLocalization.string("home.last_dictation"))
                     Spacer()
                     Button {
                         model.copyToPasteboard(record.text)
@@ -132,7 +133,7 @@ struct SottoHomeView: View {
                         SottoIcon("doc.on.doc", size: 13)
                     }
                     .buttonStyle(.sotto(.ghost, size: .small))
-                    .help("Copiar")
+                    .help(SottoLocalization.string("common.copy"))
                 }
                 Text(record.text)
                     .font(theme.typography.body)
@@ -146,34 +147,43 @@ struct SottoHomeView: View {
 
     private var dictationTitle: String {
         switch model.dictationState {
-        case .idle: model.modelState.isReady ? "Listo para dictar" : "Prepara el dictado"
-        case .preparing: "Preparando el dictado"
-        case .listening: "Escuchando"
-        case .transcribing: "Transcribiendo"
-        case .inserting: "Insertando"
-        case .completed: "Dictado completado"
-        case .failed: "No se pudo completar el dictado"
+        case .idle:
+            model.modelState.isReady
+                ? SottoLocalization.string("home.dictation.ready")
+                : SottoLocalization.string("home.dictation.prepare")
+        case .preparing: SottoLocalization.string("home.dictation.preparing")
+        case .listening: SottoLocalization.string("home.dictation.listening")
+        case .transcribing: SottoLocalization.string("home.dictation.transcribing")
+        case .inserting: SottoLocalization.string("home.dictation.inserting")
+        case .completed: SottoLocalization.string("home.dictation.completed")
+        case .failed: SottoLocalization.string("home.dictation.failed")
         }
     }
 
     private var dictationDescription: String {
         if model.modelState.isReady {
             return model.preferences.holdToTalk
-                ? "Mantén pulsado \(model.preferences.shortcut.displayName), habla y suelta para insertar el texto."
-                : "Pulsa \(model.preferences.shortcut.displayName) para iniciar y vuelve a pulsarlo para terminar."
+                ? SottoLocalization.format(
+                    "home.dictation.hold_description",
+                    model.preferences.shortcut.localizedDisplayName
+                )
+                : SottoLocalization.format(
+                    "home.dictation.toggle_description",
+                    model.preferences.shortcut.localizedDisplayName
+                )
         }
         return model.modelState.detail
     }
 
     private var primaryActionTitle: String {
-        if model.isListening { return "Detener" }
-        if model.dictationState.canCancel { return "Cancelar" }
-        if model.modelState.isReady { return "Empezar a dictar" }
-        if case .downloading = model.modelState { return "Descargando…" }
-        if case .loading = model.modelState { return "Cargando…" }
-        if case .validating = model.modelState { return "Validando…" }
-        if case .failed = model.modelState { return "Reinstalar motor" }
-        return "Instalar motor"
+        if model.isListening { return SottoLocalization.string("home.action.stop") }
+        if model.dictationState.canCancel { return SottoLocalization.string("home.action.cancel") }
+        if model.modelState.isReady { return SottoLocalization.string("common.start_dictation") }
+        if case .downloading = model.modelState { return SottoLocalization.string("home.action.downloading") }
+        if case .loading = model.modelState { return SottoLocalization.string("home.action.loading") }
+        if case .validating = model.modelState { return SottoLocalization.string("home.action.validating") }
+        if case .failed = model.modelState { return SottoLocalization.string("common.reinstall_model") }
+        return SottoLocalization.string("common.install_model")
     }
 
     private var primaryActionDisabled: Bool {
@@ -231,7 +241,7 @@ private struct SottoErrorBanner: View {
                 .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
-            Button("Cerrar", action: dismiss)
+            Button(SottoLocalization.string("common.close"), action: dismiss)
                 .buttonStyle(.sotto(.ghost, size: .small))
         }
         .padding(theme.spacing.md)
@@ -259,7 +269,7 @@ private struct SottoNoticeBanner: View {
                 .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
-            Button("Cerrar", action: dismiss)
+            Button(SottoLocalization.string("common.close"), action: dismiss)
                 .buttonStyle(.sotto(.ghost, size: .small))
         }
         .padding(theme.spacing.md)

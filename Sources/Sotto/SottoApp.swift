@@ -1,7 +1,8 @@
 import AppKit
 import SottoCore
-import SwiftUI
 import SottoDesignSystem
+import SottoLocalization
+import SwiftUI
 
 @MainActor
 final class SottoAppDelegate: NSObject, NSApplicationDelegate {
@@ -40,7 +41,7 @@ struct SottoApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Sotto", id: "main") {
+        WindowGroup(SottoLocalization.string("app.name"), id: "main") {
             SottoAppContentView(model: model)
                 .sottoTheme(.standard)
                 .frame(minWidth: 900, minHeight: 620)
@@ -55,7 +56,7 @@ struct SottoApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
 
-        MenuBarExtra("Sotto", systemImage: model.isListening ? "mic" : "waveform") {
+        MenuBarExtra(SottoLocalization.string("app.name"), systemImage: model.isListening ? "mic" : "waveform") {
             SottoMenuBarView(model: model)
                 .sottoTheme(.standard)
         }

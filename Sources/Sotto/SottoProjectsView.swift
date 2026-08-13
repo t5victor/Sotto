@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 struct SottoProjectView: View {
@@ -27,8 +28,11 @@ struct SottoProjectView: View {
                         SottoPageHeader(
                             title: project.name,
                             description: records.isEmpty
-                                ? "Las transcripciones que guardes aquí aparecerán en este proyecto."
-                                : "\(records.count) transcripciones organizadas en este proyecto."
+                                ? SottoLocalization.string("project.empty_header_description")
+                                : SottoLocalization.format(
+                                    "project.records_description",
+                                    Int64(records.count)
+                                )
                         )
 
                         Spacer(minLength: theme.spacing.lg)
@@ -41,7 +45,7 @@ struct SottoProjectView: View {
                                 SottoIcon("pencil", size: 13)
                             }
                             .buttonStyle(.sotto(.ghost, size: .small))
-                            .help("Renombrar proyecto")
+                            .help(SottoLocalization.string("project.rename"))
 
                             Button {
                                 isConfirmingDeletion = true
@@ -49,7 +53,7 @@ struct SottoProjectView: View {
                                 SottoIcon("trash", size: 13)
                             }
                             .buttonStyle(.sotto(.ghost, size: .small))
-                            .help("Eliminar proyecto")
+                            .help(SottoLocalization.string("project.delete"))
                         }
                     }
                 }
@@ -58,8 +62,8 @@ struct SottoProjectView: View {
                     SottoCard(style: .muted) {
                         SottoEmptyState(
                             systemImage: "folder",
-                            title: "Proyecto vacío",
-                            description: "Desde Historial puedes mover cualquier transcripción a este proyecto."
+                            title: SottoLocalization.string("project.empty_title"),
+                            description: SottoLocalization.string("project.empty_description")
                         )
                     }
                 } else {
@@ -79,9 +83,9 @@ struct SottoProjectView: View {
             .padding(theme.spacing.xxl)
         }
         .background(theme.colors.surface)
-        .alert("Renombrar proyecto", isPresented: $isRenaming) {
-            TextField("Nombre del proyecto", text: $draftName)
-            Button("Guardar") {
+        .alert(SottoLocalization.string("project.rename"), isPresented: $isRenaming) {
+            TextField(SottoLocalization.string("project.name_placeholder"), text: $draftName)
+            Button(SottoLocalization.string("common.save")) {
                 model.updateProject(
                     id: project.id,
                     name: draftName,
@@ -89,19 +93,19 @@ struct SottoProjectView: View {
                     accent: project.accent
                 )
             }
-            Button("Cancelar", role: .cancel) {}
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
         }
         .confirmationDialog(
-            "¿Eliminar \(project.name)?",
+            SottoLocalization.format("project.confirm_delete_title", project.name),
             isPresented: $isConfirmingDeletion,
             titleVisibility: .visible
         ) {
-            Button("Eliminar proyecto", role: .destructive) {
+            Button(SottoLocalization.string("project.delete"), role: .destructive) {
                 model.deleteProject(id: project.id)
             }
-            Button("Cancelar", role: .cancel) {}
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Las transcripciones se conservarán en Historial, sin proyecto.")
+            Text(SottoLocalization.string("project.delete_message"))
         }
     }
 }
@@ -139,10 +143,14 @@ struct SottoTranscriptRow: View {
                         .foregroundStyle(record.isPinned ? theme.colors.accentInk : theme.colors.subtleForeground)
                 }
                 .buttonStyle(.sotto(.ghost, size: .small))
-                .help(record.isPinned ? "Desfijar" : "Fijar")
+                .help(
+                    SottoLocalization.string(
+                        record.isPinned ? "project.unpin" : "project.pin"
+                    )
+                )
 
                 Menu {
-                    Button("Sin proyecto") {
+                    Button(SottoLocalization.string("project.unassigned")) {
                         model.moveHistory(id: record.id, to: nil)
                     }
 
@@ -161,7 +169,7 @@ struct SottoTranscriptRow: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 26, height: 26)
-                .help("Mover a proyecto")
+                .help(SottoLocalization.string("project.move"))
 
                 Button {
                     model.copyToPasteboard(record.text)
@@ -169,7 +177,7 @@ struct SottoTranscriptRow: View {
                     SottoIcon("doc.on.doc", size: 13)
                 }
                 .buttonStyle(.sotto(.ghost, size: .small))
-                .help("Copiar")
+                .help(SottoLocalization.string("common.copy"))
 
                 Button {
                     model.removeHistory(id: record.id)
@@ -177,7 +185,7 @@ struct SottoTranscriptRow: View {
                     SottoIcon("trash", size: 13)
                 }
                 .buttonStyle(.sotto(.ghost, size: .small))
-                .help("Eliminar")
+                .help(SottoLocalization.string("common.delete"))
             }
 
             Text(record.text)
@@ -210,21 +218,21 @@ struct SottoHistorySearchView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: theme.spacing.md) {
             HStack {
-                Text("Buscar transcripciones")
+                Text(SottoLocalization.string("project.search_title"))
                     .font(theme.typography.pageTitle)
                 Spacer()
-                Button("Cerrar") { dismiss() }
+                Button(SottoLocalization.string("common.close")) { dismiss() }
                     .buttonStyle(.sotto(.ghost, size: .small))
             }
 
-            TextField("Escribe para buscar…", text: $query)
+            TextField(SottoLocalization.string("project.search_placeholder"), text: $query)
                 .textFieldStyle(.sotto)
 
             if results.isEmpty {
                 SottoEmptyState(
                     systemImage: "magnifyingglass",
-                    title: "Sin resultados",
-                    description: "Prueba con otras palabras."
+                    title: SottoLocalization.string("project.search_no_results"),
+                    description: SottoLocalization.string("project.search_no_results_description")
                 )
             } else {
                 ScrollView {

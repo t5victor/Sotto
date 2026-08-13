@@ -1,6 +1,7 @@
 import AVFoundation
 import FluidAudio
 import Foundation
+import SottoLocalization
 
 public actor ParakeetService {
     public enum ServiceError: LocalizedError {
@@ -13,15 +14,15 @@ public actor ParakeetService {
         public var errorDescription: String? {
             switch self {
             case .unsupportedHardware:
-                "Esta versión de Sotto requiere un Mac compatible."
+                SottoLocalization.string("error.parakeet.unsupported_hardware")
             case .modelNotInstalled:
-                "Instala el motor antes de iniciar el dictado."
+                SottoLocalization.string("error.parakeet.model_not_installed")
             case .unreadableAudio(let url):
-                "No se pudo leer la grabación \(url.lastPathComponent)."
+                SottoLocalization.format("error.parakeet.unreadable_audio", url.lastPathComponent)
             case .emptyAudio:
-                "La grabación no contiene audio suficiente para transcribir."
+                SottoLocalization.string("error.parakeet.empty_audio")
             case .emptyTranscript:
-                "No se detectó voz en la grabación."
+                SottoLocalization.string("error.parakeet.empty_transcript")
             }
         }
     }
@@ -98,7 +99,12 @@ public actor ParakeetService {
         }
 
         do {
-            transition(to: .downloading(progress: 0, detail: "Preparando descarga"))
+            transition(
+                to: .downloading(
+                    progress: 0,
+                    detail: SottoLocalization.string("state.model.download_preparing")
+                )
+            )
             _ = try await AsrModels.download(
                 to: directories.parakeetV3,
                 version: .v3,
@@ -233,13 +239,17 @@ public actor ParakeetService {
         let detail: String
         switch progress.phase {
         case .listing:
-            detail = "Consultando archivos"
+            detail = SottoLocalization.string("state.model.querying_files")
         case .downloading(let completed, let total):
             detail = total > 0
-                ? "Descargando archivo \(min(completed + 1, total)) de \(total)"
-                : "Comprobando archivos"
+                ? SottoLocalization.format(
+                    "state.model.downloading_file",
+                    Int64(min(completed + 1, total)),
+                    Int64(total)
+                )
+                : SottoLocalization.string("state.model.checking_files")
         case .compiling:
-            detail = "Preparando archivos"
+            detail = SottoLocalization.string("state.model.preparing_files")
         }
         maximumDownloadProgress = max(
             maximumDownloadProgress,

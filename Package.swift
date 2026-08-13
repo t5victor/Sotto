@@ -4,12 +4,14 @@ import PackageDescription
 
 let package = Package(
     name: "Sotto",
+    defaultLocalization: "es",
     platforms: [
         .macOS(.v14),
     ],
     products: [
         .executable(name: "Sotto", targets: ["Sotto"]),
         .executable(name: "SottoDoctor", targets: ["SottoDoctor"]),
+        .library(name: "SottoLocalization", targets: ["SottoLocalization"]),
         .library(name: "SottoDesignSystem", targets: ["SottoDesignSystem"]),
         .library(name: "SottoCore", targets: ["SottoCore"]),
     ],
@@ -24,11 +26,21 @@ let package = Package(
             name: "SottoAudioRingC",
             publicHeadersPath: "include"
         ),
-        .target(name: "SottoDesignSystem"),
+        .target(
+            name: "SottoLocalization",
+            resources: [
+                .process("Resources/Localization"),
+            ]
+        ),
+        .target(
+            name: "SottoDesignSystem",
+            dependencies: ["SottoLocalization"]
+        ),
         .target(
             name: "SottoCore",
             dependencies: [
                 "SottoAudioRingC",
+                "SottoLocalization",
                 .product(name: "FluidAudio", package: "FluidAudio"),
             ]
         ),
@@ -37,6 +49,7 @@ let package = Package(
             dependencies: [
                 "SottoCore",
                 "SottoDesignSystem",
+                "SottoLocalization",
             ],
             exclude: [
                 "Resources/AppIcon.icns",
@@ -47,6 +60,7 @@ let package = Package(
             resources: [
                 .copy("Resources/Fonts"),
                 .copy("Resources/FontLicenses"),
+                .process("Resources/Localization"),
             ]
         ),
         .executableTarget(
@@ -59,7 +73,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SottoCoreTests",
-            dependencies: ["SottoCore", "SottoAudioRingC"]
+            dependencies: ["SottoCore", "SottoAudioRingC", "SottoLocalization"]
         ),
     ]
 )

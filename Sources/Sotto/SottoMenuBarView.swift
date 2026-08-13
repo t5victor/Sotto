@@ -1,6 +1,7 @@
 import AppKit
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 struct SottoMenuBarView: View {
@@ -16,7 +17,7 @@ struct SottoMenuBarView: View {
                     .frame(width: 20, height: 20)
 
                 VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                    Text("Sotto")
+                    Text(SottoLocalization.string("app.name"))
                         .font(theme.typography.sectionTitle)
                         .tracking(theme.typography.tracking)
                 }
@@ -25,7 +26,9 @@ struct SottoMenuBarView: View {
 
             if model.dictationState == .transcribing || model.dictationState == .inserting {
                 SottoActivityLabel(
-                    model.dictationState == .inserting ? "Insertando texto" : "Transcribiendo"
+                    model.dictationState == .inserting
+                        ? SottoLocalization.string("menu.inserting_text")
+                        : SottoLocalization.string("menu.transcribing")
                 )
             } else if model.modelState.isReady {
                 SottoRecordingPill(
@@ -55,7 +58,7 @@ struct SottoMenuBarView: View {
                 } label: {
                     HStack(spacing: theme.spacing.sm) {
                         SottoIcon("doc.on.doc", size: 13)
-                        Text("Copiar último dictado")
+                        Text(SottoLocalization.string("menu.copy_last"))
                     }
                 }
                 .buttonStyle(.sotto(.secondary, size: .small, expands: true))
@@ -64,7 +67,7 @@ struct SottoMenuBarView: View {
             SottoDivider()
 
             HStack {
-                Button("Abrir Sotto") {
+                Button(SottoLocalization.string("common.open_sotto")) {
                     openWindow(id: "main")
                     NSApp.activate()
                 }
@@ -72,7 +75,7 @@ struct SottoMenuBarView: View {
 
                 Spacer()
 
-                Button("Salir") {
+                Button(SottoLocalization.string("common.quit")) {
                     NSApp.terminate(nil)
                 }
                 .buttonStyle(.sotto(.ghost, size: .small))
@@ -92,8 +95,8 @@ struct SottoMenuBarView: View {
     }
 
     private var menuActionTitle: String {
-        if model.isListening { return "Detener dictado" }
-        if model.dictationState.canCancel { return "Cancelar dictado" }
-        return "Empezar a dictar"
+        if model.isListening { return SottoLocalization.string("menu.action.stop") }
+        if model.dictationState.canCancel { return SottoLocalization.string("menu.action.cancel") }
+        return SottoLocalization.string("menu.action.start")
     }
 }

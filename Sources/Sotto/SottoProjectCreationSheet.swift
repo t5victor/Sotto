@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 struct SottoProjectCreationSheet: View {
@@ -40,7 +41,7 @@ struct SottoProjectCreationSheet: View {
                 .padding(.top, theme.spacing.lg)
 
             VStack(alignment: .leading, spacing: theme.spacing.md) {
-                Text("Icono y color")
+                Text(SottoLocalization.string("project.icon_and_color"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(theme.colors.foreground)
 
@@ -63,7 +64,7 @@ struct SottoProjectCreationSheet: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            Text("Crear un proyecto")
+            Text(SottoLocalization.string("project.create_title"))
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundStyle(theme.colors.foreground)
 
@@ -76,8 +77,8 @@ struct SottoProjectCreationSheet: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(SottoProjectPickerButtonStyle())
-            .help("Cerrar")
-            .accessibilityLabel("Cerrar")
+            .help(SottoLocalization.string("common.close"))
+            .accessibilityLabel(SottoLocalization.string("common.close"))
         }
     }
 
@@ -91,7 +92,7 @@ struct SottoProjectCreationSheet: View {
                 .fill(isNameFocused ? theme.colors.accent : theme.colors.border)
                 .frame(width: 1, height: 44)
 
-            TextField("Nombre del proyecto", text: $name)
+            TextField(SottoLocalization.string("project.name_placeholder"), text: $name)
                 .textFieldStyle(.plain)
                 .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(theme.colors.foreground)
@@ -131,7 +132,7 @@ struct SottoProjectCreationSheet: View {
                         .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
                 }
                 .buttonStyle(SottoProjectPickerButtonStyle())
-                .accessibilityLabel("Icono \(option)")
+                .accessibilityLabel(SottoLocalization.format("project.icon_label", option))
                 .accessibilityAddTraits(icon == option ? .isSelected : [])
             }
         }
@@ -139,7 +140,7 @@ struct SottoProjectCreationSheet: View {
 
     private var colorPicker: some View {
         HStack(spacing: theme.spacing.md) {
-            Text("Color")
+            Text(SottoLocalization.string("project.color"))
                 .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(theme.colors.mutedForeground)
 
@@ -170,10 +171,10 @@ struct SottoProjectCreationSheet: View {
         HStack {
             Spacer(minLength: theme.spacing.md)
 
-            Button("Cancelar", action: onCancel)
+            Button(SottoLocalization.string("common.cancel"), action: onCancel)
                 .buttonStyle(.sotto(.ghost, size: .regular))
 
-            Button("Crear proyecto") {
+            Button(SottoLocalization.string("project.create_title")) {
                 onCreate(name, icon, accent)
             }
             .buttonStyle(.sotto(.primary, size: .regular))

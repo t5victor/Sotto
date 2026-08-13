@@ -1,4 +1,5 @@
 import SwiftUI
+import SottoLocalization
 
 public enum SottoRecordingState: Equatable, Sendable {
     case idle
@@ -47,9 +48,9 @@ public struct SottoRecordingPill: View {
 
     private var stateLabel: String {
         switch state {
-        case .idle: "Sotto está listo"
-        case .listening: "Escuchando"
-        case .transcribing: "Transcribiendo"
+        case .idle: SottoLocalization.string("home.dictation.ready")
+        case .listening: SottoLocalization.string("home.dictation.listening")
+        case .transcribing: SottoLocalization.string("home.dictation.transcribing")
         }
     }
 

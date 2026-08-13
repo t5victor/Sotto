@@ -1,4 +1,5 @@
 import SwiftUI
+import SottoLocalization
 
 public enum SottoPermissionState: Sendable {
     case granted
@@ -62,9 +63,9 @@ public struct SottoPermissionRow: View {
 
     private var stateLabel: String {
         switch state {
-        case .granted: "Concedido"
-        case .required: "Necesario"
-        case .unavailable: "No disponible"
+        case .granted: SottoLocalization.string("common.granted")
+        case .required: SottoLocalization.string("common.required")
+        case .unavailable: SottoLocalization.string("common.unavailable")
         }
     }
 

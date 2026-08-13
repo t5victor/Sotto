@@ -1,4 +1,5 @@
 import Foundation
+import SottoLocalization
 
 public enum SottoManagedPathError: LocalizedError, Equatable {
     case outsideRoot(URL)
@@ -10,15 +11,19 @@ public enum SottoManagedPathError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .outsideRoot(let url):
-            "La ruta no pertenece a la carpeta privada de Sotto: \(url.path)."
+            SottoLocalization.format("error.directories.outside_root", url.path)
         case .unexpectedChild(let url):
-            "Sotto rechazó una ruta de archivo inesperada: \(url.path)."
+            SottoLocalization.format("error.directories.unexpected_child", url.path)
         case .unexpectedExtension(let url, let expected):
-            "Sotto esperaba un archivo .\(expected), no \(url.lastPathComponent)."
+            SottoLocalization.format(
+                "error.directories.unexpected_extension",
+                expected,
+                url.lastPathComponent
+            )
         case .symbolicLink(let url):
-            "Sotto rechazó un enlace simbólico en una carpeta gestionada: \(url.path)."
+            SottoLocalization.format("error.directories.symbolic_link", url.path)
         case .notDirectory(let url):
-            "La ruta gestionada por Sotto no es una carpeta: \(url.path)."
+            SottoLocalization.format("error.directories.not_directory", url.path)
         }
     }
 }

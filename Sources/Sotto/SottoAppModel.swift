@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import ServiceManagement
 import SottoCore
+import SottoLocalization
 
 @MainActor
 protocol SottoOverlayPresenting: AnyObject {
@@ -163,7 +164,10 @@ final class SottoAppModel: ObservableObject {
         do {
             try await settingsStore.save(preferences)
         } catch {
-            notice = "No se pudieron guardar los ajustes al cerrar: \(Self.userMessage(for: error))"
+            notice = SottoLocalization.format(
+                "error.app.save_on_exit",
+                Self.userMessage(for: error)
+            )
         }
         await parakeet.unload()
     }
@@ -270,7 +274,10 @@ final class SottoAppModel: ObservableObject {
             }
             refreshLaunchAtLoginStatus()
         } catch {
-            presentFailure("No se pudo cambiar el inicio de sesión: \(error.localizedDescription)", hideAfter: nil)
+            presentFailure(
+                SottoLocalization.format("error.app.login_item", error.localizedDescription),
+                hideAfter: nil
+            )
         }
     }
 
@@ -428,7 +435,10 @@ final class SottoAppModel: ObservableObject {
                 olderThan: Date().addingTimeInterval(-24 * 60 * 60)
             )
         } catch {
-            presentFailure("No se pudo preparar la carpeta de Sotto: \(error.localizedDescription)", hideAfter: nil)
+            presentFailure(
+                SottoLocalization.format("error.app.prepare_directory", error.localizedDescription),
+                hideAfter: nil
+            )
             isBootstrapped = true
             return
         }
@@ -457,8 +467,8 @@ final class SottoAppModel: ObservableObject {
         guard !dictationState.isBusy else { return }
         guard modelState.isReady else {
             let message = modelState.isInstalled
-                ? "El motor todavía se está preparando."
-                : "Instala el motor para empezar a dictar."
+                ? SottoLocalization.string("error.app.model_preparing")
+                : SottoLocalization.string("error.app.model_required")
             presentFailure(message, hideAfter: 2)
             return
         }
@@ -474,7 +484,7 @@ final class SottoAppModel: ObservableObject {
         guard microphonePermission.isGranted else {
             cleanupCurrentRecording()
             presentFailure(
-                "Sotto necesita permiso para usar el micrófono. Puedes concederlo en Privacidad y seguridad.",
+                SottoLocalization.string("error.app.microphone_permission"),
                 hideAfter: nil
             )
             return
@@ -550,7 +560,10 @@ final class SottoAppModel: ObservableObject {
             do {
                 try removeRecording(at: audio.url)
             } catch {
-                notice = "El texto se insertó, pero no se pudo eliminar la grabación temporal: \(Self.userMessage(for: error))"
+                notice = SottoLocalization.format(
+                    "notice.app.remove_recording",
+                    Self.userMessage(for: error)
+                )
             }
             currentRecordingURL = nil
             currentTarget = nil
@@ -566,7 +579,10 @@ final class SottoAppModel: ObservableObject {
                         limit: preferences.historyLimit
                     )
                 } catch {
-                    notice = "El texto se insertó, pero no pudo guardarse en el historial: \(Self.userMessage(for: error))"
+                    notice = SottoLocalization.format(
+                        "notice.app.save_history",
+                        Self.userMessage(for: error)
+                    )
                 }
             }
         } catch is CancellationError {
@@ -621,7 +637,10 @@ final class SottoAppModel: ObservableObject {
                     self.audioLevel = level
                 case .limitReached:
                     if self.dictationState.isListening {
-                        self.notice = "Se alcanzó el límite de grabación de \(Int(self.preferences.maximumRecordingDuration)) segundos. Sotto transcribirá lo capturado."
+                        self.notice = SottoLocalization.format(
+                            "notice.app.recording_limit",
+                            Int64(self.preferences.maximumRecordingDuration)
+                        )
                         self.beginStopDictation()
                     }
                 case .failure(let message):
@@ -653,7 +672,10 @@ final class SottoAppModel: ObservableObject {
             do {
                 try await settingsStore.save(snapshot)
             } catch {
-                self?.notice = "No se pudieron guardar los ajustes: \(Self.userMessage(for: error))"
+                self?.notice = SottoLocalization.format(
+                    "error.app.save_preferences",
+                    Self.userMessage(for: error)
+                )
             }
         }
     }
@@ -675,7 +697,10 @@ final class SottoAppModel: ObservableObject {
             do {
                 try removeRecording(at: currentRecordingURL)
             } catch {
-                notice = "No se pudo eliminar una grabación temporal: \(Self.userMessage(for: error))"
+                notice = SottoLocalization.format(
+                    "error.app.remove_recording",
+                    Self.userMessage(for: error)
+                )
             }
         }
         currentRecordingURL = nil
@@ -722,16 +747,16 @@ final class SottoAppModel: ObservableObject {
             launchAtLoginMessage = nil
         case .requiresApproval:
             preferences.launchAtLogin = false
-            launchAtLoginMessage = "macOS requiere tu aprobación en Ajustes del Sistema > Ítems de inicio."
+            launchAtLoginMessage = SottoLocalization.string("app.login.requires_approval")
         case .notRegistered:
             preferences.launchAtLogin = false
             launchAtLoginMessage = nil
         case .notFound:
             preferences.launchAtLogin = false
-            launchAtLoginMessage = "macOS no encuentra el elemento de inicio de Sotto."
+            launchAtLoginMessage = SottoLocalization.string("app.login.not_found")
         @unknown default:
             preferences.launchAtLogin = false
-            launchAtLoginMessage = "No se pudo comprobar el estado del inicio de sesión."
+            launchAtLoginMessage = SottoLocalization.string("app.login.unknown")
         }
     }
 

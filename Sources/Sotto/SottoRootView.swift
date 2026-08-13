@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 enum SottoDestination: Hashable, Identifiable {
@@ -27,14 +28,14 @@ enum SottoDestination: Hashable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Inicio"
-        case .history: "Historial"
-        case .models: "Motor de voz"
-        case .vocabulary: "Vocabulario"
-        case .shortcuts: "Atajos"
-        case .appearance: "Apariencia"
-        case .privacy: "Privacidad"
-        case .project: "Proyecto"
+        case .home: SottoLocalization.string("navigation.home")
+        case .history: SottoLocalization.string("navigation.history")
+        case .models: SottoLocalization.string("navigation.models")
+        case .vocabulary: SottoLocalization.string("navigation.vocabulary")
+        case .shortcuts: SottoLocalization.string("navigation.shortcuts")
+        case .appearance: SottoLocalization.string("navigation.appearance")
+        case .privacy: SottoLocalization.string("navigation.privacy")
+        case .project: SottoLocalization.string("navigation.project")
         }
     }
 
@@ -139,7 +140,7 @@ private struct SottoSidebar: View {
                     sidebarHeader(isCompact: isCompact)
 
                     SottoSidebarAction(
-                        title: "Nueva transcripción",
+                        title: SottoLocalization.string("sidebar.new_transcription"),
                         systemImage: "square.and.pencil",
                         isCompact: isCompact
                     ) {
@@ -162,7 +163,7 @@ private struct SottoSidebar: View {
 
                     let pinnedRecords = model.history.filter { $0.isPinned }
                     if !isCompact, !pinnedRecords.isEmpty {
-                        SottoSidebarSection(title: "Ancladas") {
+                        SottoSidebarSection(title: SottoLocalization.string("sidebar.pinned")) {
                             ForEach(pinnedRecords.prefix(4)) { record in
                                 SottoRecentRow(record: record) {
                                     selection = record.projectID.map(SottoDestination.project) ?? .history
@@ -213,7 +214,7 @@ private struct SottoSidebar: View {
     private func sidebarHeader(isCompact: Bool) -> some View {
         HStack(spacing: theme.spacing.xs) {
             if !isCompact {
-                Text("Sotto")
+                Text(SottoLocalization.string("app.name"))
                     .font(theme.typography.sidebarTitle)
                     .foregroundStyle(theme.colors.foreground)
 
@@ -222,7 +223,10 @@ private struct SottoSidebar: View {
                 Spacer(minLength: 0)
             }
 
-            SottoSidebarIconButton(systemImage: "magnifyingglass", help: "Buscar") {
+            SottoSidebarIconButton(
+                systemImage: "magnifyingglass",
+                help: SottoLocalization.string("common.search")
+            ) {
                 isShowingSearch = true
             }
 
@@ -241,8 +245,8 @@ private struct SottoSidebar: View {
             .menuStyle(.borderlessButton)
             .buttonStyle(SottoSidebarButtonStyle())
             .frame(width: 28, height: 28)
-            .help("Configuración")
-            .accessibilityLabel("Configuración")
+            .help(SottoLocalization.string("common.settings"))
+            .accessibilityLabel(SottoLocalization.string("common.settings"))
 
             if isCompact {
                 Spacer(minLength: 0)
@@ -267,7 +271,7 @@ private struct SottoSidebar: View {
                     }
 
                     if !isCompact {
-                        Text("Recientes")
+                        Text(SottoLocalization.string("sidebar.recents"))
                             .font(theme.typography.sidebarSection)
                             .foregroundStyle(theme.colors.subtleForeground)
                     }
@@ -305,8 +309,8 @@ private struct SottoSidebar: View {
 
     private func projectsSection(isCompact: Bool) -> some View {
         SottoSidebarSection(
-            title: "Proyectos",
-            actionTitle: "Nuevo proyecto",
+            title: SottoLocalization.string("sidebar.projects"),
+            actionTitle: SottoLocalization.string("common.new_project"),
             actionSystemImage: "plus",
             isCompact: isCompact,
             action: beginProjectCreation
@@ -334,7 +338,7 @@ private struct SottoSidebar: View {
                     HStack(spacing: theme.spacing.sm) {
                         SottoIcon("plus", size: isCompact ? 15 : 13, weight: .regular)
                         if !isCompact {
-                            Text("Añade tu primer proyecto")
+                            Text(SottoLocalization.string("sidebar.first_project"))
                         }
                     }
                     .font(theme.typography.sidebarItem)
@@ -648,7 +652,7 @@ private struct SottoProjectRow: View {
 
             if isExpanded, !isCompact {
                 if transcripts.isEmpty {
-                    Text("Sin transcripciones")
+                    Text(SottoLocalization.string("sidebar.no_transcriptions"))
                         .font(theme.typography.sidebarItem)
                         .foregroundStyle(theme.colors.foreground.opacity(0.72))
                         .padding(.leading, 44)
@@ -671,9 +675,15 @@ private struct SottoProjectRow: View {
             }
         }
         .contextMenu {
-            Text("\(transcripts.count) transcripciones")
+            Text(
+                SottoLocalization.count(
+                    "sidebar.transcription_count.one",
+                    "sidebar.transcription_count.other",
+                    transcripts.count
+                )
+            )
             Divider()
-            Button("Abrir proyecto", action: onSelect)
+            Button(SottoLocalization.string("common.open_project"), action: onSelect)
         }
     }
 

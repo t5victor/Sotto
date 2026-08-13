@@ -1,5 +1,6 @@
 import SottoCore
 import SottoDesignSystem
+import SottoLocalization
 import SwiftUI
 
 struct SottoModelsView: View {
@@ -10,8 +11,8 @@ struct SottoModelsView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Motor de voz",
-            description: "Configura el motor que convierte tu voz en texto."
+            title: SottoLocalization.string("settings.models.title"),
+            description: SottoLocalization.string("settings.models.description")
         ) {
             SottoCard(style: .raised) {
                 VStack(alignment: .leading, spacing: theme.spacing.lg) {
@@ -21,9 +22,9 @@ struct SottoModelsView: View {
                             .frame(width: 22, height: 22)
 
                         VStack(alignment: .leading, spacing: theme.spacing.xs) {
-                            Text("Motor de voz")
+                            Text(SottoLocalization.string("settings.models.section_title"))
                                 .font(theme.typography.sectionTitle)
-                            Text("Convierte tus dictados en texto.")
+                            Text(SottoLocalization.string("settings.models.section_description"))
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
@@ -38,14 +39,17 @@ struct SottoModelsView: View {
 
                     HStack {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                            Text("Idioma del dictado")
+                            Text(SottoLocalization.string("settings.models.language_title"))
                                 .font(theme.typography.label)
-                            Text("Detectar automáticamente suele funcionar. Elige un idioma si el resultado no es correcto.")
+                            Text(SottoLocalization.string("settings.models.language_description"))
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
                         Spacer()
-                        Picker("Idioma", selection: $model.preferences.language) {
+                        Picker(
+                            SottoLocalization.string("settings.models.language_picker"),
+                            selection: $model.preferences.language
+                        ) {
                             ForEach(SottoLanguage.allCases) { language in
                                 Text(language.displayName).tag(language)
                             }
@@ -58,28 +62,28 @@ struct SottoModelsView: View {
             }
         }
         .confirmationDialog(
-            "¿Eliminar el motor?",
+            SottoLocalization.string("settings.models.delete_confirmation"),
             isPresented: $confirmsModelDeletion,
             titleVisibility: .visible
         ) {
-            Button("Eliminar motor", role: .destructive) {
+            Button(SottoLocalization.string("common.remove_model"), role: .destructive) {
                 model.deleteModel()
             }
-            Button("Cancelar", role: .cancel) {}
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Puedes instalarlo de nuevo. Tus ajustes, vocabulario e historial no se borrarán.")
+            Text(SottoLocalization.string("settings.models.delete_message"))
         }
         .confirmationDialog(
-            "¿Reinstalar el motor?",
+            SottoLocalization.string("settings.models.reinstall_confirmation"),
             isPresented: $confirmsModelRepair,
             titleVisibility: .visible
         ) {
-            Button("Reinstalar motor", role: .destructive) {
+            Button(SottoLocalization.string("common.reinstall_model"), role: .destructive) {
                 model.reinstallModel()
             }
-            Button("Cancelar", role: .cancel) {}
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Se eliminarán los archivos actuales y se instalará una copia nueva.")
+            Text(SottoLocalization.string("settings.models.reinstall_message"))
         }
     }
 
@@ -93,7 +97,7 @@ struct SottoModelsView: View {
                         .font(theme.typography.body)
                 }
                 Spacer()
-                Button("Instalar motor") {
+                Button(SottoLocalization.string("common.install_model")) {
                     model.installModel()
                 }
                 .buttonStyle(.sotto())
@@ -106,7 +110,7 @@ struct SottoModelsView: View {
                         .font(theme.typography.body)
                 }
                 Spacer()
-                Button("Reinstalar motor") {
+                Button(SottoLocalization.string("common.reinstall_model")) {
                     confirmsModelRepair = true
                 }
                 .buttonStyle(.sotto())
@@ -123,7 +127,7 @@ struct SottoModelsView: View {
                 }
                 ProgressView(value: progress)
                     .tint(theme.colors.accent)
-                Button("Cancelar") {
+                Button(SottoLocalization.string("common.cancel")) {
                     model.cancelModelDownload()
                 }
                 .buttonStyle(.sotto(.secondary, size: .small))
@@ -138,7 +142,7 @@ struct SottoModelsView: View {
                     .font(theme.typography.body)
                     .foregroundStyle(theme.colors.mutedForeground)
                 Spacer()
-                Button("Eliminar motor") {
+                Button(SottoLocalization.string("common.remove_model")) {
                     confirmsModelDeletion = true
                 }
                 .buttonStyle(.sotto(.destructive, size: .small))
@@ -156,23 +160,29 @@ struct SottoVocabularyView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Vocabulario",
-            description: "Corrige nombres y términos que el dictado reconoce mal."
+            title: SottoLocalization.string("settings.vocabulary.title"),
+            description: SottoLocalization.string("settings.vocabulary.description")
         ) {
             SottoCard {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
                     SottoSectionHeader(
-                        "Añadir término",
-                        description: "Escribe lo que dices y cómo quieres que aparezca."
+                        SottoLocalization.string("settings.vocabulary.add_title"),
+                        description: SottoLocalization.string("settings.vocabulary.add_description")
                     )
                     HStack(spacing: theme.spacing.sm) {
-                        TextField("Forma hablada", text: $spokenForm)
+                        TextField(
+                            SottoLocalization.string("settings.vocabulary.spoken_placeholder"),
+                            text: $spokenForm
+                        )
                             .textFieldStyle(.sotto)
                         SottoIcon("arrow.right", size: 13)
                             .foregroundStyle(theme.colors.subtleForeground)
-                        TextField("Escribir como", text: $replacement)
+                        TextField(
+                            SottoLocalization.string("settings.vocabulary.replacement_placeholder"),
+                            text: $replacement
+                        )
                             .textFieldStyle(.sotto)
-                        Button("Añadir") {
+                        Button(SottoLocalization.string("common.add")) {
                             model.addVocabulary(spokenForm: spokenForm, replacement: replacement)
                             spokenForm = ""
                             replacement = ""
@@ -186,8 +196,8 @@ struct SottoVocabularyView: View {
                     if model.vocabulary.isEmpty {
                         SottoEmptyState(
                             systemImage: "book.closed",
-                            title: "Aún no hay términos",
-                            description: "Añade nombres o palabras que suelas dictar."
+                            title: SottoLocalization.string("settings.vocabulary.empty_title"),
+                            description: SottoLocalization.string("settings.vocabulary.empty_description")
                         )
                     } else {
                         ForEach(model.vocabulary) { entry in
@@ -205,7 +215,7 @@ struct SottoVocabularyView: View {
                                     SottoIcon("trash", size: 13)
                                 }
                                 .buttonStyle(.sotto(.ghost, size: .small))
-                                .help("Eliminar término")
+                                .help(SottoLocalization.string("settings.vocabulary.delete"))
                             }
                             if entry.id != model.vocabulary.last?.id { SottoDivider() }
                         }
@@ -222,8 +232,8 @@ struct SottoShortcutsView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Atajos",
-            description: "Inicia y detén el dictado con el teclado."
+            title: SottoLocalization.string("settings.shortcuts.title"),
+            description: SottoLocalization.string("settings.shortcuts.description")
         ) {
             SottoCard {
                 VStack(spacing: theme.spacing.lg) {
@@ -233,19 +243,31 @@ struct SottoShortcutsView: View {
                             .frame(width: 20, height: 20)
 
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                            Text("Atajo global")
+                            Text(SottoLocalization.string("settings.shortcuts.global_title"))
                                 .font(theme.typography.label)
-                            Text("Funciona aunque Sotto no esté en primer plano.")
+                            Text(SottoLocalization.string("settings.shortcuts.global_description"))
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
                         Spacer()
-                        Picker("Atajo", selection: shortcutBinding) {
-                            Text("⌥ Espacio").tag(SottoShortcut.defaultDictation)
-                            Text("⌃ ⌥ Espacio").tag(
+                        Picker(SottoLocalization.string("settings.shortcuts.picker"), selection: shortcutBinding) {
+                            Text(SottoShortcut.defaultDictation.localizedDisplayName).tag(SottoShortcut.defaultDictation)
+                            Text(
+                                SottoShortcut(
+                                    keyCode: 49,
+                                    carbonModifiers: 6_144,
+                                    displayName: "⌃ ⌥ Espacio"
+                                ).localizedDisplayName
+                            ).tag(
                                 SottoShortcut(keyCode: 49, carbonModifiers: 6_144, displayName: "⌃ ⌥ Espacio")
                             )
-                            Text("⌃ ⇧ Espacio").tag(
+                            Text(
+                                SottoShortcut(
+                                    keyCode: 49,
+                                    carbonModifiers: 5_120,
+                                    displayName: "⌃ ⇧ Espacio"
+                                ).localizedDisplayName
+                            ).tag(
                                 SottoShortcut(keyCode: 49, carbonModifiers: 5_120, displayName: "⌃ ⇧ Espacio")
                             )
                         }
@@ -263,36 +285,36 @@ struct SottoShortcutsView: View {
                     SottoDivider()
 
                     SottoToggleRow(
-                        "Mantener para dictar",
-                        description: "Suelta el atajo para terminar.",
+                        SottoLocalization.string("settings.shortcuts.hold_title"),
+                        description: SottoLocalization.string("settings.shortcuts.hold_description"),
                         systemImage: "hand.tap",
                         isOn: $model.preferences.holdToTalk
                     )
                     SottoDivider()
                     SottoToggleRow(
-                        "Sonidos de estado",
-                        description: "Reproduce un sonido al empezar y terminar.",
+                        SottoLocalization.string("settings.shortcuts.sounds_title"),
+                        description: SottoLocalization.string("settings.shortcuts.sounds_description"),
                         systemImage: "speaker.wave.2",
                         isOn: $model.preferences.playSounds
                     )
                     SottoDivider()
                     HStack {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                            Text("Límite de grabación")
+                            Text(SottoLocalization.string("settings.shortcuts.limit_title"))
                                 .font(theme.typography.label)
-                            Text("Sotto detendrá el dictado al alcanzarlo.")
+                            Text(SottoLocalization.string("settings.shortcuts.limit_description"))
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
                         Spacer()
                         Picker(
-                            "Duración máxima",
+                            SottoLocalization.string("settings.shortcuts.duration_picker"),
                             selection: $model.preferences.maximumRecordingDuration
                         ) {
-                            Text("2 minutos").tag(TimeInterval(120))
-                            Text("5 minutos").tag(TimeInterval(300))
-                            Text("10 minutos").tag(TimeInterval(600))
-                            Text("30 minutos").tag(TimeInterval(1_800))
+                            Text(SottoLocalization.string("settings.shortcuts.duration.2")).tag(TimeInterval(120))
+                            Text(SottoLocalization.string("settings.shortcuts.duration.5")).tag(TimeInterval(300))
+                            Text(SottoLocalization.string("settings.shortcuts.duration.10")).tag(TimeInterval(600))
+                            Text(SottoLocalization.string("settings.shortcuts.duration.30")).tag(TimeInterval(1_800))
                         }
                         .labelsHidden()
                         .frame(width: 130)
@@ -316,12 +338,12 @@ struct SottoAppearanceView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Apariencia",
-            description: "Elige el color de acento de la interfaz."
+            title: SottoLocalization.string("settings.appearance.title"),
+            description: SottoLocalization.string("settings.appearance.description")
         ) {
             SottoCard(style: .raised) {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
-                    SottoSectionHeader("Color de acento")
+                    SottoSectionHeader(SottoLocalization.string("settings.appearance.accent"))
 
                     HStack(spacing: theme.spacing.sm) {
                         ForEach(Array(appearanceSwatches.enumerated()), id: \.offset) { index, swatch in
@@ -332,7 +354,12 @@ struct SottoAppearanceView: View {
                                     RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
                                         .strokeBorder(theme.colors.strongBorder)
                                 }
-                                .accessibilityLabel("Muestra de superficie \(index + 1)")
+                                .accessibilityLabel(
+                                    SottoLocalization.format(
+                                        "settings.appearance.swatch",
+                                        Int64(index + 1)
+                                    )
+                                )
                         }
                     }
 
@@ -359,17 +386,19 @@ struct SottoPrivacyView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Privacidad",
-            description: "Decide qué permisos y datos usa Sotto."
+            title: SottoLocalization.string("settings.privacy.title"),
+            description: SottoLocalization.string("settings.privacy.description")
         ) {
             SottoCard {
                 VStack(spacing: theme.spacing.lg) {
                     SottoPermissionRow(
-                        "Micrófono",
-                        description: "Necesario para capturar tu voz.",
+                        SottoLocalization.string("settings.privacy.microphone.title"),
+                        description: SottoLocalization.string("settings.privacy.microphone.description"),
                         systemImage: "mic",
                         state: model.microphonePermission.designState,
-                        actionTitle: model.microphonePermission == .notDetermined ? "Permitir" : permissionAction(model.microphonePermission)
+                        actionTitle: model.microphonePermission == .notDetermined
+                            ? SottoLocalization.string("common.allow")
+                            : permissionAction(model.microphonePermission)
                     ) {
                         if model.microphonePermission == .notDetermined {
                             model.requestMicrophonePermission()
@@ -379,8 +408,8 @@ struct SottoPrivacyView: View {
                     }
                     SottoDivider()
                     SottoPermissionRow(
-                        "Accesibilidad",
-                        description: "Permite insertar el texto en la aplicación activa.",
+                        SottoLocalization.string("settings.privacy.accessibility.title"),
+                        description: SottoLocalization.string("settings.privacy.accessibility.description"),
                         systemImage: "accessibility",
                         state: model.accessibilityPermission.designState,
                         actionTitle: permissionAction(model.accessibilityPermission)
@@ -393,22 +422,22 @@ struct SottoPrivacyView: View {
                     }
                     SottoDivider()
                     SottoToggleRow(
-                        "Insertar automáticamente",
-                        description: "Si está desactivado, Sotto copia el texto.",
+                        SottoLocalization.string("settings.privacy.insert.title"),
+                        description: SottoLocalization.string("settings.privacy.insert.description"),
                         systemImage: "text.cursor",
                         isOn: $model.preferences.insertAutomatically
                     )
                     SottoDivider()
                     SottoToggleRow(
-                        "Guardar historial",
-                        description: "Conserva tus últimos dictados.",
+                        SottoLocalization.string("settings.privacy.history.title"),
+                        description: SottoLocalization.string("settings.privacy.history.description"),
                         systemImage: "clock",
                         isOn: $model.preferences.keepHistory
                     )
                     SottoDivider()
                     SottoToggleRow(
-                        "Abrir al iniciar sesión",
-                        description: "Sotto estará disponible al iniciar el Mac.",
+                        SottoLocalization.string("settings.privacy.login.title"),
+                        description: SottoLocalization.string("settings.privacy.login.description"),
                         systemImage: "power",
                         isOn: launchAtLoginBinding
                     )
@@ -418,7 +447,7 @@ struct SottoPrivacyView: View {
                                 .font(theme.typography.caption)
                                 .foregroundStyle(theme.colors.warningForeground)
                             Spacer()
-                            Button("Abrir ítems de inicio") {
+                            Button(SottoLocalization.string("settings.privacy.open_login_items")) {
                                 model.openLoginItemsSettings()
                             }
                             .buttonStyle(.sotto(.secondary, size: .small))
@@ -432,17 +461,17 @@ struct SottoPrivacyView: View {
                             .frame(width: 20, height: 20)
 
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                            Text("Desarrollo")
+                            Text(SottoLocalization.string("settings.privacy.development"))
                                 .font(theme.typography.label)
                                 .foregroundStyle(theme.colors.foreground)
-                            Text("Vuelve a mostrar el onboarding en esta compilación.")
+                            Text(SottoLocalization.string("settings.privacy.development_description"))
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
 
                         Spacer(minLength: theme.spacing.lg)
 
-                        Button("Repetir onboarding") {
+                        Button(SottoLocalization.string("settings.privacy.repeat_onboarding")) {
                             model.resetOnboardingForDebug()
                         }
                         .buttonStyle(.sotto(.secondary, size: .small))
@@ -454,7 +483,9 @@ struct SottoPrivacyView: View {
     }
 
     private func permissionAction(_ status: SottoPermissionStatus) -> String? {
-        status == .granted ? "Ajustes" : "Configurar"
+        status == .granted
+            ? SottoLocalization.string("common.open_settings")
+            : SottoLocalization.string("common.configure")
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -472,24 +503,30 @@ struct SottoHistoryView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Historial",
-            description: "Revisa, copia o elimina tus dictados."
+            title: SottoLocalization.string("settings.history.title"),
+            description: SottoLocalization.string("settings.history.description")
         ) {
             if model.history.isEmpty {
                 SottoCard {
                     SottoEmptyState(
                         systemImage: "clock",
-                        title: "Aún no hay dictados",
-                        description: "Cuando termines uno, aparecerá aquí."
+                        title: SottoLocalization.string("settings.history.empty_title"),
+                        description: SottoLocalization.string("settings.history.empty_description")
                     )
                 }
             } else {
                 HStack {
-                    Text("\(model.history.count) dictados")
+                    Text(
+                        SottoLocalization.count(
+                            "settings.history.count.one",
+                            "settings.history.count.other",
+                            model.history.count
+                        )
+                    )
                         .font(theme.typography.caption)
                         .foregroundStyle(theme.colors.mutedForeground)
                     Spacer()
-                    Button("Borrar historial") {
+                    Button(SottoLocalization.string("settings.history.clear")) {
                         confirmsHistoryDeletion = true
                     }
                     .buttonStyle(.sotto(.destructive, size: .small))
@@ -506,16 +543,16 @@ struct SottoHistoryView: View {
             }
         }
         .confirmationDialog(
-            "¿Borrar todo el historial?",
+            SottoLocalization.string("settings.history.clear_confirmation"),
             isPresented: $confirmsHistoryDeletion,
             titleVisibility: .visible
         ) {
-            Button("Borrar historial", role: .destructive) {
+            Button(SottoLocalization.string("settings.history.clear"), role: .destructive) {
                 model.clearHistory()
             }
-            Button("Cancelar", role: .cancel) {}
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Esta acción elimina del Mac todos los dictados guardados por Sotto.")
+            Text(SottoLocalization.string("settings.history.clear_message"))
         }
     }
 }

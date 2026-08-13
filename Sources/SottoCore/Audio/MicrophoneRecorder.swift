@@ -2,6 +2,7 @@
 import Darwin
 import Foundation
 import SottoAudioRingC
+import SottoLocalization
 
 public struct RecordedAudio: Equatable, Sendable {
     public let url: URL
@@ -39,17 +40,19 @@ public final class MicrophoneRecorder {
 
         public var errorDescription: String? {
             switch self {
-            case .alreadyRecording: "Ya hay una grabación en curso."
-            case .invalidInputFormat: "El dispositivo de entrada no ofrece un formato de audio válido."
-            case .cannotCreateMonoFormat: "No se pudo preparar el formato mono del micrófono."
-            case .cannotCreateConverter: "No se pudo preparar el conversor de audio."
-            case .cannotCreateBufferQueue: "No se pudo reservar la cola de audio en tiempo real."
+            case .alreadyRecording: SottoLocalization.string("error.microphone.already_recording")
+            case .invalidInputFormat: SottoLocalization.string("error.microphone.invalid_input_format")
+            case .cannotCreateMonoFormat: SottoLocalization.string("error.microphone.mono_format")
+            case .cannotCreateConverter: SottoLocalization.string("error.microphone.converter")
+            case .cannotCreateBufferQueue: SottoLocalization.string("error.microphone.buffer_queue")
             case .unsafeDestination(let url):
-                "Sotto rechazó una ruta de grabación insegura: \(url.path)."
-            case .engineStartFailed(let error): "No se pudo iniciar el micrófono: \(error.localizedDescription)"
-            case .writeFailed(let error): "No se pudo guardar la grabación: \(error.localizedDescription)"
-            case .notRecording: "No hay ninguna grabación activa."
-            case .recordingTooShort: "La grabación es demasiado corta. Mantén el atajo mientras hablas."
+                SottoLocalization.format("error.microphone.unsafe_destination", url.path)
+            case .engineStartFailed(let error):
+                SottoLocalization.format("error.microphone.engine_start", error.localizedDescription)
+            case .writeFailed(let error):
+                SottoLocalization.format("error.microphone.write", error.localizedDescription)
+            case .notRecording: SottoLocalization.string("error.microphone.not_recording")
+            case .recordingTooShort: SottoLocalization.string("error.microphone.recording_too_short")
             }
         }
     }
@@ -215,7 +218,7 @@ public final class MicrophoneRecorder {
             queue: .main
         ) { [continuation] _ in
             continuation.yield(
-                .failure("El dispositivo de audio cambió durante la grabación. Vuelve a intentarlo.")
+                .failure(SottoLocalization.string("error.microphone.configuration_changed"))
             )
         }
     }
@@ -259,9 +262,9 @@ private enum AudioSinkError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .realtimeQueueOverflow:
-            "El sistema no pudo vaciar la cola de audio a tiempo. La grabación se descartó para no perder palabras."
+            SottoLocalization.string("error.audio.realtime_queue_overflow")
         case .incompatibleBuffer:
-            "El dispositivo cambió a un formato de audio incompatible durante la grabación."
+            SottoLocalization.string("error.audio.incompatible_buffer")
         }
     }
 }
