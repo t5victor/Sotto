@@ -8,6 +8,7 @@ enum SottoDestination: Hashable, Identifiable {
     case history
     case models
     case vocabulary
+    case text
     case shortcuts
     case appearance
     case privacy
@@ -19,6 +20,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .history: "history"
         case .models: "models"
         case .vocabulary: "vocabulary"
+        case .text: "text"
         case .shortcuts: "shortcuts"
         case .appearance: "appearance"
         case .privacy: "privacy"
@@ -32,6 +34,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .history: SottoLocalization.string("navigation.history")
         case .models: SottoLocalization.string("navigation.models")
         case .vocabulary: SottoLocalization.string("navigation.vocabulary")
+        case .text: SottoLocalization.string("home.section.text")
         case .shortcuts: SottoLocalization.string("navigation.shortcuts")
         case .appearance: SottoLocalization.string("navigation.appearance")
         case .privacy: SottoLocalization.string("navigation.privacy")
@@ -45,6 +48,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .history: "clock"
         case .models: "waveform"
         case .vocabulary: "character.book.closed"
+        case .text: "textformat"
         case .shortcuts: "command"
         case .appearance: "circle.lefthalf.filled"
         case .privacy: "lock"
@@ -92,6 +96,8 @@ struct SottoRootView: View {
             SottoModelsView(model: model)
         case .vocabulary:
             SottoVocabularyView(model: model)
+        case .text:
+            SottoTextView(model: model)
         case .shortcuts:
             SottoShortcutsView(model: model)
         case .appearance:
@@ -126,6 +132,7 @@ private struct SottoSidebar: View {
     private let configuration: [SottoDestination] = [
         .models,
         .vocabulary,
+        .text,
         .shortcuts,
         .appearance,
         .privacy,
@@ -188,7 +195,7 @@ private struct SottoSidebar: View {
         .background(theme.colors.canvas)
         .sheet(isPresented: $isShowingSearch) {
             SottoHistorySearchView(model: model, selection: $selection)
-                .sottoTheme(.standard)
+                .sottoTheme(theme)
         }
         .sheet(isPresented: $isCreatingProject, onDismiss: resetProjectDraft) {
             SottoProjectCreationSheet(
@@ -200,7 +207,7 @@ private struct SottoSidebar: View {
                 },
                 onCreate: createProject
             )
-            .sottoTheme(.standard)
+            .sottoTheme(theme)
             .frame(width: 520, height: 360)
             .fixedSize()
             .modifier(SottoFittedSheetSizing())

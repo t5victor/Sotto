@@ -332,6 +332,36 @@ struct SottoShortcutsView: View {
     }
 }
 
+struct SottoTextView: View {
+    @ObservedObject var model: SottoAppModel
+    @Environment(\.sottoTheme) private var theme
+
+    var body: some View {
+        SottoSettingsPage(
+            title: SottoLocalization.string("home.section.text"),
+            description: SottoLocalization.string("home.section.text_description")
+        ) {
+            SottoCard {
+                VStack(spacing: theme.spacing.lg) {
+                    SottoToggleRow(
+                        SottoLocalization.string("home.normalize.title"),
+                        description: SottoLocalization.string("home.normalize.description"),
+                        systemImage: "textformat",
+                        isOn: $model.preferences.normalizeText
+                    )
+                    SottoDivider()
+                    SottoToggleRow(
+                        SottoLocalization.string("home.fillers.title"),
+                        description: SottoLocalization.string("home.fillers.description"),
+                        systemImage: "sparkles",
+                        isOn: $model.preferences.removeFillers
+                    )
+                }
+            }
+        }
+    }
+}
+
 struct SottoAppearanceView: View {
     @ObservedObject var model: SottoAppModel
     @Environment(\.sottoTheme) private var theme
@@ -345,21 +375,15 @@ struct SottoAppearanceView: View {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
                     SottoSectionHeader(SottoLocalization.string("settings.appearance.accent"))
 
-                    HStack(spacing: theme.spacing.sm) {
-                        ForEach(Array(appearanceSwatches.enumerated()), id: \.offset) { index, swatch in
-                            RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
-                                .fill(swatch)
-                                .frame(width: 30, height: 30)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
-                                        .strokeBorder(theme.colors.strongBorder)
-                                }
-                                .accessibilityLabel(
-                                    SottoLocalization.format(
-                                        "settings.appearance.swatch",
-                                        Int64(index + 1)
-                                    )
-                                )
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: theme.spacing.sm),
+                            GridItem(.flexible(), spacing: theme.spacing.sm),
+                        ],
+                        spacing: theme.spacing.sm
+                    ) {
+                        ForEach(SottoAccent.allCases) { option in
+                            paletteOption(option)
                         }
                     }
 
@@ -368,15 +392,57 @@ struct SottoAppearanceView: View {
         }
     }
 
-    private var appearanceSwatches: [Color] {
-        [
-            theme.colors.canvas,
-            theme.colors.mutedSurface,
-            theme.colors.surface,
-            theme.colors.field,
-            theme.colors.hoverStrong,
-            theme.colors.accent,
-        ]
+    private func paletteOption(_ option: SottoAccent) -> some View {
+        let isSelected = model.preferences.accent == option
+        let paletteColor = option.themePalette.background.color
+
+        return Button {
+            model.preferences.accent = option
+        } label: {
+            VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                HStack(spacing: theme.spacing.sm) {
+                    Circle()
+                        .fill(paletteColor)
+                        .frame(width: 18, height: 18)
+                        .overlay {
+                            Circle()
+                                .strokeBorder(theme.colors.strongBorder.opacity(0.65))
+                        }
+
+                    Text(option.displayName)
+                        .font(theme.typography.label)
+                        .foregroundStyle(theme.colors.foreground)
+
+                    Spacer(minLength: theme.spacing.xs)
+
+                    if isSelected {
+                        SottoIcon("checkmark.circle.fill", size: 15, weight: .medium)
+                            .foregroundStyle(theme.colors.accent)
+                    }
+                }
+
+                HStack(spacing: theme.spacing.xs) {
+                    Capsule().fill(paletteColor)
+                    Capsule().fill(paletteColor.opacity(0.62))
+                    Capsule().fill(paletteColor.opacity(0.24))
+                }
+                .frame(height: 6)
+            }
+            .padding(theme.spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(isSelected ? theme.colors.accentTint : theme.colors.field)
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? theme.colors.accent : theme.colors.border,
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(option.displayName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

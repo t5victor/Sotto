@@ -29,7 +29,7 @@ final class SottoOverlayController: SottoOverlayPresenting {
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(.standard)
+                .sottoTheme(SottoTheme.standard.withAccent(model.preferences.accent.themePalette))
         )
     }
 
@@ -37,7 +37,7 @@ final class SottoOverlayController: SottoOverlayPresenting {
         guard let model else { return }
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(.standard)
+                .sottoTheme(SottoTheme.standard.withAccent(model.preferences.accent.themePalette))
         )
         positionPanel()
         panel.orderFrontRegardless()

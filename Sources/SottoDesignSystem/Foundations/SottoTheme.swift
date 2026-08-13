@@ -524,6 +524,10 @@ public struct SottoTheme: Sendable {
         copy.colors.actionBackground = accent
         return copy
     }
+
+    public func withAccent(_ pair: SottoColorPair) -> SottoTheme {
+        withAccent(pair.background.color, foreground: pair.foreground.color)
+    }
 }
 
 private func dynamicColor(light: NSColor, dark: NSColor) -> Color {

@@ -43,7 +43,7 @@ struct SottoApp: App {
     var body: some Scene {
         WindowGroup(SottoLocalization.string("app.name"), id: "main") {
             SottoAppContentView(model: model)
-                .sottoTheme(.standard)
+                .sottoTheme(appTheme)
                 .frame(minWidth: 900, minHeight: 620)
                 .onAppear {
                     appDelegate.onTerminate = { [weak model] in
@@ -58,14 +58,18 @@ struct SottoApp: App {
 
         MenuBarExtra(SottoLocalization.string("app.name"), systemImage: model.isListening ? "mic" : "waveform") {
             SottoMenuBarView(model: model)
-                .sottoTheme(.standard)
+                .sottoTheme(appTheme)
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SottoAppearanceView(model: model)
-                .sottoTheme(.standard)
+                .sottoTheme(appTheme)
                 .frame(width: 520, height: 390)
         }
+    }
+
+    private var appTheme: SottoTheme {
+        SottoTheme.standard.withAccent(model.preferences.accent.themePalette)
     }
 }

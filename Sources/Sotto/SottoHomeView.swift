@@ -32,12 +32,8 @@ struct SottoHomeView: View {
                     dictationCard
                 }
 
-                SottoReveal(delay: 0.08) {
-                    behaviorCard
-                }
-
                 if let first = model.history.first {
-                    SottoReveal(delay: 0.12) {
+                    SottoReveal(delay: 0.08) {
                         recentCard(first)
                     }
                 }
@@ -49,36 +45,51 @@ struct SottoHomeView: View {
     }
 
     private var dictationCard: some View {
-        SottoCard(style: .raised, padding: 20) {
-            HStack(alignment: .center, spacing: 20) {
-                VStack(alignment: .leading, spacing: theme.spacing.md) {
-                    Text(dictationTitle)
-                        .font(theme.typography.cardTitle)
-                        .tracking(-0.22)
-                        .foregroundStyle(theme.colors.foreground)
+        SottoCard(style: .raised, padding: theme.spacing.xl) {
+            VStack(alignment: .leading, spacing: theme.spacing.xl) {
+                HStack(alignment: .top, spacing: theme.spacing.md) {
+                    dictationStatusIcon
 
-                    Text(dictationDescription)
-                        .font(theme.typography.body)
-                        .tracking(theme.typography.tracking)
-                        .foregroundStyle(theme.colors.mutedForeground)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: theme.spacing.xs) {
+                        Text(dictationTitle)
+                            .font(theme.typography.cardTitle)
+                            .tracking(-0.22)
+                            .foregroundStyle(theme.colors.foreground)
 
-                    HStack(spacing: theme.spacing.sm) {
-                        Button(primaryActionTitle) {
-                            performPrimaryAction()
-                        }
-                        .buttonStyle(.sotto(model.isListening ? .secondary : .primary))
-                        .disabled(primaryActionDisabled)
-
-                        SottoShortcutKey(model.preferences.shortcut.localizedDisplayName)
+                        Text(dictationDescription)
+                            .font(theme.typography.body)
+                            .tracking(theme.typography.tracking)
+                            .foregroundStyle(theme.colors.mutedForeground)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+
+                    Spacer(minLength: theme.spacing.md)
+
+                    dictationActivity
                 }
 
-                Spacer(minLength: theme.spacing.xl)
+                HStack(spacing: theme.spacing.sm) {
+                    Button(primaryActionTitle) {
+                        performPrimaryAction()
+                    }
+                    .buttonStyle(.sotto(model.isListening ? .secondary : .primary))
+                    .disabled(primaryActionDisabled)
 
-                dictationActivity
+                    SottoShortcutKey(model.preferences.shortcut.localizedDisplayName)
+                }
             }
         }
+    }
+
+    private var dictationStatusIcon: some View {
+        ZStack {
+            Circle()
+                .fill(statusIconBackground)
+            SottoIcon(statusIconName, size: 19, weight: .medium)
+                .foregroundStyle(statusIconColor)
+        }
+        .frame(width: 48, height: 48)
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -92,32 +103,41 @@ struct SottoHomeView: View {
             SottoActivityLabel(SottoLocalization.string("home.activity.transcribing"))
         case .inserting:
             SottoActivityLabel(SottoLocalization.string("home.activity.inserting"))
-        default: EmptyView()
+        case .idle, .completed, .failed:
+            if model.modelState.isReady {
+                SottoRecordingPill(state: .idle)
+            } else {
+                SottoActivityLabel(model.modelState.detail)
+            }
         }
     }
 
-    private var behaviorCard: some View {
-        SottoCard {
-            VStack(alignment: .leading, spacing: theme.spacing.md) {
-                SottoSectionHeader(
-                    SottoLocalization.string("home.section.text"),
-                    description: SottoLocalization.string("home.section.text_description")
-                )
-                SottoDivider()
-                SottoToggleRow(
-                    SottoLocalization.string("home.normalize.title"),
-                    description: SottoLocalization.string("home.normalize.description"),
-                    systemImage: "textformat",
-                    isOn: $model.preferences.normalizeText
-                )
-                SottoDivider()
-                SottoToggleRow(
-                    SottoLocalization.string("home.fillers.title"),
-                    description: SottoLocalization.string("home.fillers.description"),
-                    systemImage: "sparkles",
-                    isOn: $model.preferences.removeFillers
-                )
-            }
+    private var statusIconName: String {
+        switch model.dictationState {
+        case .preparing, .listening: "mic"
+        case .transcribing: "waveform"
+        case .inserting: "text.cursor"
+        case .completed: "checkmark"
+        case .failed: "exclamationmark.triangle"
+        case .idle: "waveform"
+        }
+    }
+
+    private var statusIconColor: Color {
+        switch model.dictationState {
+        case .preparing, .listening: theme.colors.accent
+        case .transcribing, .inserting, .completed: theme.colors.successForeground
+        case .failed: theme.colors.destructiveForeground
+        case .idle: theme.colors.accentInk
+        }
+    }
+
+    private var statusIconBackground: Color {
+        switch model.dictationState {
+        case .preparing, .listening: theme.colors.accentTint
+        case .transcribing, .inserting, .completed: theme.colors.successBackground
+        case .failed: theme.colors.destructiveBackground
+        case .idle: theme.colors.field
         }
     }
 
