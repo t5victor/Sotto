@@ -36,6 +36,7 @@ final class SottoThemeTests: XCTestCase {
         let statusPairs = SottoPalette.statusPairs.flatMap { [$0.light, $0.dark] }
         let pairs = SottoPalette.accentPairs
             + [SottoPalette.destructiveAction]
+            + SottoPalette.actionPairs
             + statusPairs
 
         for pair in pairs {
@@ -48,6 +49,20 @@ final class SottoThemeTests: XCTestCase {
                 60
             )
         }
+    }
+
+    func testBeautifulUIReferencePaletteRemainsExact() {
+        XCTAssertEqual(SottoPalette.Light.page, SottoSRGB(hex: 0xFAFAFB))
+        XCTAssertEqual(SottoPalette.Light.surface, SottoSRGB(hex: 0xFFFFFF))
+        XCTAssertEqual(SottoPalette.Light.line, SottoSRGB(hex: 0xECEDEF))
+        XCTAssertEqual(SottoPalette.Light.ink, SottoSRGB(hex: 0x1F2124))
+        XCTAssertEqual(SottoPalette.Light.accent, SottoSRGB(hex: 0x0285FF))
+
+        XCTAssertEqual(SottoPalette.Dark.page, SottoSRGB(hex: 0x17181A))
+        XCTAssertEqual(SottoPalette.Dark.surface, SottoSRGB(hex: 0x232427))
+        XCTAssertEqual(SottoPalette.Dark.line, SottoSRGB(hex: 0x2E3033))
+        XCTAssertEqual(SottoPalette.Dark.ink, SottoSRGB(hex: 0xF2F3F4))
+        XCTAssertEqual(SottoPalette.Dark.accent, SottoSRGB(hex: 0x3D9AFF))
     }
 
     private func wcagContrast(_ foreground: SottoSRGB, _ background: SottoSRGB) -> Double {

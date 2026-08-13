@@ -8,11 +8,13 @@ struct SottoHomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: theme.spacing.xl) {
-                SottoPageHeader(
-                    title: "Habla. Sotto escribe.",
-                    description: "Dictado rápido y privado en cualquier aplicación de tu Mac."
-                )
+            VStack(alignment: .leading, spacing: 20) {
+                SottoReveal {
+                    SottoPageHeader(
+                        title: "Habla. Sotto escribe.",
+                        description: "Dictado rápido y privado en cualquier aplicación de tu Mac."
+                    )
+                }
 
                 if case .failed(let message) = model.dictationState {
                     SottoErrorBanner(message: message) {
@@ -25,25 +27,32 @@ struct SottoHomeView: View {
                     }
                 }
 
-                dictationCard
+                SottoReveal(delay: 0.04) {
+                    dictationCard
+                }
 
-                HStack(alignment: .top, spacing: theme.spacing.lg) {
-                    modelCard
-                    behaviorCard
+                SottoReveal(delay: 0.08) {
+                    HStack(alignment: .top, spacing: theme.spacing.lg) {
+                        modelCard
+                        behaviorCard
+                    }
                 }
 
                 if let first = model.history.first {
-                    recentCard(first)
+                    SottoReveal(delay: 0.12) {
+                        recentCard(first)
+                    }
                 }
             }
-            .frame(maxWidth: 880, alignment: .leading)
+            .frame(maxWidth: 820, alignment: .leading)
             .padding(theme.spacing.xxl)
         }
+        .background(theme.colors.canvas)
     }
 
     private var dictationCard: some View {
-        SottoCard(style: .raised, padding: theme.spacing.xl) {
-            HStack(alignment: .center, spacing: theme.spacing.xl) {
+        SottoCard(style: .raised, padding: 20) {
+            HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
                     SottoBadge(
                         statusLabel,
@@ -52,11 +61,13 @@ struct SottoHomeView: View {
                     )
 
                     Text(dictationTitle)
-                        .font(.system(size: 21, weight: .semibold, design: .rounded))
+                        .font(.custom("Inter", size: 18).weight(.semibold))
+                        .tracking(-0.22)
                         .foregroundStyle(theme.colors.foreground)
 
                     Text(dictationDescription)
                         .font(theme.typography.body)
+                        .tracking(theme.typography.tracking)
                         .foregroundStyle(theme.colors.mutedForeground)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -67,17 +78,31 @@ struct SottoHomeView: View {
                         .buttonStyle(.sotto(model.isListening ? .secondary : .primary))
                         .disabled(primaryActionDisabled)
 
-                        SottoBadge(model.preferences.shortcut.displayName, tone: .neutral)
+                        SottoShortcutKey(model.preferences.shortcut.displayName)
                     }
                 }
 
                 Spacer(minLength: theme.spacing.xl)
 
-                SottoRecordingPill(
-                    state: recordingVisualState,
-                    level: model.audioLevel
-                )
+                dictationActivity
             }
+        }
+    }
+
+    @ViewBuilder
+    private var dictationActivity: some View {
+        switch model.dictationState {
+        case .preparing:
+            SottoActivityLabel("Preparando")
+        case .transcribing:
+            SottoActivityLabel("Transcribiendo")
+        case .inserting:
+            SottoActivityLabel("Insertando")
+        default:
+            SottoRecordingPill(
+                state: recordingVisualState,
+                level: model.audioLevel
+            )
         }
     }
 
@@ -88,19 +113,21 @@ struct SottoHomeView: View {
                     "Motor de voz",
                     description: "El reconocimiento ocurre en este Mac."
                 )
-                Divider()
+                SottoDivider()
                 HStack(spacing: theme.spacing.md) {
-                    Image(systemName: "cpu.fill")
-                        .foregroundStyle(theme.colors.accent)
-                        .frame(width: 34, height: 34)
-                        .background(theme.colors.accent.opacity(0.1))
+                    SottoIcon("cpu", size: 15)
+                        .foregroundStyle(theme.colors.accentInk)
+                        .frame(width: 30, height: 30)
+                        .background(theme.colors.accentTint)
                         .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
 
                     VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                         Text("Parakeet TDT 0.6B v3")
                             .font(theme.typography.label)
+                            .tracking(theme.typography.tracking)
                         Text(model.modelSizeDescription.map { "25 idiomas · \($0)" } ?? "25 idiomas · Apple Silicon")
-                            .font(theme.typography.body)
+                            .font(theme.typography.caption)
+                            .tracking(theme.typography.tracking)
                             .foregroundStyle(theme.colors.mutedForeground)
                     }
                     Spacer()
@@ -117,14 +144,14 @@ struct SottoHomeView: View {
                     "Comportamiento",
                     description: "Ajustes aplicados a cada dictado."
                 )
-                Divider()
+                SottoDivider()
                 SottoToggleRow(
                     "Normalizar texto",
                     description: "Limpia espacios y puntuación.",
                     systemImage: "textformat",
                     isOn: $model.preferences.normalizeText
                 )
-                Divider()
+                SottoDivider()
                 SottoToggleRow(
                     "Eliminar muletillas",
                     description: "Quita sonidos como «eh» o «mmm».",
@@ -145,13 +172,14 @@ struct SottoHomeView: View {
                     Button {
                         model.copyToPasteboard(record.text)
                     } label: {
-                        Image(systemName: "doc.on.doc")
+                        SottoIcon("doc.on.doc", size: 13)
                     }
                     .buttonStyle(.sotto(.ghost, size: .small))
                     .help("Copiar")
                 }
                 Text(record.text)
                     .font(theme.typography.body)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.foreground)
                     .lineLimit(3)
                     .textSelection(.enabled)
@@ -259,9 +287,11 @@ struct SottoPageHeader: View {
         VStack(alignment: .leading, spacing: theme.spacing.xs) {
             Text(title)
                 .font(theme.typography.pageTitle)
+                .tracking(-0.42)
                 .foregroundStyle(theme.colors.foreground)
             Text(description)
                 .font(theme.typography.body)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.mutedForeground)
         }
     }
@@ -274,10 +304,11 @@ private struct SottoErrorBanner: View {
 
     var body: some View {
         HStack(spacing: theme.spacing.md) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            SottoIcon("exclamationmark.triangle", size: 14)
                 .foregroundStyle(theme.colors.destructiveForeground)
             Text(message)
                 .font(theme.typography.body)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
             Button("Cerrar", action: dismiss)
@@ -285,7 +316,12 @@ private struct SottoErrorBanner: View {
         }
         .padding(theme.spacing.md)
         .background(theme.colors.destructiveBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: theme.radii.medium)
+                .strokeBorder(theme.colors.destructive.opacity(0.24))
+        }
         .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }
 
@@ -296,10 +332,11 @@ private struct SottoNoticeBanner: View {
 
     var body: some View {
         HStack(spacing: theme.spacing.md) {
-            Image(systemName: "info.circle.fill")
+            SottoIcon("info.circle", size: 14)
                 .foregroundStyle(theme.colors.warningForeground)
             Text(message)
                 .font(theme.typography.body)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
             Button("Cerrar", action: dismiss)
@@ -307,6 +344,35 @@ private struct SottoNoticeBanner: View {
         }
         .padding(theme.spacing.md)
         .background(theme.colors.warningBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: theme.radii.medium)
+                .strokeBorder(theme.colors.warning.opacity(0.24))
+        }
         .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+}
+
+private struct SottoShortcutKey: View {
+    @Environment(\.sottoTheme) private var theme
+    let label: String
+
+    init(_ label: String) {
+        self.label = label
+    }
+
+    var body: some View {
+        Text(label)
+            .font(theme.typography.mono)
+            .foregroundStyle(theme.colors.mutedForeground)
+            .padding(.horizontal, 7)
+            .frame(height: 26)
+            .background(theme.colors.field)
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                    .strokeBorder(theme.colors.strongBorder)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .shadow(color: .black.opacity(0.16), radius: 1, y: 1)
     }
 }

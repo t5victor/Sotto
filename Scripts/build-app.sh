@@ -55,6 +55,16 @@ cp "$PROJECT_ROOT/LICENSE" "$APP_BUNDLE/Contents/Resources/LICENSE.txt"
 cp "$PROJECT_ROOT/Sources/Sotto/Resources/ThirdPartyNotices.txt" \
   "$APP_BUNDLE/Contents/Resources/ThirdPartyNotices.txt"
 
+RESOURCE_BUNDLE="$BIN_DIR/Sotto_Sotto.bundle"
+if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
+  print -u2 "Missing SwiftPM resource bundle: $RESOURCE_BUNDLE"
+  exit 1
+fi
+APP_RESOURCE_BUNDLE="$APP_BUNDLE/Contents/Resources/Sotto_Sotto.bundle"
+mkdir -p "$APP_RESOURCE_BUNDLE"
+cp -R "$RESOURCE_BUNDLE/Fonts" "$APP_RESOURCE_BUNDLE/Fonts"
+cp -R "$RESOURCE_BUNDLE/FontLicenses" "$APP_RESOURCE_BUNDLE/FontLicenses"
+
 ICON="$PROJECT_ROOT/Sources/Sotto/Resources/AppIcon.icns"
 if [[ -f "$ICON" ]]; then
   cp "$ICON" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"

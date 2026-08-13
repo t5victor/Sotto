@@ -12,6 +12,8 @@ FluidAudio links the following third-party components into Sotto:
   under its BSD-style license. The complete copyright notice, conditions and
   disclaimer are reproduced in the packaged `ThirdPartyNotices.txt`.
 - **VBx clustering**, under the Apache License 2.0.
+- **Inter**, under the SIL Open Font License 1.1.
+- **JetBrains Mono**, under the SIL Open Font License 1.1.
 
 ## NVIDIA Parakeet TDT 0.6B v3
 

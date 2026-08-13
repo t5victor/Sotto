@@ -15,11 +15,13 @@ public struct SottoSectionHeader: View {
         VStack(alignment: .leading, spacing: theme.spacing.xs) {
             Text(title)
                 .font(theme.typography.sectionTitle)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
 
             if let description {
                 Text(description)
                     .font(theme.typography.body)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.mutedForeground)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -27,4 +29,3 @@ public struct SottoSectionHeader: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-

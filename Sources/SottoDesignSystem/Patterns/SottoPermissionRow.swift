@@ -34,19 +34,20 @@ public struct SottoPermissionRow: View {
 
     public var body: some View {
         HStack(alignment: .center, spacing: theme.spacing.md) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .medium))
+            SottoIcon(systemImage, size: 14)
                 .foregroundStyle(theme.colors.mutedForeground)
-                .frame(width: 32, height: 32)
-                .background(theme.colors.mutedSurface)
+                .frame(width: 28, height: 28)
+                .background(theme.colors.field)
                 .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
 
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                 Text(title)
                     .font(theme.typography.label)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.foreground)
                 Text(description)
                     .font(theme.typography.body)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.mutedForeground)
             }
 
@@ -85,4 +86,3 @@ public struct SottoPermissionRow: View {
         }
     }
 }
-

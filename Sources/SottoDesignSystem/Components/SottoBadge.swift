@@ -28,24 +28,28 @@ public struct SottoBadge: View {
     public var body: some View {
         HStack(spacing: theme.spacing.xs) {
             if let systemImage {
-                Image(systemName: systemImage)
-                    .imageScale(.small)
+                SottoIcon(systemImage, size: 11, weight: .medium)
             }
             Text(text)
         }
         .font(theme.typography.caption)
+        .tracking(theme.typography.tracking)
         .foregroundStyle(toneForeground)
-        .padding(.horizontal, theme.spacing.sm)
-        .padding(.vertical, theme.spacing.xs)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
         .background(toneBackground)
-        .clipShape(Capsule())
+        .overlay {
+            RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                .strokeBorder(toneBorder)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
     private var toneForeground: Color {
         switch tone {
         case .neutral: theme.colors.mutedForeground
-        case .accent: theme.colors.accentForeground
+        case .accent: theme.colors.foreground
         case .success: theme.colors.successForeground
         case .warning: theme.colors.warningForeground
         case .destructive: theme.colors.destructiveForeground
@@ -54,11 +58,21 @@ public struct SottoBadge: View {
 
     private var toneBackground: Color {
         switch tone {
-        case .neutral: theme.colors.mutedSurface
-        case .accent: theme.colors.accent
+        case .neutral: theme.colors.surface
+        case .accent: theme.colors.accentTint
         case .success: theme.colors.successBackground
         case .warning: theme.colors.warningBackground
         case .destructive: theme.colors.destructiveBackground
+        }
+    }
+
+    private var toneBorder: Color {
+        switch tone {
+        case .neutral: theme.colors.strongBorder
+        case .accent: theme.colors.accent.opacity(0.28)
+        case .success: theme.colors.success.opacity(0.24)
+        case .warning: theme.colors.warning.opacity(0.24)
+        case .destructive: theme.colors.destructive.opacity(0.24)
         }
     }
 }

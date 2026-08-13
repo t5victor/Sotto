@@ -16,7 +16,8 @@ Version 1.0 includes the complete desktop flow:
 - direct Accessibility insertion, Command-V fallback and clipboard fallback;
 - non-activating overlay, menu bar controls and launch-at-login support;
 - local preferences and optional, bounded transcription history;
-- a source-owned SwiftUI design system inspired by shadcn/ui;
+- a source-owned SwiftUI design system inspired by shadcn/ui and visually
+  aligned with Beautiful UI;
 - a diagnostic CLI, automated tests and a reproducible `.app` packager.
 
 ## Requirements

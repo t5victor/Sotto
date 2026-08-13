@@ -33,52 +33,17 @@ public struct SottoButtonStyle: ButtonStyle {
     }
 
     public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(theme.typography.label)
-            .foregroundStyle(foregroundColor)
-            .padding(.horizontal, horizontalPadding)
-            .frame(maxWidth: expands ? .infinity : nil, minHeight: controlHeight)
-            .background(backgroundColor.opacity(configuration.isPressed ? 0.78 : 1))
-            .overlay {
-                RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
-                    .strokeBorder(borderColor, lineWidth: variant == .secondary ? 1 : 0)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
-            .opacity(isEnabled ? 1 : 0.48)
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
-            .animation(
-                reduceMotion ? nil : .easeOut(duration: theme.motion.fast),
-                value: configuration.isPressed
-            )
-    }
-
-    private var foregroundColor: Color {
-        switch variant {
-        case .primary:
-            theme.colors.accentForeground
-        case .destructive:
-            theme.colors.destructiveButtonForeground
-        case .secondary, .ghost:
-            theme.colors.foreground
-        }
-    }
-
-    private var backgroundColor: Color {
-        switch variant {
-        case .primary:
-            theme.colors.accent
-        case .secondary:
-            theme.colors.raisedSurface
-        case .ghost:
-            .clear
-        case .destructive:
-            theme.colors.destructive
-        }
-    }
-
-    private var borderColor: Color {
-        variant == .secondary ? theme.colors.border : .clear
+        SottoButtonBody(
+            label: configuration.label,
+            isPressed: configuration.isPressed,
+            isEnabled: isEnabled,
+            reduceMotion: reduceMotion,
+            theme: theme,
+            variant: variant,
+            expands: expands,
+            horizontalPadding: horizontalPadding,
+            controlHeight: controlHeight
+        )
     }
 
     private var horizontalPadding: CGFloat {
@@ -95,6 +60,83 @@ public struct SottoButtonStyle: ButtonStyle {
         case .regular: theme.controlHeights.regular
         case .large: theme.controlHeights.large
         }
+    }
+}
+
+private struct SottoButtonBody<Label: View>: View {
+    let label: Label
+    let isPressed: Bool
+    let isEnabled: Bool
+    let reduceMotion: Bool
+    let theme: SottoTheme
+    let variant: SottoButtonVariant
+    let expands: Bool
+    let horizontalPadding: CGFloat
+    let controlHeight: CGFloat
+
+    @State private var isHovered = false
+
+    var body: some View {
+        label
+            .font(theme.typography.label)
+            .tracking(theme.typography.tracking)
+            .foregroundStyle(foregroundColor)
+            .padding(.horizontal, horizontalPadding)
+            .frame(maxWidth: expands ? .infinity : nil, minHeight: controlHeight)
+            .background(backgroundColor)
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: variant == .ghost ? 0 : 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .shadow(
+                color: castsShadow ? Color.black.opacity(0.18) : .clear,
+                radius: castsShadow ? 1 : 0,
+                y: castsShadow ? 1 : 0
+            )
+            .opacity(isEnabled ? 1 : 0.4)
+            .scaleEffect(isPressed && !reduceMotion ? 0.97 : 1)
+            .animation(
+                reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+                value: isPressed
+            )
+            .animation(.easeOut(duration: theme.motion.fast), value: isHovered)
+            .onHover { isHovered = $0 }
+    }
+
+    private var foregroundColor: Color {
+        switch variant {
+        case .primary: theme.colors.accentForeground
+        case .destructive: theme.colors.destructiveButtonForeground
+        case .secondary, .ghost: theme.colors.foreground
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch variant {
+        case .primary:
+            isPressed || isHovered ? theme.colors.accentInk : theme.colors.actionBackground
+        case .secondary:
+            isPressed || isHovered ? theme.colors.hover : theme.colors.surface
+        case .ghost:
+            isPressed || isHovered ? theme.colors.hover : .clear
+        case .destructive:
+            isPressed ? theme.colors.destructive.opacity(0.82) : theme.colors.destructive
+        }
+    }
+
+    private var borderColor: Color {
+        switch variant {
+        case .primary: theme.colors.accentInk
+        case .secondary: theme.colors.strongBorder
+        case .destructive: theme.colors.destructive
+        case .ghost: .clear
+        }
+    }
+
+    private var castsShadow: Bool {
+        variant == .secondary || variant == .primary || variant == .destructive
     }
 }
 

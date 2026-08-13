@@ -36,6 +36,16 @@ VBx clustering
 https://github.com/BUTSpeechFIT/VBx
 Licensed under the Apache License, Version 2.0.
 
+Inter
+Copyright 2016 The Inter Project Authors
+Licensed under the SIL Open Font License, Version 1.1.
+The complete license is bundled at Sotto_Sotto.bundle/FontLicenses/Inter-OFL.txt.
+
+JetBrains Mono
+Copyright 2020 The JetBrains Mono Project Authors
+Licensed under the SIL Open Font License, Version 1.1.
+The complete license is bundled at Sotto_Sotto.bundle/FontLicenses/JetBrainsMono-OFL.txt.
+
 NVIDIA Parakeet TDT 0.6B v3
 https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
 Created by NVIDIA. Licensed under Creative Commons Attribution 4.0 International

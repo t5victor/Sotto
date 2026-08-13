@@ -10,7 +10,7 @@ final class SottoOverlayController: SottoOverlayPresenting {
     init(model: SottoAppModel) {
         self.model = model
         self.panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 86),
+            contentRect: NSRect(x: 0, y: 0, width: 398, height: 112),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -28,12 +28,7 @@ final class SottoOverlayController: SottoOverlayPresenting {
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(
-                    .standard.withAccent(
-                        model.accent.color,
-                        foreground: model.accent.foregroundColor
-                    )
-                )
+                .sottoTheme(.standard)
         )
     }
 
@@ -41,12 +36,7 @@ final class SottoOverlayController: SottoOverlayPresenting {
         guard let model else { return }
         panel.contentView = NSHostingView(
             rootView: SottoOverlayView(model: model)
-                .sottoTheme(
-                    .standard.withAccent(
-                        model.accent.color,
-                        foreground: model.accent.foregroundColor
-                    )
-                )
+                .sottoTheme(.standard)
         )
         positionPanel()
         panel.orderFrontRegardless()
@@ -77,12 +67,14 @@ private struct SottoOverlayView: View {
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                 Text(title)
                     .font(theme.typography.label)
-                    .foregroundStyle(theme.colors.foreground)
+                    .tracking(theme.typography.tracking)
+                    .foregroundStyle(theme.colors.overlayForeground)
                     .lineLimit(1)
 
                 Text(subtitle)
                     .font(theme.typography.caption)
-                    .foregroundStyle(theme.colors.mutedForeground)
+                    .tracking(theme.typography.tracking)
+                    .foregroundStyle(theme.colors.overlayMutedForeground)
                     .lineLimit(1)
             }
 
@@ -96,29 +88,29 @@ private struct SottoOverlayView: View {
                 Button {
                     model.cancelDictation()
                 } label: {
-                    Image(systemName: "xmark")
+                    SottoIcon("xmark", size: 12)
                 }
-                .buttonStyle(.sotto(.ghost, size: .small))
+                .buttonStyle(SottoOverlayIconButtonStyle())
                 .help("Cancelar dictado")
             } else if case .failed = model.dictationState {
                 Button("Cerrar") {
                     model.dismissFailure()
                 }
-                .buttonStyle(.sotto(.ghost, size: .small))
+                .buttonStyle(SottoOverlayTextButtonStyle())
             }
         }
         .padding(.horizontal, theme.spacing.lg)
         .padding(.vertical, theme.spacing.md)
         .frame(width: 350)
         .frame(minHeight: 64)
-        .background(.ultraThickMaterial)
+        .background(theme.colors.overlay)
         .overlay {
             RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous)
-                .strokeBorder(theme.colors.border.opacity(0.85))
+                .strokeBorder(theme.colors.overlayBorder)
         }
         .clipShape(RoundedRectangle(cornerRadius: theme.radii.large, style: .continuous))
-        .shadow(color: .black.opacity(0.22), radius: 18, y: 8)
-        .padding(10)
+        .shadow(color: .black.opacity(0.34), radius: 28, y: 8)
+        .padding(24)
     }
 
     @ViewBuilder
@@ -128,17 +120,16 @@ private struct SottoOverlayView: View {
         case .listening: ("mic.fill", theme.colors.accent)
         case .transcribing: ("waveform.badge.magnifyingglass", theme.colors.accent)
         case .inserting: ("text.cursor", theme.colors.accent)
-        case .completed: ("checkmark", theme.colors.successForeground)
-        case .failed: ("exclamationmark", theme.colors.destructiveForeground)
-        case .idle: ("waveform", theme.colors.mutedForeground)
+        case .completed: ("checkmark", theme.colors.success)
+        case .failed: ("exclamationmark", theme.colors.destructive)
+        case .idle: ("waveform", theme.colors.overlayMutedForeground)
         }
 
-        Image(systemName: icon)
-            .font(.system(size: 13, weight: .bold))
+        SottoIcon(icon, size: 13, weight: .medium)
             .foregroundStyle(color)
-            .frame(width: 30, height: 30)
-            .background(color.opacity(0.12))
-            .clipShape(Circle())
+            .frame(width: 28, height: 28)
+            .background(theme.colors.overlayBorder.opacity(0.72))
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
     }
 
     private var title: String {
@@ -166,8 +157,48 @@ private struct SottoOverlayView: View {
     }
 }
 
+private struct SottoOverlayIconButtonStyle: ButtonStyle {
+    @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(theme.colors.overlayMutedForeground)
+            .frame(width: 28, height: 28)
+            .background(configuration.isPressed ? theme.colors.overlayBorder : .clear)
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radii.medium)
+                    .strokeBorder(theme.colors.overlayBorder)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+    }
+}
+
+private struct SottoOverlayTextButtonStyle: ButtonStyle {
+    @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(theme.typography.label)
+            .tracking(theme.typography.tracking)
+            .foregroundStyle(theme.colors.overlayForeground)
+            .padding(.horizontal, theme.spacing.sm)
+            .frame(minHeight: 28)
+            .background(configuration.isPressed ? theme.colors.overlayBorder : .clear)
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radii.small)
+                    .strokeBorder(theme.colors.overlayBorder)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+    }
+}
+
 private struct SottoWaveform: View {
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let level: Double
 
     var body: some View {
@@ -179,7 +210,7 @@ private struct SottoWaveform: View {
                     .frame(width: 3, height: max(4, 22 * max(0.12, level) * shape))
             }
         }
-        .animation(.easeOut(duration: theme.motion.fast), value: level)
+        .animation(reduceMotion ? nil : .easeOut(duration: theme.motion.fast), value: level)
         .accessibilityHidden(true)
     }
 }

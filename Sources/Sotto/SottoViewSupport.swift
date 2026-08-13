@@ -2,26 +2,6 @@ import SottoCore
 import SottoDesignSystem
 import SwiftUI
 
-extension SottoAccent {
-    var color: Color {
-        switch self {
-        case .violet: SottoPalette.violetAccent.background.color
-        case .blue: SottoPalette.blueAccent.background.color
-        case .coral: SottoPalette.coralAccent.background.color
-        case .green: SottoPalette.greenAccent.background.color
-        }
-    }
-
-    var foregroundColor: Color {
-        switch self {
-        case .violet: SottoPalette.violetAccent.foreground.color
-        case .blue: SottoPalette.blueAccent.foreground.color
-        case .coral: SottoPalette.coralAccent.foreground.color
-        case .green: SottoPalette.greenAccent.foreground.color
-        }
-    }
-}
-
 extension SottoModelState {
     var title: String {
         switch self {

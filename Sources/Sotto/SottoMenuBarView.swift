@@ -10,27 +10,48 @@ struct SottoMenuBarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: theme.spacing.md) {
-            HStack {
+            HStack(spacing: theme.spacing.sm) {
+                SottoIcon("waveform", size: 14, weight: .medium)
+                    .foregroundStyle(theme.colors.accentInk)
+                    .frame(width: 30, height: 30)
+                    .background(theme.colors.accentTint)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: theme.radii.medium)
+                            .strokeBorder(theme.colors.accent.opacity(0.24))
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+
                 VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                     Text("Sotto")
                         .font(theme.typography.sectionTitle)
+                        .tracking(theme.typography.tracking)
                     Text("Parakeet TDT 0.6B v3 · Local")
                         .font(theme.typography.caption)
+                        .tracking(theme.typography.tracking)
                         .foregroundStyle(theme.colors.mutedForeground)
                 }
                 Spacer()
                 SottoBadge(statusLabel, tone: statusTone)
             }
 
-            SottoRecordingPill(
-                state: recordingState,
-                level: model.audioLevel
-            )
-            .frame(maxWidth: .infinity)
+            if model.dictationState == .transcribing || model.dictationState == .inserting {
+                SottoCard(style: .muted, padding: theme.spacing.md) {
+                    SottoActivityLabel(
+                        model.dictationState == .inserting ? "Insertando texto" : "Transcribiendo"
+                    )
+                }
+            } else {
+                SottoRecordingPill(
+                    state: recordingState,
+                    level: model.audioLevel
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             if !model.modelState.isReady {
                 Text(model.modelState.detail)
                     .font(theme.typography.caption)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.mutedForeground)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -45,12 +66,15 @@ struct SottoMenuBarView: View {
                 Button {
                     model.copyToPasteboard(transcript)
                 } label: {
-                    Label("Copiar último dictado", systemImage: "doc.on.doc")
+                    HStack(spacing: theme.spacing.sm) {
+                        SottoIcon("doc.on.doc", size: 13)
+                        Text("Copiar último dictado")
+                    }
                 }
                 .buttonStyle(.sotto(.secondary, size: .small, expands: true))
             }
 
-            Divider()
+            SottoDivider()
 
             HStack {
                 Button("Abrir Sotto") {
@@ -68,7 +92,8 @@ struct SottoMenuBarView: View {
             }
         }
         .padding(theme.spacing.lg)
-        .frame(width: 310)
+        .frame(width: 320)
+        .background(theme.colors.canvas)
     }
 
     private var statusLabel: String {

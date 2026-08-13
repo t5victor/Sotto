@@ -115,7 +115,7 @@ public struct SottoPreferences: Codable, Equatable, Sendable {
     public var maximumRecordingDuration: TimeInterval
 
     public init(
-        accent: SottoAccent = .violet,
+        accent: SottoAccent = .blue,
         language: SottoLanguage = .automatic,
         removeFillers: Bool = true,
         normalizeText: Bool = true,

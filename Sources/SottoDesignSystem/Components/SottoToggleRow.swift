@@ -23,22 +23,23 @@ public struct SottoToggleRow: View {
     public var body: some View {
         HStack(alignment: .center, spacing: theme.spacing.md) {
             if let systemImage {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(theme.colors.accent)
-                    .frame(width: 30, height: 30)
-                    .background(theme.colors.accent.opacity(0.1))
+                SottoIcon(systemImage, size: 14)
+                    .foregroundStyle(theme.colors.accentInk)
+                    .frame(width: 28, height: 28)
+                    .background(theme.colors.accentTint)
                     .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
             }
 
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                 Text(title)
                     .font(theme.typography.label)
+                    .tracking(theme.typography.tracking)
                     .foregroundStyle(theme.colors.foreground)
 
                 if let description {
                     Text(description)
                         .font(theme.typography.body)
+                        .tracking(theme.typography.tracking)
                         .foregroundStyle(theme.colors.mutedForeground)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -48,9 +49,8 @@ public struct SottoToggleRow: View {
 
             Toggle(title, isOn: $isOn)
                 .labelsHidden()
-                .toggleStyle(.switch)
+                .toggleStyle(.sotto)
         }
         .contentShape(Rectangle())
     }
 }
-

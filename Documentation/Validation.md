@@ -4,7 +4,7 @@ Validation date: 2026-08-13. Host: Apple M4, 16 GB RAM, arm64, macOS 26.5.2.
 
 ## Automated checks
 
-- `swift test`: 29 tests passed, 0 failures.
+- `swift test --skip-update`: 30 tests passed, 0 failures.
 - Coverage includes C11 SPSC ring ordering/overflow, hardware-quantum capacity,
   target identity beyond PID, theme replacement, WCAG/APCA pairs, text
   processing, vocabulary identity, schema migration, corrupt JSON recovery,
@@ -17,6 +17,9 @@ Validation date: 2026-08-13. Host: Apple M4, 16 GB RAM, arm64, macOS 26.5.2.
   it passes `codesign --verify --deep --strict`.
 - The linked `fastcluster_compute_centroid_linkage` symbol and complete
   fastcluster BSD notice are both present in the local bundle.
+- The packaged resource bundle contains the Inter and JetBrains Mono variable
+  fonts together with both OFL license texts; it contains no stale duplicate
+  app icon or third-party-notice resources.
 
 ## Model and transcription
 
@@ -51,12 +54,22 @@ notarized candidate:
   the active target, the safety route correctly reported `copied`.
 - The Accessibility route was exercised separately against a temporary TextEdit
   document and reported `TARGET=TextEdit`, `OUTCOME=inserted`.
+
+The final visual redesign was inspected on 2026-08-13 from a separately launched
+instance of the rebuilt local application. Home, Appearance and Models rendered
+with the bundled Inter typography, Beautiful UI-derived light/dark tokens,
+compact controls, hairline borders and custom navigation selectors. No clipping,
+overflow or layout breakage was observed, and the Models screen reported
+Parakeet ready. This visual pass did not repeat microphone capture, global-hotkey
+dictation or overlay insertion; the runtime evidence above covers those flows
+before the visual-only redesign.
+
 ## Current local artifact
 
-- App: `dist/Sotto.app` (approximately 9.7 MB; model stored separately).
-- Archive: `dist/Sotto-1.0.0.zip` (approximately 3.8 MB).
+- App: `dist/Sotto.app` (approximately 11 MB; model stored separately).
+- Archive: `dist/Sotto-1.0.0.zip` (approximately 5.1 MB).
 - SHA-256:
-  `47d72dd83740fe7de45428786270f534e94228a49ea447c0b60f5965e897b011`.
+  `3245d873c3c1195a16ec3613424e6943fb507683300d4978081e279f78d725b0`.
 - The matching digest is emitted in `dist/Sotto-1.0.0.zip.sha256`, beside the
   exact archive it describes, and `shasum -a 256 -c` passes.
 

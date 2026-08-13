@@ -1,6 +1,6 @@
 import SwiftUI
 
-public enum SottoRecordingState: Sendable {
+public enum SottoRecordingState: Equatable, Sendable {
     case idle
     case listening
     case transcribing
@@ -8,6 +8,7 @@ public enum SottoRecordingState: Sendable {
 
 public struct SottoRecordingPill: View {
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let state: SottoRecordingState
     private let level: Double
@@ -19,15 +20,15 @@ public struct SottoRecordingPill: View {
 
     public var body: some View {
         HStack(spacing: theme.spacing.sm) {
-            Image(systemName: stateIcon)
-                .font(.system(size: 12, weight: .semibold))
+            SottoIcon(stateIcon, size: 13, weight: .medium)
                 .foregroundStyle(stateColor)
-                .frame(width: 24, height: 24)
-                .background(stateColor.opacity(0.12))
-                .clipShape(Circle())
+                .frame(width: 26, height: 26)
+                .background(stateBackground)
+                .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
 
             Text(stateLabel)
                 .font(theme.typography.label)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
 
             if state == .listening {
@@ -35,15 +36,19 @@ public struct SottoRecordingPill: View {
                     .frame(width: 42)
             }
         }
-        .padding(.horizontal, theme.spacing.md)
-        .padding(.vertical, theme.spacing.sm)
-        .background(theme.colors.raisedSurface)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(theme.colors.surface)
         .overlay {
-            Capsule()
-                .strokeBorder(theme.colors.border)
+            RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
+                .strokeBorder(theme.colors.strongBorder)
         }
-        .clipShape(Capsule())
-        .shadow(color: Color.black.opacity(0.12), radius: 12, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
+        .shadow(color: Color.black.opacity(0.18), radius: 2, y: 1)
+        .animation(
+            reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.regular),
+            value: state
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(stateLabel)
     }
@@ -71,10 +76,19 @@ public struct SottoRecordingPill: View {
         case .transcribing: theme.colors.successForeground
         }
     }
+
+    private var stateBackground: Color {
+        switch state {
+        case .idle: theme.colors.field
+        case .listening: theme.colors.accentTint
+        case .transcribing: theme.colors.successBackground
+        }
+    }
 }
 
 private struct SottoLevelMeter: View {
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let level: Double
 
@@ -84,12 +98,13 @@ private struct SottoLevelMeter: View {
                 let threshold = Double(index + 1) / 5
                 let activation = max(0.18, min(1, level / threshold))
 
-                Capsule()
+                RoundedRectangle(cornerRadius: 1)
                     .fill(theme.colors.accent.opacity(0.35 + activation * 0.65))
                     .frame(width: 3, height: 5 + (CGFloat(activation) * CGFloat(8 + index % 2 * 4)))
             }
         }
         .frame(height: 18)
+        .animation(reduceMotion ? nil : .linear(duration: theme.motion.fast), value: level)
         .accessibilityHidden(true)
     }
 }

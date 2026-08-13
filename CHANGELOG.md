@@ -18,3 +18,7 @@
   recoverable model installation and versioned local persistence.
 - Added accessible light/dark color pairs, complete fastcluster attribution,
   CI, portable artifact checksums and fail-closed Developer ID notarization.
+- Rebuilt the interface around the Beautiful UI art direction: bundled Inter
+  and JetBrains Mono, exact light/dark neutral tokens, compact one-pixel
+  controls, custom sidebar hover states, outline icon sizing and restrained
+  pixel-loader, shimmer, reveal and press motion with Reduce Motion support.

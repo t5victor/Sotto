@@ -31,6 +31,7 @@ struct SottoApp: App {
     private let overlayController: SottoOverlayController
 
     init() {
+        SottoFontRegistry.registerBundledFonts()
         let model = SottoAppModel()
         _model = StateObject(wrappedValue: model)
         overlayController = SottoOverlayController(model: model)
@@ -41,12 +42,7 @@ struct SottoApp: App {
     var body: some Scene {
         WindowGroup("Sotto", id: "main") {
             SottoRootView(model: model)
-                .sottoTheme(
-                    .standard.withAccent(
-                        model.accent.color,
-                        foreground: model.accent.foregroundColor
-                    )
-                )
+                .sottoTheme(.standard)
                 .frame(minWidth: 900, minHeight: 620)
                 .onAppear {
                     appDelegate.onTerminate = { [weak model] in
@@ -61,23 +57,13 @@ struct SottoApp: App {
 
         MenuBarExtra("Sotto", systemImage: model.isListening ? "mic.fill" : "waveform") {
             SottoMenuBarView(model: model)
-                .sottoTheme(
-                    .standard.withAccent(
-                        model.accent.color,
-                        foreground: model.accent.foregroundColor
-                    )
-                )
+                .sottoTheme(.standard)
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SottoAppearanceView(model: model)
-                .sottoTheme(
-                    .standard.withAccent(
-                        model.accent.color,
-                        foreground: model.accent.foregroundColor
-                    )
-                )
+                .sottoTheme(.standard)
                 .frame(width: 520, height: 390)
         }
     }

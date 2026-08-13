@@ -99,7 +99,6 @@ final class SottoAppModel: ObservableObject {
         transcriptionTask?.cancel()
     }
 
-    var accent: SottoAccent { preferences.accent }
     var isListening: Bool { dictationState.isListening }
     var isBusy: Bool { dictationState.isBusy }
 

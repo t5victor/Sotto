@@ -16,11 +16,14 @@ struct SottoModelsView: View {
             SottoCard(style: .raised) {
                 VStack(alignment: .leading, spacing: theme.spacing.lg) {
                     HStack(spacing: theme.spacing.md) {
-                        Image(systemName: "waveform.badge.mic")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(theme.colors.accent)
-                            .frame(width: 42, height: 42)
-                            .background(theme.colors.accent.opacity(0.1))
+                        SottoIcon("waveform.badge.mic", size: 17)
+                            .foregroundStyle(theme.colors.accentInk)
+                            .frame(width: 38, height: 38)
+                            .background(theme.colors.accentTint)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: theme.radii.medium)
+                                    .strokeBorder(theme.colors.accent.opacity(0.24))
+                            }
                             .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
 
                         VStack(alignment: .leading, spacing: theme.spacing.xs) {
@@ -36,11 +39,11 @@ struct SottoModelsView: View {
                         Spacer()
                     }
 
-                    Divider()
+                    SottoDivider()
 
                     modelControls
 
-                    Divider()
+                    SottoDivider()
 
                     HStack {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
@@ -60,7 +63,7 @@ struct SottoModelsView: View {
                         .frame(width: 205)
                     }
 
-                    Divider()
+                    SottoDivider()
 
                     LabeledContent("Idiomas", value: "25 idiomas europeos")
                     LabeledContent("Ejecución", value: "Core ML · Neural Engine")
@@ -155,13 +158,7 @@ struct SottoModelsView: View {
             }
 
         case .checking, .validating, .loading:
-            HStack(spacing: theme.spacing.md) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(model.modelState.detail)
-                    .font(theme.typography.body)
-                    .foregroundStyle(theme.colors.mutedForeground)
-            }
+            SottoActivityLabel(model.modelState.detail)
 
         case .installed, .ready:
             HStack {
@@ -198,11 +195,11 @@ struct SottoVocabularyView: View {
                     )
                     HStack(spacing: theme.spacing.sm) {
                         TextField("Forma hablada", text: $spokenForm)
-                            .textFieldStyle(.roundedBorder)
-                        Image(systemName: "arrow.right")
+                            .textFieldStyle(.sotto)
+                        SottoIcon("arrow.right", size: 13)
                             .foregroundStyle(theme.colors.subtleForeground)
                         TextField("Escribir como", text: $replacement)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.sotto)
                         Button("Añadir") {
                             model.addVocabulary(spokenForm: spokenForm, replacement: replacement)
                             spokenForm = ""
@@ -212,7 +209,7 @@ struct SottoVocabularyView: View {
                         .disabled(spokenForm.trimmed.isEmpty || replacement.trimmed.isEmpty)
                     }
 
-                    Divider()
+                    SottoDivider()
 
                     if model.vocabulary.isEmpty {
                         SottoEmptyState(
@@ -225,7 +222,7 @@ struct SottoVocabularyView: View {
                             HStack(spacing: theme.spacing.md) {
                                 Text(entry.spokenForm)
                                     .font(theme.typography.body)
-                                Image(systemName: "arrow.right")
+                                SottoIcon("arrow.right", size: 13)
                                     .foregroundStyle(theme.colors.subtleForeground)
                                 Text(entry.replacement)
                                     .font(theme.typography.label)
@@ -233,12 +230,12 @@ struct SottoVocabularyView: View {
                                 Button {
                                     model.removeVocabulary(id: entry.id)
                                 } label: {
-                                    Image(systemName: "trash")
+                                    SottoIcon("trash", size: 13)
                                 }
                                 .buttonStyle(.sotto(.ghost, size: .small))
                                 .help("Eliminar término")
                             }
-                            if entry.id != model.vocabulary.last?.id { Divider() }
+                            if entry.id != model.vocabulary.last?.id { SottoDivider() }
                         }
                     }
                 }
@@ -259,10 +256,10 @@ struct SottoShortcutsView: View {
             SottoCard {
                 VStack(spacing: theme.spacing.lg) {
                     HStack(spacing: theme.spacing.md) {
-                        Image(systemName: "command")
-                            .foregroundStyle(theme.colors.accent)
-                            .frame(width: 32, height: 32)
-                            .background(theme.colors.accent.opacity(0.1))
+                        SottoIcon("command", size: 15)
+                            .foregroundStyle(theme.colors.accentInk)
+                            .frame(width: 30, height: 30)
+                            .background(theme.colors.accentTint)
                             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
 
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
@@ -293,7 +290,7 @@ struct SottoShortcutsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    Divider()
+                    SottoDivider()
 
                     SottoToggleRow(
                         "Mantener para dictar",
@@ -301,14 +298,14 @@ struct SottoShortcutsView: View {
                         systemImage: "hand.tap",
                         isOn: $model.preferences.holdToTalk
                     )
-                    Divider()
+                    SottoDivider()
                     SottoToggleRow(
                         "Sonidos de estado",
                         description: "Confirma el inicio y el final del dictado.",
                         systemImage: "speaker.wave.2",
                         isOn: $model.preferences.playSounds
                     )
-                    Divider()
+                    SottoDivider()
                     HStack {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                             Text("Duración máxima")
@@ -350,53 +347,58 @@ struct SottoAppearanceView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Apariencia",
-            description: "La interfaz completa consume los mismos tokens semánticos."
+            description: "Un sistema source-owned inspirado en Beautiful UI."
         ) {
-            SottoCard {
-                VStack(alignment: .leading, spacing: theme.spacing.lg) {
+            SottoCard(style: .raised) {
+                VStack(alignment: .leading, spacing: theme.spacing.md) {
                     SottoSectionHeader(
-                        "Color de énfasis",
-                        description: "El cambio se propaga a botones, iconos, etiquetas y overlay."
+                        "Beautiful UI",
+                        description: "Inter, negros neutros, hairlines de un píxel y controles compactos."
                     )
 
-                    HStack(spacing: theme.spacing.md) {
-                        ForEach(SottoAccent.allCases) { accent in
-                            Button {
-                                model.preferences.accent = accent
-                            } label: {
-                                VStack(spacing: theme.spacing.sm) {
-                                    Circle()
-                                        .fill(accent.color)
-                                        .frame(width: 30, height: 30)
-                                        .overlay {
-                                            if model.accent == accent {
-                                                Image(systemName: "checkmark")
-                                                    .font(.system(size: 11, weight: .bold))
-                                                    .foregroundStyle(accent.foregroundColor)
-                                            }
-                                        }
-                                        .overlay {
-                                            Circle()
-                                                .strokeBorder(
-                                                    model.accent == accent ? theme.colors.foreground : .clear,
-                                                    lineWidth: 2
-                                                )
-                                                .padding(-4)
-                                        }
-                                    Text(accent.displayName)
-                                        .font(theme.typography.caption)
-                                        .foregroundStyle(theme.colors.mutedForeground)
+                    HStack(spacing: theme.spacing.sm) {
+                        ForEach(Array(appearanceSwatches.enumerated()), id: \.offset) { index, swatch in
+                            RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                                .fill(swatch)
+                                .frame(width: 30, height: 30)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                                        .strokeBorder(theme.colors.strongBorder)
                                 }
-                                .frame(width: 70)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Color \(accent.displayName)")
-                            .accessibilityAddTraits(model.accent == accent ? .isSelected : [])
+                                .accessibilityLabel("Muestra de superficie \(index + 1)")
                         }
                     }
+
+                    SottoDivider()
+
+                    HStack(spacing: theme.spacing.sm) {
+                        SottoBadge("Preparado", systemImage: "checkmark", tone: .success)
+                        SottoActivityLabel("Procesando")
+                        Spacer()
+                        Button("Secundario") {}
+                            .buttonStyle(.sotto(.secondary, size: .small))
+                        Button("Acción") {}
+                            .buttonStyle(.sotto(.primary, size: .small))
+                    }
+
+                    Text("Los tokens siguen viviendo en SottoTheme y pueden reemplazarse sin modificar las pantallas.")
+                        .font(theme.typography.caption)
+                        .tracking(theme.typography.tracking)
+                        .foregroundStyle(theme.colors.mutedForeground)
                 }
             }
         }
+    }
+
+    private var appearanceSwatches: [Color] {
+        [
+            theme.colors.canvas,
+            theme.colors.mutedSurface,
+            theme.colors.surface,
+            theme.colors.field,
+            theme.colors.hoverStrong,
+            theme.colors.accent,
+        ]
     }
 }
 
@@ -424,7 +426,7 @@ struct SottoPrivacyView: View {
                             model.openMicrophoneSettings()
                         }
                     }
-                    Divider()
+                    SottoDivider()
                     SottoPermissionRow(
                         "Accesibilidad",
                         description: "Permite insertar el texto en la aplicación activa.",
@@ -438,21 +440,21 @@ struct SottoPrivacyView: View {
                             model.requestAccessibilityPermission()
                         }
                     }
-                    Divider()
+                    SottoDivider()
                     SottoToggleRow(
                         "Insertar automáticamente",
                         description: "Sin Accesibilidad, el texto se copia al portapapeles.",
                         systemImage: "text.cursor",
                         isOn: $model.preferences.insertAutomatically
                     )
-                    Divider()
+                    SottoDivider()
                     SottoToggleRow(
                         "Guardar historial local",
                         description: "Conserva los últimos dictados en Application Support/Sotto.",
                         systemImage: "clock.arrow.circlepath",
                         isOn: $model.preferences.keepHistory
                     )
-                    Divider()
+                    SottoDivider()
                     SottoToggleRow(
                         "Abrir al iniciar sesión",
                         description: "Mantiene Sotto disponible en la barra de menús.",
@@ -534,13 +536,13 @@ struct SottoHistoryView: View {
                                     Button {
                                         model.copyToPasteboard(record.text)
                                     } label: {
-                                        Image(systemName: "doc.on.doc")
+                                        SottoIcon("doc.on.doc", size: 13)
                                     }
                                     .buttonStyle(.sotto(.ghost, size: .small))
                                     Button {
                                         model.removeHistory(id: record.id)
                                     } label: {
-                                        Image(systemName: "trash")
+                                        SottoIcon("trash", size: 13)
                                     }
                                     .buttonStyle(.sotto(.ghost, size: .small))
                                 }
@@ -586,13 +588,14 @@ struct SottoSettingsPage<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: theme.spacing.xl) {
+            VStack(alignment: .leading, spacing: 20) {
                 SottoPageHeader(title: title, description: description)
                 content
             }
-            .frame(maxWidth: 780, alignment: .leading)
+            .frame(maxWidth: 760, alignment: .leading)
             .padding(theme.spacing.xxl)
         }
+        .background(theme.colors.canvas)
     }
 }
 
@@ -604,13 +607,14 @@ private struct SottoEmptyState: View {
 
     var body: some View {
         VStack(spacing: theme.spacing.sm) {
-            Image(systemName: systemImage)
-                .font(.system(size: 22))
+            SottoIcon(systemImage, size: 20)
                 .foregroundStyle(theme.colors.subtleForeground)
             Text(title)
                 .font(theme.typography.label)
+                .tracking(theme.typography.tracking)
             Text(description)
                 .font(theme.typography.body)
+                .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.mutedForeground)
                 .multilineTextAlignment(.center)
         }

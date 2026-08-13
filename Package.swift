@@ -44,7 +44,10 @@ let package = Package(
                 "Resources/Sotto.entitlements",
                 "Resources/ThirdPartyNotices.txt",
             ],
-            resources: []
+            resources: [
+                .copy("Resources/Fonts"),
+                .copy("Resources/FontLicenses"),
+            ]
         ),
         .executableTarget(
             name: "SottoDoctor",
