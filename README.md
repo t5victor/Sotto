@@ -12,6 +12,10 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-2f6fdb" alt="Apache 2.0 license"></a>
 </p>
 
+<p align="center">
+  <img src="Assets/Sotto.webp" alt="Sotto — local-first dictation for macOS" width="100%">
+</p>
+
 <p align="justify">
 Sotto turns your voice into clean text in the app where you are working. Press a
 shortcut, speak, release, and continue. Sotto remembers the app that was in
