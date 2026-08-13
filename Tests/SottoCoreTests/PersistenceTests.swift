@@ -61,6 +61,73 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(records.last?.text, "Texto 2")
     }
 
+    func testHistorySupportsProjectsAndPinnedRecords() throws {
+        let projectID = UUID()
+        let record = TranscriptionRecord(
+            text: "Texto organizado",
+            rawText: "Texto organizado",
+            duration: 1,
+            processingTime: 0.1,
+            confidence: 0.9,
+            targetApplication: "Notas",
+            insertionOutcome: .inserted,
+            projectID: projectID,
+            isPinned: true
+        )
+
+        let data = try JSONEncoder().encode(record)
+        let decoded = try JSONDecoder().decode(TranscriptionRecord.self, from: data)
+
+        XCTAssertEqual(decoded.projectID, projectID)
+        XCTAssertTrue(decoded.isPinned)
+    }
+
+    func testProjectRepositoryCreatesRenamesAndRemovesProjects() async throws {
+        let root = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let repository = SottoProjectRepository(url: root.appendingPathComponent("projects.json"))
+        let project = SottoProject(name: "Ideas")
+
+        var projects = try await repository.add(project)
+        XCTAssertEqual(projects.map(\.name), ["Ideas"])
+
+        projects = try await repository.update(
+            id: project.id,
+            name: "Ideas de producto",
+            icon: "lightbulb",
+            accent: .coral
+        )
+        XCTAssertEqual(projects.first?.name, "Ideas de producto")
+        XCTAssertEqual(projects.first?.icon, "lightbulb")
+        XCTAssertEqual(projects.first?.accent, .coral)
+
+        projects = try await repository.remove(id: project.id)
+        XCTAssertTrue(projects.isEmpty)
+    }
+
+    func testHistoryCanMoveAndPinARecord() async throws {
+        let root = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let repository = SottoHistoryRepository(url: root.appendingPathComponent("history.json"))
+        let projectID = UUID()
+        let record = TranscriptionRecord(
+            text: "Texto",
+            rawText: "Texto",
+            duration: 1,
+            processingTime: 0.1,
+            confidence: 0.9,
+            targetApplication: nil,
+            insertionOutcome: .skipped
+        )
+
+        _ = try await repository.add(record, limit: 10)
+        _ = try await repository.move(id: record.id, to: projectID)
+        let pinned = try await repository.setPinned(id: record.id, isPinned: true)
+
+        XCTAssertEqual(pinned.first?.projectID, projectID)
+        XCTAssertTrue(pinned.first?.isPinned == true)
+    }
+
     func testVocabularyUpsertUsesSpokenFormAsCaseInsensitiveKey() async throws {
         let root = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }

@@ -309,6 +309,8 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
     public let confidence: Float
     public let targetApplication: String?
     public let insertionOutcome: TextInsertionOutcome
+    public var projectID: UUID?
+    public var isPinned: Bool
 
     public init(
         id: UUID = UUID(),
@@ -319,7 +321,9 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         processingTime: TimeInterval,
         confidence: Float,
         targetApplication: String?,
-        insertionOutcome: TextInsertionOutcome
+        insertionOutcome: TextInsertionOutcome,
+        projectID: UUID? = nil,
+        isPinned: Bool = false
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -330,6 +334,8 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         self.confidence = confidence
         self.targetApplication = targetApplication
         self.insertionOutcome = insertionOutcome
+        self.projectID = projectID
+        self.isPinned = isPinned
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -343,6 +349,8 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         case confidence
         case targetApplication
         case insertionOutcome
+        case projectID
+        case isPinned
     }
 
     public init(from decoder: Decoder) throws {
@@ -366,13 +374,15 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
             insertionOutcome: try values.decodeIfPresent(
                 TextInsertionOutcome.self,
                 forKey: .insertionOutcome
-            ) ?? .skipped
+            ) ?? .skipped,
+            projectID: try values.decodeIfPresent(UUID.self, forKey: .projectID),
+            isPinned: try values.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
         )
     }
 
     public func encode(to encoder: Encoder) throws {
         var values = encoder.container(keyedBy: CodingKeys.self)
-        try values.encode(1, forKey: .schemaVersion)
+        try values.encode(2, forKey: .schemaVersion)
         try values.encode(id, forKey: .id)
         try values.encode(createdAt, forKey: .createdAt)
         try values.encode(text, forKey: .text)
@@ -382,6 +392,60 @@ public struct TranscriptionRecord: Codable, Equatable, Identifiable, Sendable {
         try values.encode(confidence, forKey: .confidence)
         try values.encodeIfPresent(targetApplication, forKey: .targetApplication)
         try values.encode(insertionOutcome, forKey: .insertionOutcome)
+        try values.encodeIfPresent(projectID, forKey: .projectID)
+        try values.encode(isPinned, forKey: .isPinned)
+    }
+}
+
+public struct SottoProject: Codable, Equatable, Identifiable, Sendable {
+    public let id: UUID
+    public var name: String
+    public var icon: String
+    public var accent: SottoAccent
+    public let createdAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        icon: String = "folder",
+        accent: SottoAccent = .blue,
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.icon = icon
+        self.accent = accent
+        self.createdAt = createdAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case id
+        case name
+        case icon
+        case accent
+        case createdAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try values.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+            name: try values.decode(String.self, forKey: .name),
+            icon: try values.decodeIfPresent(String.self, forKey: .icon) ?? "folder",
+            accent: try values.decodeIfPresent(SottoAccent.self, forKey: .accent) ?? .blue,
+            createdAt: try values.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(1, forKey: .schemaVersion)
+        try values.encode(id, forKey: .id)
+        try values.encode(name, forKey: .name)
+        try values.encode(icon, forKey: .icon)
+        try values.encode(accent, forKey: .accent)
+        try values.encode(createdAt, forKey: .createdAt)
     }
 }
 

@@ -369,6 +369,9 @@ public struct SottoTheme: Sendable {
         public var caption: Font
         public var micro: Font
         public var mono: Font
+        public var sidebarItem: Font
+        public var sidebarAction: Font
+        public var sidebarSection: Font
         public var tracking: CGFloat
 
         public init(
@@ -379,6 +382,9 @@ public struct SottoTheme: Sendable {
             caption: Font = .custom("Inter", size: 11.5).weight(.medium),
             micro: Font = .custom("Inter", size: 10).weight(.medium),
             mono: Font = .custom("JetBrains Mono", size: 11),
+            sidebarItem: Font = .custom("Inter", size: 14.5),
+            sidebarAction: Font = .custom("Inter", size: 15.5),
+            sidebarSection: Font = .custom("Inter", size: 12.5).weight(.medium),
             tracking: CGFloat = -0.14
         ) {
             self.pageTitle = pageTitle
@@ -388,6 +394,9 @@ public struct SottoTheme: Sendable {
             self.caption = caption
             self.micro = micro
             self.mono = mono
+            self.sidebarItem = sidebarItem
+            self.sidebarAction = sidebarAction
+            self.sidebarSection = sidebarSection
             self.tracking = tracking
         }
     }

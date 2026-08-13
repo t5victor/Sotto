@@ -27,6 +27,7 @@ final class SottoAppModel: ObservableObject {
     @Published private(set) var accessibilityPermission: SottoPermissionStatus = .notDetermined
     @Published private(set) var audioLevel: Double = 0
     @Published private(set) var history: [TranscriptionRecord] = []
+    @Published private(set) var projects: [SottoProject] = []
     @Published private(set) var vocabulary: [VocabularyEntry] = []
     @Published private(set) var lastTranscript: String?
     @Published private(set) var hotKeyError: String?
@@ -37,6 +38,7 @@ final class SottoAppModel: ObservableObject {
     private let directories: SottoDirectories
     private let settingsStore: JSONFileStore<SottoPreferences>
     private let historyRepository: SottoHistoryRepository
+    private let projectRepository: SottoProjectRepository
     private let vocabularyRepository: SottoVocabularyRepository
     private let parakeet: ParakeetService
     private let recorder: MicrophoneRecorder
@@ -69,6 +71,11 @@ final class SottoAppModel: ObservableObject {
         )
         self.historyRepository = SottoHistoryRepository(
             url: directories.historyFile,
+            managedRoot: directories.root,
+            managedDirectory: directories.state
+        )
+        self.projectRepository = SottoProjectRepository(
+            url: directories.projectsFile,
             managedRoot: directories.root,
             managedDirectory: directories.state
         )
@@ -306,6 +313,88 @@ final class SottoAppModel: ObservableObject {
         }
     }
 
+    @discardableResult
+    func createProject(
+        name: String,
+        icon: String = "folder",
+        accent: SottoAccent = .blue
+    ) -> SottoProject? {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return nil }
+
+        let project = SottoProject(name: trimmedName, icon: icon, accent: accent)
+        projects.insert(project, at: 0)
+        persistProject(project)
+        return project
+    }
+
+    func updateProject(id: UUID, name: String, icon: String, accent: SottoAccent) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        guard let index = projects.firstIndex(where: { $0.id == id }) else { return }
+        let existing = projects[index]
+        projects[index] = SottoProject(
+            id: existing.id,
+            name: trimmedName,
+            icon: icon,
+            accent: accent,
+            createdAt: existing.createdAt
+        )
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.projects = try await self.projectRepository.update(
+                    id: id,
+                    name: trimmedName,
+                    icon: icon,
+                    accent: accent
+                )
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+                self.projects = await self.projectRepository.load()
+            }
+        }
+    }
+
+    func deleteProject(id: UUID) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.history = try await self.historyRepository.moveAll(from: id, to: nil)
+                self.projects = try await self.projectRepository.remove(id: id)
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+                self.history = await self.historyRepository.load()
+                self.projects = await self.projectRepository.load()
+            }
+        }
+    }
+
+    func moveHistory(id: UUID, to projectID: UUID?) {
+        guard projectID == nil || projects.contains(where: { $0.id == projectID }) else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.history = try await self.historyRepository.move(id: id, to: projectID)
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
+    func toggleHistoryPin(id: UUID) {
+        guard let record = history.first(where: { $0.id == id }) else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.history = try await self.historyRepository.setPinned(id: id, isPinned: !record.isPinned)
+            } catch {
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
+            }
+        }
+    }
+
     func clearHistory() {
         Task { [weak self] in
             guard let self else { return }
@@ -347,6 +436,7 @@ final class SottoAppModel: ObservableObject {
         preferences = await settingsStore.load()
         didLoadPreferences = true
         history = await historyRepository.load()
+        projects = await projectRepository.load()
         vocabulary = await vocabularyRepository.load()
         refreshLaunchAtLoginStatus()
         refreshPermissions()
@@ -564,6 +654,18 @@ final class SottoAppModel: ObservableObject {
                 try await settingsStore.save(snapshot)
             } catch {
                 self?.notice = "No se pudieron guardar los ajustes: \(Self.userMessage(for: error))"
+            }
+        }
+    }
+
+    private func persistProject(_ project: SottoProject) {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                self.projects = try await self.projectRepository.add(project)
+            } catch {
+                self.projects.removeAll { $0.id == project.id }
+                self.presentFailure(Self.userMessage(for: error), hideAfter: nil)
             }
         }
     }

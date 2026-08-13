@@ -497,43 +497,9 @@ struct SottoHistoryView: View {
 
                 LazyVStack(spacing: 0) {
                     ForEach(model.history) { record in
-                        SottoCard {
-                            VStack(alignment: .leading, spacing: theme.spacing.sm) {
-                                HStack(spacing: theme.spacing.sm) {
-                                    Text(record.createdAt, format: .dateTime.day().month().hour().minute())
-                                        .font(theme.typography.caption)
-                                        .foregroundStyle(theme.colors.mutedForeground)
-                                    if let app = record.targetApplication {
-                                        Text(app)
-                                            .font(theme.typography.caption)
-                                            .foregroundStyle(theme.colors.subtleForeground)
-                                    }
-                                    Text(record.insertionOutcome.displayName)
-                                        .font(theme.typography.caption)
-                                        .foregroundStyle(theme.colors.subtleForeground)
-                                    Spacer()
-                                    Button {
-                                        model.copyToPasteboard(record.text)
-                                    } label: {
-                                        SottoIcon("doc.on.doc", size: 13)
-                                    }
-                                    .buttonStyle(.sotto(.ghost, size: .small))
-                                    Button {
-                                        model.removeHistory(id: record.id)
-                                    } label: {
-                                        SottoIcon("trash", size: 13)
-                                    }
-                                    .buttonStyle(.sotto(.ghost, size: .small))
-                                }
-                                Text(record.text)
-                                    .font(theme.typography.body)
-                                    .foregroundStyle(theme.colors.foreground)
-                                    .textSelection(.enabled)
-                            }
-                        }
+                        SottoTranscriptRow(record: record, model: model, projectID: nil)
                         if record.id != model.history.last?.id {
                             SottoDivider()
-                                .padding(.horizontal, theme.spacing.md)
                         }
                     }
                 }
@@ -584,7 +550,7 @@ struct SottoSettingsPage<Content: View>: View {
     }
 }
 
-private struct SottoEmptyState: View {
+struct SottoEmptyState: View {
     @Environment(\.sottoTheme) private var theme
     let systemImage: String
     let title: String

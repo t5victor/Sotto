@@ -67,6 +67,10 @@ public struct SottoDirectories: Sendable {
         state.appendingPathComponent("history.json")
     }
 
+    public var projectsFile: URL {
+        state.appendingPathComponent("projects.json")
+    }
+
     /// Creates only Sotto-owned directories and rejects symbolic-link
     /// substitution at the managed root or any of its direct children.
     public func prepare(fileManager: FileManager = .default) throws {
