@@ -6,7 +6,13 @@ CONFIGURATION="${1:-release}"
 SIGNING_MODE="${2:-local}"
 DIST_DIR="$PROJECT_ROOT/dist"
 APP_BUNDLE="$DIST_DIR/Sotto.app"
-ZIP_PATH="$DIST_DIR/Sotto-1.0.0.zip"
+INFO_PLIST="$PROJECT_ROOT/Sources/Sotto/Resources/Info.plist"
+VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$INFO_PLIST")"
+if [[ -z "$VERSION" || "$VERSION" == */* ]]; then
+  print -u2 "Invalid or missing CFBundleShortVersionString in $INFO_PLIST"
+  exit 1
+fi
+ZIP_PATH="$DIST_DIR/Sotto-${VERSION}.zip"
 CHECKSUM_PATH="$ZIP_PATH.sha256"
 
 write_checksum() {

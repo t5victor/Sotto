@@ -65,6 +65,25 @@ Scripts/build-app.sh release local
 open dist/Sotto.app
 ```
 
+### Install with Homebrew
+
+Once a GitHub Release is available, this repository can also be used directly
+as a custom Homebrew tap:
+
+```sh
+brew tap t5victor/sotto https://github.com/t5victor/sotto.git
+brew install --cask sotto
+```
+
+The Cask lives in [`Casks/sotto.rb`](Casks/sotto.rb). Because the release is
+ad-hoc signed rather than notarized, macOS may require you to choose **Open**
+explicitly the first time you launch Sotto.
+
+Releases are published from the `releases` branch. Push a commit whose first
+line is `cask-1.0` (or `cask-1.0.0`); the workflow checks it against the app
+version and creates the corresponding GitHub Release automatically. The
+canonical release tag for the current `1.0.0` app is `cask-1.0.0`.
+
 ### First launch
 
 1. Open **Motor de voz** (Voice Engine) and install the speech engine.

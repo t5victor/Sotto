@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - releases
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release
+    if: startsWith(github.event.head_commit.message, 'cask-')
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Check release commit matches app version
+        id: release
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          marker="${COMMIT_MESSAGE%%$'\n'*}"
+          if [[ ! "$marker" =~ ^cask-v?([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
+            echo "Expected the first commit line to be cask-<version>, got: $marker" >&2
+            exit 1
+          fi
+
+          requested_version="${BASH_REMATCH[1]}"
+          if [[ "$requested_version" != *.*.* ]]; then
+            requested_version="${requested_version}.0"
+          fi
+
+          app_version="$(plutil -extract CFBundleShortVersionString raw -o - Sources/Sotto/Resources/Info.plist)"
+          if [[ "$requested_version" != "$app_version" ]]; then
+            echo "Release marker $marker does not match app version $app_version" >&2
+            exit 1
+          fi
+
+          echo "version=$app_version" >> "$GITHUB_OUTPUT"
+          echo "release_tag=cask-$app_version" >> "$GITHUB_OUTPUT"
+
+      - name: Toolchain
+        run: swift --version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Test
+        run: swift test
+
+      - name: Build app bundle
+        run: Scripts/build-app.sh release local
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            dist/Sotto-*.zip \
+            dist/Sotto-*.zip.sha256 \
+            --target "$GITHUB_SHA" \
+            --generate-notes \
+            --title "Sotto $RELEASE_VERSION"
