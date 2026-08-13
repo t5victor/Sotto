@@ -424,6 +424,30 @@ struct SottoPrivacyView: View {
                             .buttonStyle(.sotto(.secondary, size: .small))
                         }
                     }
+#if DEBUG
+                    SottoDivider()
+                    HStack(alignment: .center, spacing: theme.spacing.md) {
+                        SottoIcon("arrow.counterclockwise", size: 13, weight: .medium)
+                            .foregroundStyle(theme.colors.subtleForeground)
+                            .frame(width: 20, height: 20)
+
+                        VStack(alignment: .leading, spacing: theme.spacing.xxs) {
+                            Text("Desarrollo")
+                                .font(theme.typography.label)
+                                .foregroundStyle(theme.colors.foreground)
+                            Text("Vuelve a mostrar el onboarding en esta compilación.")
+                                .font(theme.typography.body)
+                                .foregroundStyle(theme.colors.mutedForeground)
+                        }
+
+                        Spacer(minLength: theme.spacing.lg)
+
+                        Button("Repetir onboarding") {
+                            model.resetOnboardingForDebug()
+                        }
+                        .buttonStyle(.sotto(.secondary, size: .small))
+                    }
+#endif
                 }
             }
         }

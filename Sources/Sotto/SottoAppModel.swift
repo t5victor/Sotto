@@ -115,6 +115,13 @@ final class SottoAppModel: ObservableObject {
         preferences.hasCompletedOnboarding = true
     }
 
+#if DEBUG
+    // TODO(release): remove this local onboarding reset before production release.
+    func resetOnboardingForDebug() {
+        preferences.hasCompletedOnboarding = false
+    }
+#endif
+
     func attachOverlayPresenter(_ presenter: SottoOverlayPresenting) {
         overlayPresenter = presenter
     }
