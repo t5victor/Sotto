@@ -9,14 +9,6 @@ enum SottoOnboardingStep: Int, CaseIterable, Identifiable, Equatable, Hashable {
 
     var id: Self { self }
 
-    var eyebrow: String {
-        switch self {
-        case .welcome: "Bienvenido a Sotto"
-        case .engine: "Paso 2 de 3"
-        case .permissions: "Paso 3 de 3"
-        }
-    }
-
     var title: String {
         switch self {
         case .welcome: "Tu voz, en cualquier app."
@@ -30,7 +22,7 @@ enum SottoOnboardingStep: Int, CaseIterable, Identifiable, Equatable, Hashable {
         case .welcome:
             "Pulsa un atajo, habla y sigue trabajando. Sotto se ocupa del resto."
         case .engine:
-            "Instala el motor que convierte tus dictados en texto. Solo tendrás que hacerlo una vez."
+            "Sotto usa Parakeet para convertir tus dictados en texto. Comprueba si ya está disponible o descárgalo ahora."
         case .permissions:
             "El micrófono es necesario para dictar. Accesibilidad permite insertar el texto directamente en la app activa."
         }
@@ -95,7 +87,7 @@ struct SottoOnboardingView: View {
                 }
 
             VStack(alignment: .leading, spacing: 0) {
-                header
+                topBar
 
                 Spacer(minLength: theme.spacing.xxl)
 
@@ -123,15 +115,6 @@ struct SottoOnboardingView: View {
 
     private var aside: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: theme.spacing.sm) {
-                SottoIcon("waveform", size: 16, weight: .medium)
-                    .foregroundStyle(theme.colors.accentInk)
-                Text("Sotto")
-                    .font(theme.typography.sectionTitle)
-                    .tracking(theme.typography.tracking)
-                    .foregroundStyle(theme.colors.foreground)
-            }
-
             Spacer()
 
             SottoOnboardingMark()
@@ -163,33 +146,14 @@ struct SottoOnboardingView: View {
         .padding(.vertical, theme.spacing.xxl)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: theme.spacing.md) {
-            HStack(alignment: .center) {
-                Text(step.eyebrow.uppercased())
-                    .font(theme.typography.caption)
-                    .tracking(0.35)
-                    .foregroundStyle(theme.colors.subtleForeground)
+    private var topBar: some View {
+        HStack {
+            Spacer()
 
-                Spacer()
-
-                Button("Omitir") {
-                    model.completeOnboarding()
-                }
-                .buttonStyle(.sotto(.ghost, size: .small))
+            Button("Omitir") {
+                model.completeOnboarding()
             }
-
-            HStack(spacing: theme.spacing.xs) {
-                ForEach(SottoOnboardingStep.allCases) { item in
-                    Capsule()
-                        .fill(item.rawValue <= step.rawValue ? theme.colors.accent : theme.colors.border)
-                        .frame(width: item == step ? 28 : 8, height: 4)
-                        .animation(
-                            reduceMotion ? nil : .easeOut(duration: theme.motion.fast),
-                            value: step
-                        )
-                }
-            }
+            .buttonStyle(.sotto(.ghost, size: .small))
         }
     }
 
@@ -247,19 +211,29 @@ struct SottoOnboardingView: View {
         SottoCard(style: .raised, padding: 20) {
             VStack(alignment: .leading, spacing: theme.spacing.md) {
                 HStack(spacing: theme.spacing.md) {
-                    SottoIcon("waveform", size: 17)
-                        .foregroundStyle(theme.colors.accentInk)
+                    SottoOnboardingProcessVisual(state: model.modelState)
+
                     VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                        Text("Motor de voz")
-                            .font(theme.typography.label)
+                        Text("Parakeet")
+                            .font(theme.typography.sectionTitle)
                             .foregroundStyle(theme.colors.foreground)
-                        Text(engineStatusDescription)
-                            .font(theme.typography.body)
-                            .foregroundStyle(theme.colors.mutedForeground)
+                        HStack(spacing: theme.spacing.xs) {
+                            Circle()
+                                .fill(engineDetectionColor)
+                                .frame(width: 6, height: 6)
+                            Text(engineDetectionLabel)
+                                .font(theme.typography.caption)
+                                .foregroundStyle(engineDetectionColor)
+                        }
                     }
                     Spacer()
                     engineStatusIcon
                 }
+
+                Text(engineStatusDescription)
+                    .font(theme.typography.body)
+                    .foregroundStyle(theme.colors.mutedForeground)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if case .downloading(let progress, let detail) = model.modelState {
                     SottoDivider()
@@ -274,6 +248,20 @@ struct SottoOnboardingView: View {
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
                         ProgressView(value: progress)
+                            .progressViewStyle(.linear)
+                            .tint(theme.colors.accent)
+                    }
+                } else if showsIndeterminateProgress {
+                    SottoDivider()
+                    VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                        HStack {
+                            Text(engineProgressDescription)
+                                .font(theme.typography.caption)
+                                .foregroundStyle(theme.colors.mutedForeground)
+                            Spacer()
+                        }
+                        ProgressView()
+                            .progressViewStyle(.linear)
                             .tint(theme.colors.accent)
                     }
                 }
@@ -325,22 +313,38 @@ struct SottoOnboardingView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: theme.spacing.md) {
-            if step != .welcome {
-                Button("Atrás") {
-                    move(to: SottoOnboardingStep(rawValue: step.rawValue - 1) ?? .welcome)
+        VStack(alignment: .leading, spacing: theme.spacing.lg) {
+            HStack(spacing: theme.spacing.xs) {
+                ForEach(SottoOnboardingStep.allCases) { item in
+                    Capsule()
+                        .fill(item.rawValue <= step.rawValue ? theme.colors.accent : theme.colors.border)
+                        .frame(width: item == step ? 28 : 8, height: 4)
+                        .animation(
+                            reduceMotion ? nil : .easeOut(duration: theme.motion.fast),
+                            value: step
+                        )
                 }
-                .buttonStyle(.sotto(.ghost, size: .small))
             }
 
-            Spacer()
+            HStack(spacing: theme.spacing.md) {
+                if step != .welcome {
+                    Button("Atrás") {
+                        move(to: SottoOnboardingStep(rawValue: step.rawValue - 1) ?? .welcome)
+                    }
+                    .buttonStyle(.sotto(.ghost, size: .small))
+                }
 
-            Button(primaryActionTitle) {
-                primaryAction()
+                Spacer()
+
+                Button(primaryActionTitle) {
+                    primaryAction()
+                }
+                .buttonStyle(.sotto(.primary, size: .regular))
+                .disabled(primaryActionDisabled)
             }
-            .buttonStyle(.sotto(.primary, size: .regular))
-            .disabled(primaryActionDisabled)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Paso \(step.rawValue + 1) de \(SottoOnboardingStep.allCases.count)")
     }
 
     private var primaryActionTitle: String {
@@ -348,8 +352,8 @@ struct SottoOnboardingView: View {
         case .welcome: "Configurar Sotto"
         case .engine:
             switch model.modelState {
-            case .notInstalled: "Instalar motor"
-            case .failed: "Reintentar"
+            case .notInstalled: "Descargar Parakeet"
+            case .failed: "Reintentar descarga"
             case .ready: "Continuar"
             default: "Preparando…"
             }
@@ -398,14 +402,49 @@ struct SottoOnboardingView: View {
 
     private var engineStatusDescription: String {
         switch model.modelState {
-        case .checking: "Comprobando la instalación…"
-        case .notInstalled: "Aún no está instalado."
-        case .installed: "Preparando el motor…"
-        case .downloading: "Descargando los archivos necesarios…"
-        case .validating: "Comprobando los archivos…"
+        case .checking: "Estamos buscando Parakeet en este Mac."
+        case .notInstalled: "No hemos encontrado Parakeet. Descárgalo para poder continuar."
+        case .installed: "Hemos encontrado los archivos de Parakeet y vamos a comprobarlos."
+        case .downloading: "Descargando Parakeet y preparando sus archivos."
+        case .validating: "La descarga ha terminado. Estamos verificando Parakeet."
+        case .loading: "Parakeet está descargado. Estamos cargando el motor."
+        case .ready: "Parakeet está verificado y listo para convertir voz en texto."
+        case .failed: "No hemos podido verificar Parakeet. Puedes volver a intentarlo."
+        }
+    }
+
+    private var engineProgressDescription: String {
+        switch model.modelState {
+        case .checking: "Buscando el motor…"
+        case .installed: "Comprobando los archivos encontrados…"
+        case .validating: "Verificando la descarga…"
         case .loading: "Cargando el motor…"
-        case .ready: "Listo para dictar."
-        case .failed: "No se pudo preparar el motor."
+        default: "Preparando…"
+        }
+    }
+
+    private var showsIndeterminateProgress: Bool {
+        switch model.modelState {
+        case .checking, .installed, .validating, .loading: true
+        default: false
+        }
+    }
+
+    private var engineDetectionLabel: String {
+        switch model.modelState {
+        case .checking: "Comprobando"
+        case .notInstalled: "No detectado"
+        case .installed, .downloading, .validating, .loading, .ready: "Detectado"
+        case .failed: "No verificado"
+        }
+    }
+
+    private var engineDetectionColor: Color {
+        switch model.modelState {
+        case .ready: theme.colors.successForeground
+        case .notInstalled: theme.colors.warningForeground
+        case .failed: theme.colors.destructiveForeground
+        case .checking, .installed, .downloading, .validating, .loading: theme.colors.warningForeground
         }
     }
 
@@ -415,6 +454,9 @@ struct SottoOnboardingView: View {
         case .ready:
             SottoIcon("checkmark.circle.fill", size: 18)
                 .foregroundStyle(theme.colors.successForeground)
+        case .notInstalled:
+            SottoIcon("arrow.down.circle", size: 18)
+                .foregroundStyle(theme.colors.accentInk)
         case .failed:
             SottoIcon("exclamationmark.circle.fill", size: 18)
                 .foregroundStyle(theme.colors.destructiveForeground)
@@ -431,6 +473,71 @@ struct SottoOnboardingView: View {
         case .notDetermined: required ? "Permitir" : "Configurar"
         case .granted: nil
         case .denied, .restricted: "Abrir ajustes"
+        }
+    }
+}
+
+private struct SottoOnboardingProcessVisual: View {
+    @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    let state: SottoModelState
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 0.08, paused: reduceMotion || !isAnimated)) { timeline in
+            let phase = Int(timeline.date.timeIntervalSinceReferenceDate * 6) % 16
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.fixed(5), spacing: 3), count: 4),
+                spacing: 3
+            ) {
+                ForEach(0..<16, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 1.2, style: .continuous)
+                        .fill(pixelColor)
+                        .frame(width: 5, height: 5)
+                        .opacity(pixelOpacity(index: index, phase: phase))
+                }
+            }
+            .frame(width: 41, height: 41)
+        }
+        .frame(width: 52, height: 52)
+        .background(theme.colors.field)
+        .overlay {
+            RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
+                .strokeBorder(theme.colors.border)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
+        .accessibilityHidden(true)
+    }
+
+    private var isAnimated: Bool {
+        switch state {
+        case .checking, .installed, .downloading, .validating, .loading: true
+        default: false
+        }
+    }
+
+    private var pixelColor: Color {
+        switch state {
+        case .ready: theme.colors.success
+        case .failed: theme.colors.destructive
+        case .notInstalled: theme.colors.subtleForeground
+        default: theme.colors.accent
+        }
+    }
+
+    private func pixelOpacity(index: Int, phase: Int) -> Double {
+        if state.isReady {
+            return [0.32, 0.55, 0.9, 0.45, 0.72, 0.38, 0.82, 0.52, 0.25, 0.62, 1.0, 0.42, 0.5, 0.76, 0.34, 0.58][index]
+        }
+        if case .failed = state { return index.isMultiple(of: 3) ? 0.9 : 0.25 }
+        if case .notInstalled = state { return index.isMultiple(of: 5) ? 0.55 : 0.18 }
+        let distance = (index - phase + 16) % 16
+        return switch distance {
+        case 0: 1
+        case 1, 15: 0.62
+        case 2, 14: 0.34
+        default: 0.14
         }
     }
 }

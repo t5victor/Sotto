@@ -84,15 +84,8 @@ private struct SottoSidebar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SottoSidebarHeader()
-
-            Rectangle()
-                .fill(theme.colors.border)
-                .frame(height: 1)
-                .padding(.horizontal, theme.spacing.md)
-                .padding(.bottom, theme.spacing.lg)
-
             SottoSidebarSection(title: "Espacio de trabajo", destinations: workspace, selection: $selection)
+                .padding(.top, theme.spacing.xl)
 
             SottoSidebarSection(title: "Configuración", destinations: configuration, selection: $selection)
                 .padding(.top, theme.spacing.lg)
@@ -173,26 +166,5 @@ private struct SottoSidebarRow: View {
         if isSelected { return theme.colors.hoverStrong }
         if isHovered { return theme.colors.hover }
         return .clear
-    }
-}
-
-private struct SottoSidebarHeader: View {
-    @Environment(\.sottoTheme) private var theme
-
-    var body: some View {
-        HStack(spacing: theme.spacing.sm) {
-            SottoIcon("waveform", size: 16, weight: .medium)
-                .foregroundStyle(theme.colors.accentInk)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Sotto")
-                    .font(theme.typography.sectionTitle)
-                    .tracking(theme.typography.tracking)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, theme.spacing.sm)
-        .padding(.top, theme.spacing.xl)
-        .padding(.bottom, theme.spacing.lg)
     }
 }
