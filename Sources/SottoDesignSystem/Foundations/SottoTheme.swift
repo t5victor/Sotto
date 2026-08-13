@@ -388,11 +388,11 @@ public struct SottoTheme: Sendable {
             micro: Font = .custom("Inter", size: 10.5).weight(.medium),
             mono: Font = .custom("JetBrains Mono", size: 10.5),
             sidebarTitle: Font = .system(size: 20, weight: .semibold),
-            sidebarItem: Font = .system(size: 15.5, weight: .regular),
-            sidebarAction: Font = .system(size: 15.5, weight: .regular),
+            sidebarItem: Font = .system(size: 14.5, weight: .regular),
+            sidebarAction: Font = .system(size: 14.5, weight: .regular),
             sidebarSection: Font = .system(size: 14, weight: .regular),
             sidebarSectionAction: Font = .system(size: 14, weight: .regular),
-            sidebarMeta: Font = .system(size: 14, weight: .regular),
+            sidebarMeta: Font = .system(size: 14.5, weight: .regular),
             tracking: CGFloat = -0.10
         ) {
             self.pageTitle = pageTitle

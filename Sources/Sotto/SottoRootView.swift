@@ -59,14 +59,15 @@ struct SottoRootView: View {
     @State private var selection: SottoDestination = .home
 
     var body: some View {
-        HStack(spacing: 0) {
+        HSplitView {
             SottoSidebar(model: model, selection: $selection)
-                .frame(width: 320)
+                .frame(minWidth: 76, idealWidth: 320, maxWidth: 420, maxHeight: .infinity)
 
             destinationView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(theme.colors.surface)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colors.canvas)
         .onChange(of: model.projects) { _, projects in
             guard case .project(let projectID) = selection,
@@ -116,6 +117,8 @@ private struct SottoSidebar: View {
     @State private var isShowingSearch = false
     @State private var expandedProjects: Set<UUID> = []
     @State private var projectDraftName = ""
+    @State private var projectDraftIcon = "folder"
+    @State private var projectDraftAccent: SottoAccent = .blue
     @State private var isRecentsExpanded = false
 
     private let workspace: [SottoDestination] = [.home, .history]
@@ -128,61 +131,60 @@ private struct SottoSidebar: View {
     ]
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 0) {
-                sidebarHeader
+        GeometryReader { proxy in
+            let isCompact = proxy.size.width < 180
 
-                SottoSidebarAction(title: "Nueva transcripción", systemImage: "square.and.pencil") {
-                    selection = .home
-                    model.toggleDictation()
-                }
-                .padding(.top, theme.spacing.lg)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    sidebarHeader(isCompact: isCompact)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(workspace) { destination in
-                        SottoSidebarRow(
-                            destination: destination,
-                            isSelected: selection == destination
-                        ) {
-                            selection = destination
-                        }
+                    SottoSidebarAction(
+                        title: "Nueva transcripción",
+                        systemImage: "square.and.pencil",
+                        isCompact: isCompact
+                    ) {
+                        selection = .home
+                        model.toggleDictation()
                     }
-                }
+                    .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
 
-                let pinnedRecords = model.history.filter { $0.isPinned }
-                if !pinnedRecords.isEmpty {
-                    SottoSidebarSection(title: "Ancladas") {
-                        ForEach(pinnedRecords.prefix(4)) { record in
-                            SottoRecentRow(record: record) {
-                                selection = record.projectID.map(SottoDestination.project) ?? .history
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(workspace) { destination in
+                            SottoSidebarRow(
+                                destination: destination,
+                                isSelected: selection == destination,
+                                isCompact: isCompact
+                            ) {
+                                selection = destination
                             }
                         }
                     }
-                    .padding(.top, theme.spacing.lg)
+
+                    let pinnedRecords = model.history.filter { $0.isPinned }
+                    if !isCompact, !pinnedRecords.isEmpty {
+                        SottoSidebarSection(title: "Ancladas") {
+                            ForEach(pinnedRecords.prefix(4)) { record in
+                                SottoRecentRow(record: record) {
+                                    selection = record.projectID.map(SottoDestination.project) ?? .history
+                                }
+                            }
+                        }
+                        .padding(.top, theme.spacing.lg)
+                    }
+
+                    projectsSection(isCompact: isCompact)
+
+                    recentsSection(isCompact: isCompact)
+                        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+
+                    Spacer(minLength: theme.spacing.xxl)
                 }
-
-                projectsSection
-
-                recentsSection
-                    .padding(.top, theme.spacing.lg)
-
-                Spacer(minLength: theme.spacing.xxl)
+                .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+                .padding(.bottom, theme.spacing.md)
             }
-            .padding(.top, theme.spacing.lg)
-            .padding(.bottom, theme.spacing.md)
+            .padding(.horizontal, isCompact ? theme.spacing.xs : theme.spacing.lg)
         }
-        .padding(.horizontal, theme.spacing.lg)
-        .background {
-            LinearGradient(
-                colors: [
-                    theme.colors.canvas,
-                    theme.colors.canvas,
-                    theme.colors.accentTint.opacity(0.08),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
+        .background(theme.colors.canvas)
         .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(theme.colors.border)
@@ -192,21 +194,18 @@ private struct SottoSidebar: View {
             SottoHistorySearchView(model: model, selection: $selection)
                 .sottoTheme(.standard)
         }
-        .alert("Nuevo proyecto", isPresented: $isCreatingProject) {
-            TextField("Nombre del proyecto", text: $projectDraftName)
-            Button("Crear") {
-                if let project = model.createProject(name: projectDraftName) {
-                    expandedProjects.insert(project.id)
-                    selection = .project(project.id)
-                }
-                projectDraftName = ""
-            }
-            .disabled(projectDraftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            Button("Cancelar", role: .cancel) {
-                projectDraftName = ""
-            }
-        } message: {
-            Text("Agrupa tus transcripciones para encontrarlas cuando las necesites.")
+        .sheet(isPresented: $isCreatingProject, onDismiss: resetProjectDraft) {
+            SottoProjectCreationSheet(
+                name: $projectDraftName,
+                icon: $projectDraftIcon,
+                accent: $projectDraftAccent,
+                onCancel: {
+                    isCreatingProject = false
+                },
+                onCreate: createProject
+            )
+            .sottoTheme(.standard)
+            .frame(width: 560, height: 410)
         }
         .animation(
             reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.regular),
@@ -214,14 +213,13 @@ private struct SottoSidebar: View {
         )
     }
 
-    private var sidebarHeader: some View {
+    private func sidebarHeader(isCompact: Bool) -> some View {
         HStack(spacing: theme.spacing.xs) {
-            Text("Sotto")
-                .font(theme.typography.sidebarTitle)
-                .foregroundStyle(theme.colors.foreground)
-
-            SottoIcon("chevron.down", size: 11, weight: .semibold)
-                .foregroundStyle(theme.colors.mutedForeground)
+            if !isCompact {
+                Text("Sotto")
+                    .font(theme.typography.sidebarTitle)
+                    .foregroundStyle(theme.colors.foreground)
+            }
 
             Spacer(minLength: theme.spacing.sm)
 
@@ -243,14 +241,15 @@ private struct SottoSidebar: View {
             }
             .menuStyle(.borderlessButton)
             .buttonStyle(SottoSidebarButtonStyle())
+            .frame(width: 28, height: 28)
             .help("Configuración")
             .accessibilityLabel("Configuración")
         }
-        .frame(height: 32)
-        .padding(.horizontal, theme.spacing.xs)
+        .frame(maxWidth: .infinity, minHeight: 32)
+        .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
     }
 
-    private var recentsSection: some View {
+    private func recentsSection(isCompact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Button {
                 withAnimation(
@@ -260,20 +259,22 @@ private struct SottoSidebar: View {
                 }
             } label: {
                 HStack(spacing: theme.spacing.xs) {
-                    Text("Recientes")
-                        .font(theme.typography.sidebarSection)
-                        .foregroundStyle(theme.colors.subtleForeground)
+                    if !isCompact {
+                        Text("Recientes")
+                            .font(theme.typography.sidebarSection)
+                            .foregroundStyle(theme.colors.subtleForeground)
+                    }
 
                     SottoIcon(
                         isRecentsExpanded ? "chevron.down" : "chevron.right",
-                        size: 11,
+                        size: isCompact ? 14 : 11,
                         weight: .semibold
                     )
                     .foregroundStyle(theme.colors.subtleForeground)
 
                     Spacer(minLength: theme.spacing.sm)
 
-                    if !model.history.isEmpty {
+                    if !isCompact, !model.history.isEmpty {
                         Circle()
                             .fill(theme.colors.accent)
                             .frame(width: 7, height: 7)
@@ -285,7 +286,7 @@ private struct SottoSidebar: View {
             }
             .buttonStyle(SottoSidebarButtonStyle())
 
-            if isRecentsExpanded {
+            if isRecentsExpanded, !isCompact {
                 ForEach(model.history.prefix(4)) { record in
                     SottoRecentRow(record: record) {
                         selection = record.projectID.map(SottoDestination.project) ?? .history
@@ -295,16 +296,21 @@ private struct SottoSidebar: View {
         }
     }
 
-    private var projectsSection: some View {
-        SottoSidebarSection(title: "Proyectos", actionTitle: "Nuevo proyecto", action: {
-            isCreatingProject = true
-        }) {
+    private func projectsSection(isCompact: Bool) -> some View {
+        SottoSidebarSection(
+            title: "Proyectos",
+            actionTitle: "Nuevo proyecto",
+            actionSystemImage: "plus",
+            isCompact: isCompact,
+            action: beginProjectCreation
+        ) {
             ForEach(model.projects) { project in
                 SottoProjectRow(
                     project: project,
                     isSelected: selection == .project(project.id),
                     isExpanded: expandedProjects.contains(project.id),
                     transcripts: model.history.filter { $0.projectID == project.id },
+                    isCompact: isCompact,
                     onSelect: {
                         selection = .project(project.id)
                     },
@@ -316,22 +322,45 @@ private struct SottoSidebar: View {
 
             if model.projects.isEmpty {
                 Button {
-                    isCreatingProject = true
+                    beginProjectCreation()
                 } label: {
                     HStack(spacing: theme.spacing.sm) {
-                        SottoIcon("plus", size: 12, weight: .medium)
-                        Text("Añade tu primer proyecto")
+                        SottoIcon("plus", size: isCompact ? 15 : 13, weight: .regular)
+                        if !isCompact {
+                            Text("Añade tu primer proyecto")
+                        }
                     }
-                    .font(theme.typography.sidebarMeta)
-                    .foregroundStyle(theme.colors.subtleForeground)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, theme.spacing.sm)
-                    .frame(height: 32)
+                    .font(theme.typography.sidebarItem)
+                    .foregroundStyle(theme.colors.foreground.opacity(0.72))
+                    .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
+                    .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
+                    .frame(height: 30)
                 }
                 .buttonStyle(SottoSidebarButtonStyle())
             }
         }
-        .padding(.top, theme.spacing.lg)
+        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+    }
+
+    private func beginProjectCreation() {
+        projectDraftName = ""
+        projectDraftIcon = "folder"
+        projectDraftAccent = .blue
+        isCreatingProject = true
+    }
+
+    private func createProject(name: String, icon: String, accent: SottoAccent) {
+        if let project = model.createProject(name: name, icon: icon, accent: accent) {
+            expandedProjects.insert(project.id)
+            selection = .project(project.id)
+        }
+        isCreatingProject = false
+    }
+
+    private func resetProjectDraft() {
+        projectDraftName = ""
+        projectDraftIcon = "folder"
+        projectDraftAccent = .blue
     }
 
     private func toggleProject(_ id: UUID) {
@@ -346,17 +375,23 @@ private struct SottoSidebar: View {
 private struct SottoSidebarSection: View {
     let title: String
     var actionTitle: String?
+    var actionSystemImage: String?
+    var isCompact: Bool
     let content: AnyView
     @Environment(\.sottoTheme) private var theme
 
     init<Content: View>(
         title: String,
         actionTitle: String? = nil,
+        actionSystemImage: String? = nil,
+        isCompact: Bool = false,
         action: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.actionTitle = actionTitle
+        self.actionSystemImage = actionSystemImage
+        self.isCompact = isCompact
         self.content = AnyView(content())
         self.action = action
     }
@@ -366,22 +401,31 @@ private struct SottoSidebarSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text(title)
-                    .font(theme.typography.sidebarSection)
-                    .foregroundStyle(theme.colors.subtleForeground)
+                if !isCompact {
+                    Text(title)
+                        .font(theme.typography.sidebarSection)
+                        .foregroundStyle(theme.colors.subtleForeground)
+                }
 
                 Spacer(minLength: theme.spacing.sm)
 
                 if let actionTitle, let action {
-                    Button(actionTitle, action: action)
-                        .font(theme.typography.sidebarSectionAction)
-                        .foregroundStyle(theme.colors.subtleForeground)
+                    Button(action: action) {
+                        if isCompact, let actionSystemImage {
+                            SottoIcon(actionSystemImage, size: 15, weight: .regular)
+                        } else {
+                            Text(actionTitle)
+                                .font(theme.typography.sidebarItem)
+                        }
+                    }
+                        .foregroundStyle(theme.colors.foreground.opacity(0.72))
                         .buttonStyle(SottoSidebarButtonStyle())
                         .help(actionTitle)
+                        .accessibilityLabel(actionTitle)
                 }
             }
             .padding(.horizontal, theme.spacing.sm)
-            .padding(.bottom, 5)
+            .frame(height: isCompact ? 28 : 30)
 
             content
         }
@@ -408,6 +452,7 @@ private struct SottoSidebarIconButton: View {
     let action: () -> Void
 
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
 
     var body: some View {
@@ -420,7 +465,7 @@ private struct SottoSidebarIconButton: View {
         .buttonStyle(SottoSidebarButtonStyle())
         .onHover { isHovered = $0 }
         .animation(
-            .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+            reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
             value: isHovered
         )
         .help(help)
@@ -431,37 +476,47 @@ private struct SottoSidebarIconButton: View {
 private struct SottoSidebarAction: View {
     let title: String
     let systemImage: String
+    let isCompact: Bool
     let action: () -> Void
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.md) {
-                SottoIcon(systemImage, size: 16, weight: .regular)
-                    .foregroundStyle(theme.colors.mutedForeground)
-                    .frame(width: 20)
+            HStack(spacing: theme.spacing.sm) {
+                SottoIcon(systemImage, size: isCompact ? 16 : 15, weight: .regular)
+                    .foregroundStyle(theme.colors.foreground.opacity(0.72))
+                    .frame(width: isCompact ? 28 : 20)
 
-                Text(title)
-                    .font(theme.typography.sidebarAction)
-                    .foregroundStyle(theme.colors.foreground)
+                if !isCompact {
+                    Text(title)
+                        .font(theme.typography.sidebarItem)
+                        .foregroundStyle(theme.colors.foreground.opacity(0.72))
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
+                }
             }
-            .padding(.horizontal, theme.spacing.sm)
-            .frame(height: 34)
+            .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
+            .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
+            .frame(height: 30)
             .background(isHovered ? theme.colors.hover : .clear)
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         }
         .buttonStyle(SottoSidebarButtonStyle())
         .onHover { isHovered = $0 }
-        .animation(.timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast), value: isHovered)
+        .animation(
+            reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+            value: isHovered
+        )
+        .accessibilityLabel(title)
     }
 }
 
 private struct SottoSidebarRow: View {
     let destination: SottoDestination
     let isSelected: Bool
+    let isCompact: Bool
     let action: () -> Void
 
     @Environment(\.sottoTheme) private var theme
@@ -470,19 +525,22 @@ private struct SottoSidebarRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.md) {
-                SottoIcon(destination.systemImage, size: 16, weight: .regular)
-                    .foregroundStyle(isSelected ? theme.colors.foreground : theme.colors.mutedForeground)
-                    .frame(width: 20)
+            HStack(spacing: theme.spacing.sm) {
+                SottoIcon(destination.systemImage, size: isCompact ? 16 : 15, weight: .regular)
+                    .foregroundStyle(theme.colors.foreground.opacity(0.72))
+                    .frame(width: isCompact ? 28 : 20)
 
-                Text(destination.title)
-                    .font(theme.typography.sidebarItem)
-                    .foregroundStyle(isSelected ? theme.colors.foreground : theme.colors.foreground.opacity(0.78))
+                if !isCompact {
+                    Text(destination.title)
+                        .font(theme.typography.sidebarItem)
+                        .foregroundStyle(theme.colors.foreground.opacity(0.72))
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
+                }
             }
-            .padding(.horizontal, theme.spacing.sm)
-            .frame(height: 34)
+            .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
+            .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
+            .frame(height: 30)
             .background(rowBackground)
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -497,6 +555,7 @@ private struct SottoSidebarRow: View {
             value: isHovered
         )
         .onHover { isHovered = $0 }
+        .accessibilityLabel(destination.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -512,50 +571,61 @@ private struct SottoProjectRow: View {
     let isSelected: Bool
     let isExpanded: Bool
     let transcripts: [TranscriptionRecord]
+    let isCompact: Bool
     let onSelect: () -> Void
     let onToggleExpanded: () -> Void
 
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 2) {
-                Button(action: onToggleExpanded) {
-                    SottoIcon(isExpanded ? "chevron.down" : "chevron.right", size: 10, weight: .semibold)
-                        .foregroundStyle(theme.colors.subtleForeground)
-                        .frame(width: 18, height: 32)
-                        .contentShape(Rectangle())
+                if !isCompact {
+                    Button(action: onToggleExpanded) {
+                        SottoIcon(isExpanded ? "chevron.down" : "chevron.right", size: 10, weight: .semibold)
+                            .foregroundStyle(theme.colors.subtleForeground)
+                            .frame(width: 18, height: 30)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(SottoSidebarButtonStyle())
                 }
-                .buttonStyle(SottoSidebarButtonStyle())
 
                 Button(action: onSelect) {
                     HStack(spacing: theme.spacing.md) {
-                        SottoIcon(project.icon, size: 16)
+                        SottoIcon(project.icon, size: isCompact ? 16 : 15)
                             .foregroundStyle(project.accent.color)
-                            .frame(width: 20)
+                            .frame(width: isCompact ? 28 : 20)
 
-                        Text(project.name)
-                            .font(theme.typography.sidebarItem)
-                            .foregroundStyle(isSelected ? theme.colors.foreground : theme.colors.foreground.opacity(0.78))
-                            .lineLimit(1)
+                        if !isCompact {
+                            Text(project.name)
+                                .font(theme.typography.sidebarItem)
+                                .foregroundStyle(theme.colors.foreground.opacity(0.72))
+                                .lineLimit(1)
 
-                        Spacer(minLength: 0)
+                            Spacer(minLength: 0)
+                        }
                     }
-                    .padding(.horizontal, theme.spacing.xs)
-                    .frame(height: 32)
+                    .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
+                    .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
+                    .frame(height: 30)
                     .background(rowBackground)
                     .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
                 }
                 .buttonStyle(SottoSidebarButtonStyle())
                 .onHover { isHovered = $0 }
-                .animation(.timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast), value: isHovered)
+                .animation(
+                    reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+                    value: isHovered
+                )
+                .accessibilityLabel(project.name)
             }
 
-            if isExpanded {
+            if isExpanded, !isCompact {
                 if transcripts.isEmpty {
                     Text("Sin transcripciones")
-                        .font(theme.typography.sidebarMeta)
+                        .font(theme.typography.sidebarItem)
                         .foregroundStyle(theme.colors.foreground.opacity(0.72))
                         .padding(.leading, 44)
                         .padding(.vertical, 5)
@@ -563,7 +633,7 @@ private struct SottoProjectRow: View {
                     ForEach(transcripts.prefix(5)) { transcript in
                         Button(action: onSelect) {
                             Text(transcript.text)
-                                .font(theme.typography.sidebarMeta)
+                                .font(theme.typography.sidebarItem)
                                 .foregroundStyle(theme.colors.foreground.opacity(0.72))
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -595,30 +665,30 @@ private struct SottoRecentRow: View {
     let action: () -> Void
 
     @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.md) {
-                SottoIcon(record.isPinned ? "pin.fill" : "clock", size: 14)
-                    .foregroundStyle(theme.colors.subtleForeground)
-                    .frame(width: 20)
-
+            HStack(spacing: theme.spacing.sm) {
                 Text(record.text)
-                    .font(theme.typography.sidebarMeta)
+                    .font(theme.typography.sidebarItem)
                     .foregroundStyle(theme.colors.foreground.opacity(0.72))
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, theme.spacing.sm)
-            .frame(height: 32)
+            .frame(height: 30)
             .background(isHovered ? theme.colors.hover : .clear)
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         }
         .buttonStyle(SottoSidebarButtonStyle())
         .onHover { isHovered = $0 }
-        .animation(.timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast), value: isHovered)
+        .animation(
+            reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+            value: isHovered
+        )
     }
 }
 
