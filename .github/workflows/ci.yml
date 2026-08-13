@@ -3,9 +3,168 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
+  change_scope:
+    name: Select validation scope
+    runs-on: ubuntu-latest
+    outputs:
+      run_full_ci: ${{ steps.scope.outputs.run_full_ci }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect source changes
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          FORCE_FULL_CI: ${{ contains(github.event.head_commit.message, '[ci full]') || contains(github.event.pull_request.title, '[ci full]') }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import plistlib
+          import subprocess
+          import sys
+
+          ZERO_SHA = "0" * 40
+          COPY_SWIFT_FILES = {
+              "Sources/Sotto/SottoAppModel.swift",
+              "Sources/Sotto/SottoHomeView.swift",
+              "Sources/Sotto/SottoMenuBarView.swift",
+              "Sources/Sotto/SottoOverlayController.swift",
+              "Sources/Sotto/SottoRootView.swift",
+              "Sources/Sotto/SottoSettingsViews.swift",
+              "Sources/Sotto/SottoViewSupport.swift",
+          }
+
+          def git(*arguments, binary=False):
+              return subprocess.check_output(
+                  ["git", *arguments],
+                  text=not binary,
+              )
+
+          def full_ci(reason):
+              print(f"Full CI required: {reason}")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+                  output.write("run_full_ci=true\n")
+              sys.exit(0)
+
+          event_name = os.environ["EVENT_NAME"]
+          head = os.environ["HEAD_SHA"]
+
+          if event_name == "workflow_dispatch":
+              full_ci("manual dispatch")
+
+          if event_name == "pull_request":
+              base = os.environ["PR_BASE_SHA"]
+          else:
+              base = os.environ.get("PUSH_BEFORE", "")
+              if not base or base == ZERO_SHA:
+                  base = git("rev-list", "--max-parents=0", head).strip()
+
+          if os.environ.get("FORCE_FULL_CI") == "true":
+              full_ci("[ci full] override")
+
+          changed_files = git("diff", "--name-only", base, head).splitlines()
+          if not changed_files:
+              full_ci("unable to identify changed files")
+
+          def swift_structure(source):
+              result = []
+              literals = []
+              index = 0
+
+              while index < len(source):
+                  if source.startswith("#\"", index) or source.startswith('"""', index):
+                      return None
+                  if source[index] != '"':
+                      result.append(source[index])
+                      index += 1
+                      continue
+
+                  start = index + 1
+                  index += 1
+                  escaped = False
+                  while index < len(source):
+                      if not escaped and source.startswith('"', index):
+                          literals.append(source[start:index])
+                          result.append('"__SOTTO_STRING__"')
+                          index += 1
+                          break
+                      escaped = source[index] == "\\" and not escaped
+                      if source[index] != "\\":
+                          escaped = False
+                      index += 1
+                  else:
+                      return None
+              return "".join(result), literals
+
+          def is_copy_only_swift(path):
+              try:
+                  old_source = git("show", f"{base}:{path}", binary=True).decode("utf-8")
+                  new_source = git("show", f"{head}:{path}", binary=True).decode("utf-8")
+              except (subprocess.CalledProcessError, UnicodeDecodeError):
+                  return False
+
+              old_masked = swift_structure(old_source)
+              new_masked = swift_structure(new_source)
+              if old_masked is None or new_masked is None:
+                  return False
+              old_structure, old_literals = old_masked
+              new_structure, new_literals = new_masked
+              if old_structure != new_structure or len(old_literals) != len(new_literals):
+                  return False
+
+              for old_literal, new_literal in zip(old_literals, new_literals):
+                  if old_literal != new_literal and ("\\(" in old_literal or "\\(" in new_literal):
+                      return False
+              return True
+
+          def is_copy_only_plist(path):
+              try:
+                  old_plist = plistlib.loads(git("show", f"{base}:{path}", binary=True))
+                  new_plist = plistlib.loads(git("show", f"{head}:{path}", binary=True))
+              except (subprocess.CalledProcessError, plistlib.InvalidFileException):
+                  return False
+
+              keys = set(old_plist) | set(new_plist)
+              changed_keys = {key for key in keys if old_plist.get(key) != new_plist.get(key)}
+              return changed_keys == {"NSMicrophoneUsageDescription"}
+
+          def is_copy_only(path):
+              if path.endswith((".md", ".txt")) or path.startswith("Documentation/"):
+                  return True
+              if path.endswith((".strings", ".stringsdict")):
+                  return True
+              if path == "Sources/Sotto/Resources/Info.plist":
+                  return is_copy_only_plist(path)
+              if path in COPY_SWIFT_FILES:
+                  return is_copy_only_swift(path)
+              return False
+
+          if all(is_copy_only(path) for path in changed_files):
+              print("Only copy/documentation changes detected; skipping macOS tests and build.")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+                  output.write("run_full_ci=false\n")
+          else:
+              full_ci("source, test, dependency, or packaging changes")
+          PY
+
   macos:
+    needs: change_scope
+    if: needs.change_scope.outputs.run_full_ci == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
