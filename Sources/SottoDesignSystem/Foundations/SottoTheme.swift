@@ -363,40 +363,52 @@ public struct SottoTheme: Sendable {
 
     public struct Typography: Sendable {
         public var pageTitle: Font
+        public var cardTitle: Font
         public var sectionTitle: Font
         public var body: Font
         public var label: Font
         public var caption: Font
         public var micro: Font
         public var mono: Font
+        public var sidebarTitle: Font
         public var sidebarItem: Font
         public var sidebarAction: Font
         public var sidebarSection: Font
+        public var sidebarSectionAction: Font
+        public var sidebarMeta: Font
         public var tracking: CGFloat
 
         public init(
-            pageTitle: Font = .custom("Inter", size: 21).weight(.semibold),
+            pageTitle: Font = .custom("Inter", size: 20).weight(.semibold),
+            cardTitle: Font = .custom("Inter", size: 17).weight(.semibold),
             sectionTitle: Font = .custom("Inter", size: 13).weight(.semibold),
             body: Font = .custom("Inter", size: 13),
             label: Font = .custom("Inter", size: 12.5).weight(.medium),
             caption: Font = .custom("Inter", size: 11.5).weight(.medium),
-            micro: Font = .custom("Inter", size: 10).weight(.medium),
-            mono: Font = .custom("JetBrains Mono", size: 11),
-            sidebarItem: Font = .custom("Inter", size: 14.5),
-            sidebarAction: Font = .custom("Inter", size: 15.5),
-            sidebarSection: Font = .custom("Inter", size: 12.5).weight(.medium),
-            tracking: CGFloat = -0.14
+            micro: Font = .custom("Inter", size: 10.5).weight(.medium),
+            mono: Font = .custom("JetBrains Mono", size: 10.5),
+            sidebarTitle: Font = .system(size: 20, weight: .semibold),
+            sidebarItem: Font = .system(size: 15.5, weight: .regular),
+            sidebarAction: Font = .system(size: 15.5, weight: .regular),
+            sidebarSection: Font = .system(size: 14, weight: .regular),
+            sidebarSectionAction: Font = .system(size: 14, weight: .regular),
+            sidebarMeta: Font = .system(size: 14, weight: .regular),
+            tracking: CGFloat = -0.10
         ) {
             self.pageTitle = pageTitle
+            self.cardTitle = cardTitle
             self.sectionTitle = sectionTitle
             self.body = body
             self.label = label
             self.caption = caption
             self.micro = micro
             self.mono = mono
+            self.sidebarTitle = sidebarTitle
             self.sidebarItem = sidebarItem
             self.sidebarAction = sidebarAction
             self.sidebarSection = sidebarSection
+            self.sidebarSectionAction = sidebarSectionAction
+            self.sidebarMeta = sidebarMeta
             self.tracking = tracking
         }
     }

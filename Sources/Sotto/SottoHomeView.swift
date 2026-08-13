@@ -52,7 +52,7 @@ struct SottoHomeView: View {
             HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
                     Text(dictationTitle)
-                        .font(.custom("Inter", size: 18).weight(.semibold))
+                        .font(theme.typography.cardTitle)
                         .tracking(-0.22)
                         .foregroundStyle(theme.colors.foreground)
 
