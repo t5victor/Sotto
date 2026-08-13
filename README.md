@@ -1,105 +1,152 @@
 # Sotto
 
-Sotto is a native macOS dictation application that turns speech into text
-without sending audio to a transcription service. It records the microphone,
-runs NVIDIA Parakeet TDT 0.6B v3 locally through Core ML, cleans the result and
-inserts it into the application that was active when dictation began.
+<p align="center">
+  <strong>Speak. Sotto types.</strong><br>
+  Native dictation for macOS that keeps you in the app you are already using.
+</p>
 
-Version 1.0 includes the complete desktop flow:
+<p align="center">
+  <a href="https://github.com/t5victor/Sotto/actions/workflows/ci.yml"><img src="https://github.com/t5victor/Sotto/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://www.apple.com/macos/sonoma/"><img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple&logoColor=white" alt="macOS 14 or newer"></a>
+  <a href="https://www.swift.org/"><img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-2f6fdb" alt="Apache 2.0 license"></a>
+</p>
 
-- resumable model installation with byte progress, validation, offline reload
-  and safe deletion;
-- microphone capture to a private scratch recording with a live level meter;
-- local multilingual transcription in 25 languages on Apple Silicon;
-- editable vocabulary, conservative filler removal and text normalization;
-- global hold-to-talk or toggle shortcut (Option-Space by default);
-- direct Accessibility insertion, Command-V fallback and clipboard fallback;
-- non-activating overlay, menu bar controls and launch-at-login support;
-- local preferences and optional, bounded transcription history;
-- a source-owned SwiftUI design system inspired by shadcn/ui and visually
-  aligned with Beautiful UI;
-- a diagnostic CLI, automated tests and a reproducible `.app` packager.
+<p align="justify">
+Sotto turns your voice into clean text in the app where you are working. Press a
+shortcut, speak, release, and continue. Sotto remembers the app that was in
+front, processes the recording, improves the text, and inserts it into the
+focused field. If automatic insertion is unavailable, the finished text stays
+ready on the clipboard.
+</p>
 
-## Requirements
+## Why Sotto
 
-- an Apple Silicon Mac;
-- macOS 14 or newer;
-- about 500 MB of free space for the Parakeet Core ML model;
-- Xcode 16 or newer only when building from source.
+| | What you get |
+| --- | --- |
+| **A short path from voice to text** | Hold <kbd>⌥</kbd> <kbd>Space</kbd> by default, speak, release, and keep moving. Toggle mode is available too. |
+| **A focused desktop experience** | A menu bar control and a quiet overlay show state without pulling you away. Light and dark themes, compact controls, and Reduce Motion support keep the surface calm. |
+| **Text that sounds like you** | Add vocabulary replacements, remove filler sounds, and normalize spacing and punctuation. |
+| **A safe fallback** | Sotto tries direct insertion first, then paste, then leaves the result copied when macOS cannot insert it. |
+| **Useful history, when you want it** | Keep a bounded list of recent dictations, or turn history off. Audio recordings are temporary and are not stored in history. |
 
-## Install and use
+## How it works
 
-Build the local release:
+```mermaid
+flowchart LR
+    A["Press the shortcut"] --> B["Speak"]
+    B --> C["Transcribe on your Mac"]
+    C --> D["Clean and personalize the text"]
+    D --> E{"Insert automatically?"}
+    E -->|"Yes"| F["Return to the previous app"]
+    E -->|"No"| G["Keep the text on the clipboard"]
+```
+
+The first model download needs an internet connection. Once the model is ready,
+dictation itself does not make a network request. Sotto has no account system,
+advertising SDK, analytics pipeline, telemetry endpoint, or cloud transcription
+service.
+
+## Try it
+
+Sotto currently runs on Apple Silicon Macs with macOS 14 or newer. The speech
+model needs roughly 500 MB of free disk space and is downloaded separately from
+the application bundle.
+
+### Install from source
+
+You need Xcode 16 or newer.
 
 ```sh
+git clone https://github.com/t5victor/Sotto.git
+cd Sotto
+swift package resolve
 Scripts/build-app.sh release local
 open dist/Sotto.app
 ```
 
-On first launch:
+### First launch
 
-1. Open **Models** and select **Download model**. This is the only operation
-   that needs a network connection.
-2. Grant Microphone permission.
-3. Grant Accessibility permission if Sotto should insert text automatically.
-   Without it, completed text remains safely available on the clipboard.
-4. Hold **Option-Space**, speak, then release. Disable “Hold to dictate” to use
-   the same shortcut as an on/off toggle.
+1. Open **Motor de voz** (Voice Engine) and install the speech engine.
+2. Allow **Microphone** access so Sotto can hear you.
+3. Allow **Accessibility** if you want Sotto to insert text into the active app.
+   Without it, Sotto copies the completed text instead.
+4. Hold <kbd>⌥</kbd> <kbd>Space</kbd>, speak, and release. Turn off **Mantener
+   para dictar** in **Atajos** (Shortcuts) to use the same shortcut as a toggle.
 
-The app captures the target application and its process identity before asking
-for microphone permission or showing its overlay, so neither macOS's permission
-UI nor Sotto itself becomes the text destination.
+Sotto captures the destination app before it asks for permission or shows the
+overlay. A permission dialog or the overlay cannot accidentally become the
+place where your words are inserted.
+
+## What you can customize
+
+- **Vocabulary:** map the way a name sounds to the spelling you want.
+- **Text cleanup:** normalize punctuation and remove unambiguous filler sounds.
+- **Shortcuts:** choose a global shortcut and hold-to-talk or toggle behavior.
+- **History:** keep recent dictations, or disable it.
+- **Startup:** launch Sotto when you sign in to your Mac.
+- **Insertion:** use Accessibility insertion when available, with pasteboard
+  fallback when it is not.
+
+<details>
+<summary>Supported languages</summary>
+
+Bulgarian, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French,
+German, Greek, Hungarian, Italian, Latvian, Lithuanian, Maltese, Polish,
+Portuguese, Romanian, Russian, Slovak, Slovenian, Spanish, Swedish, and
+Ukrainian.
+
+</details>
+
+## Privacy in plain language
+
+<p align="justify">
+Sotto stores its preferences, vocabulary, optional history, temporary recordings,
+and downloaded speech model under <code>~/Library/Application Support/Sotto</code>.
+Temporary recordings are deleted after success, failure, or cancellation, and
+crash leftovers older than 24 hours are cleaned up at startup. History contains
+text and dictation metadata, never audio.
+</p>
+
+| Permission or data | What it is used for |
+| --- | --- |
+| **Microphone** | Captures the speech you choose to dictate. |
+| **Accessibility** | Inserts text into the app that was active before dictation began. It is optional. |
+| **Pasteboard** | Provides a fallback when direct insertion is not available. |
+| **History** | Stores recent text only when you enable it. |
+| **Launch at login** | Makes Sotto available when you sign in. |
+
+You can remove the downloaded speech engine and delete history from Sotto's
+settings. Sotto also rejects unexpected symbolic links inside its managed data
+folders before reading, writing, or deleting files.
 
 ## Build and test
 
+For contributors and people who want to build their own copy:
+
 ```sh
 swift test
-swift run Sotto
+swift build -c release --product Sotto
 Scripts/build-app.sh release local
 ```
 
-`build-app.sh` creates an ad-hoc signed local build at `dist/Sotto.app` and a
-transport archive at `dist/Sotto-1.0.0.zip`, plus its matching `.sha256`.
-A public download can be signed and
-notarized with the publisher's Apple Developer identity without changing the
-application code; see [Documentation/Release.md](Documentation/Release.md).
+The package includes the macOS app, menu bar control, dictation overlay,
+diagnostic CLI, reusable UI components, and automated tests. A local build is
+ad-hoc signed for development. Public distribution requires a separate
+Developer ID and notarization setup. The test suite covers realtime audio
+buffering, text processing, insertion fallback, persistence recovery, model
+cache safety, and accessible design tokens.
 
-## Diagnostics
+## License and credits
 
-`SottoDoctor` exercises the same `SottoCore` services as the UI:
+Sotto is released under the [Apache License 2.0](LICENSE).
 
-```sh
-swift run SottoDoctor doctor
-swift run SottoDoctor install-model
-swift run SottoDoctor validate-model
-swift run SottoDoctor record 5 /tmp/sotto-test.caf
-swift run SottoDoctor transcribe /path/to/audio
-swift run SottoDoctor insert "Texto de prueba"
-```
+Sotto uses FluidAudio under Apache 2.0 and NVIDIA Parakeet TDT 0.6B v3 under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Inter and JetBrains
+Mono are distributed under the SIL Open Font License. Full attribution and
+third-party notices are available in
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and are included with the
+application bundle.
 
-## Project map
-
-```text
-Sources/
-├── Sotto/                 SwiftUI app, menu bar and overlay
-├── SottoCore/             audio, Parakeet, text, persistence and macOS services
-├── SottoAudioRingC/       lock-free C11 SPSC indices for realtime audio
-├── SottoDesignSystem/     owned tokens, components and product patterns
-└── SottoDoctor/           runtime diagnostics
-Tests/
-├── SottoCoreTests/
-└── SottoDesignSystemTests/
-```
-
-More detail:
-
-- [Architecture](Documentation/Architecture.md)
-- [Privacy model](Documentation/Privacy.md)
-- [Design system](Documentation/DesignSystem.md)
-- [Release process](Documentation/Release.md)
-- [Version 1.0 validation](Documentation/Validation.md)
-- [Third-party notices](THIRD_PARTY_NOTICES.md)
-
-Sotto is licensed under Apache License 2.0. The separately downloaded Parakeet
-model is licensed under CC BY 4.0; attribution is included in the app and in the
-third-party notices.
+Questions, bug reports, and feedback are welcome in the
+[GitHub issue tracker](https://github.com/t5victor/Sotto/issues).

@@ -4,3 +4,9 @@
 xcuserdata/
 DerivedData/
 dist/
+
+# Engineering notes
+Documentation/
+private/
+*.private.md
+*.internal.md
