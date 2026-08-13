@@ -185,11 +185,6 @@ private struct SottoSidebar: View {
             .padding(.horizontal, isCompact ? theme.spacing.xs : theme.spacing.lg)
         }
         .background(theme.colors.canvas)
-        .overlay(alignment: .trailing) {
-            Rectangle()
-                .fill(theme.colors.border)
-                .frame(width: 1)
-        }
         .sheet(isPresented: $isShowingSearch) {
             SottoHistorySearchView(model: model, selection: $selection)
                 .sottoTheme(.standard)
@@ -221,9 +216,11 @@ private struct SottoSidebar: View {
                 Text("Sotto")
                     .font(theme.typography.sidebarTitle)
                     .foregroundStyle(theme.colors.foreground)
-            }
 
-            Spacer(minLength: theme.spacing.sm)
+                Spacer(minLength: theme.spacing.sm)
+            } else {
+                Spacer(minLength: 0)
+            }
 
             SottoSidebarIconButton(systemImage: "magnifyingglass", help: "Buscar") {
                 isShowingSearch = true
@@ -246,6 +243,10 @@ private struct SottoSidebar: View {
             .frame(width: 28, height: 28)
             .help("Configuración")
             .accessibilityLabel("Configuración")
+
+            if isCompact {
+                Spacer(minLength: 0)
+            }
         }
         .frame(maxWidth: .infinity, minHeight: 32)
         .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
@@ -261,6 +262,10 @@ private struct SottoSidebar: View {
                 }
             } label: {
                 HStack(spacing: theme.spacing.xs) {
+                    if isCompact {
+                        Spacer(minLength: 0)
+                    }
+
                     if !isCompact {
                         Text("Recientes")
                             .font(theme.typography.sidebarSection)
@@ -274,7 +279,7 @@ private struct SottoSidebar: View {
                     )
                     .foregroundStyle(theme.colors.subtleForeground)
 
-                    Spacer(minLength: theme.spacing.sm)
+                    Spacer(minLength: isCompact ? 0 : theme.spacing.sm)
 
                     if !isCompact, !model.history.isEmpty {
                         Circle()
@@ -407,9 +412,11 @@ private struct SottoSidebarSection: View {
                     Text(title)
                         .font(theme.typography.sidebarSection)
                         .foregroundStyle(theme.colors.subtleForeground)
-                }
 
-                Spacer(minLength: theme.spacing.sm)
+                    Spacer(minLength: theme.spacing.sm)
+                } else {
+                    Spacer(minLength: 0)
+                }
 
                 if let actionTitle, let action {
                     Button(action: action) {
@@ -424,6 +431,10 @@ private struct SottoSidebarSection: View {
                         .buttonStyle(SottoSidebarButtonStyle())
                         .help(actionTitle)
                         .accessibilityLabel(actionTitle)
+                }
+
+                if isCompact {
+                    Spacer(minLength: 0)
                 }
             }
             .padding(.horizontal, theme.spacing.sm)
