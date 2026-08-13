@@ -15,36 +15,23 @@ concurrency:
 jobs:
   release:
     name: Build and publish release
-    if: startsWith(github.event.head_commit.message, 'cask-')
+    if: startsWith(github.event.head_commit.message, 'cask')
     runs-on: macos-15
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Check release commit matches app version
+      - name: Calculate and apply next version
         id: release
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           marker="${COMMIT_MESSAGE%%$'\n'*}"
-          if [[ ! "$marker" =~ ^cask-v?([0-9]+\.[0-9]+(\.[0-9]+)?)$ ]]; then
-            echo "Expected the first commit line to be cask-<version>, got: $marker" >&2
+          if [[ "$marker" != "cask" ]]; then
+            echo "Expected the first commit line to be exactly cask, got: $marker" >&2
             exit 1
           fi
-
-          requested_version="${BASH_REMATCH[1]}"
-          if [[ "$requested_version" != *.*.* ]]; then
-            requested_version="${requested_version}.0"
-          fi
-
-          app_version="$(plutil -extract CFBundleShortVersionString raw -o - Sources/Sotto/Resources/Info.plist)"
-          if [[ "$requested_version" != "$app_version" ]]; then
-            echo "Release marker $marker does not match app version $app_version" >&2
-            exit 1
-          fi
-
-          echo "version=$app_version" >> "$GITHUB_OUTPUT"
-          echo "release_tag=cask-$app_version" >> "$GITHUB_OUTPUT"
+          Scripts/bump-version.sh
 
       - name: Toolchain
         run: swift --version
@@ -58,15 +45,50 @@ jobs:
       - name: Build app bundle
         run: Scripts/build-app.sh release local
 
+      - name: Pin Cask checksum
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          checksum_file="dist/Sotto-${RELEASE_VERSION}.zip.sha256"
+          checksum="$(awk 'NF { print $1; exit }' "$checksum_file")"
+          if [[ ! "$checksum" =~ ^[0-9a-fA-F]{64}$ ]]; then
+            echo "Invalid SHA-256 in $checksum_file" >&2
+            exit 1
+          fi
+          SOTTO_CASK_CHECKSUM="$checksum" perl -0pi -e \
+            's/^\s*sha256\s+(?::no_check|"[0-9a-fA-F]{64}")/  sha256 "$ENV{SOTTO_CASK_CHECKSUM}"/m' \
+            Casks/sotto.rb
+
+      - name: Commit version bump
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Sources/Sotto/Resources/Info.plist Casks/sotto.rb CHANGELOG.md
+          git commit -m "chore(release): bump version to $RELEASE_VERSION [skip ci]"
+
+      - name: Publish version bump to both branches
+        run: |
+          git fetch origin main releases
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "releases must include the latest origin/main before publishing" >&2
+            exit 1
+          fi
+          git push --atomic origin \
+            HEAD:refs/heads/releases \
+            HEAD:refs/heads/main
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
         run: |
+          release_commit="$(git rev-parse HEAD)"
           gh release create "$RELEASE_TAG" \
             dist/Sotto-*.zip \
             dist/Sotto-*.zip.sha256 \
-            --target "$GITHUB_SHA" \
+            --target "$release_commit" \
             --generate-notes \
             --title "Sotto $RELEASE_VERSION"

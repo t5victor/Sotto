@@ -80,9 +80,10 @@ ad-hoc signed rather than notarized, macOS may require you to choose **Open**
 explicitly the first time you launch Sotto.
 
 Releases are published from the `releases` branch. Push a commit whose first
-line is `cask-1.0` (or `cask-1.0.0`); the workflow checks it against the app
-version and creates the corresponding GitHub Release automatically. The
-canonical release tag for the current `1.0.0` app is `cask-1.0.0`.
+line is simply `cask`; the workflow increments the version everywhere, updates
+the Cask checksum, synchronizes `releases` and `main`, and creates the GitHub
+Release automatically. The counter advances through `1.0.0`, `1.0.1`, …,
+`1.0.10`, then rolls over to `1.1.0`.
 
 ### First launch
 
