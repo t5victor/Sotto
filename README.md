@@ -10,6 +10,7 @@
   <a href="https://www.apple.com/macos/sonoma/"><img src="https://img.shields.io/badge/macOS-14%2B-111111?logo=apple&logoColor=white" alt="macOS 14 or newer"></a>
   <a href="https://www.swift.org/"><img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-2f6fdb" alt="Apache 2.0 license"></a>
+  <a href="https://ko-fi.com/t5victor"><img src="https://img.shields.io/badge/Ko--fi-Support%20me-ff5e5b?logo=ko-fi&logoColor=white" alt="Support Sotto on Ko-fi"></a>
 </p>
 
 <p align="center">
