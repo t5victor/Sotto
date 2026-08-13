@@ -19,10 +19,11 @@ public struct SottoReveal<Content: View>: View {
             .offset(y: reduceMotion || isVisible ? 0 : 8)
             .onAppear {
                 guard !isVisible else { return }
-                withAnimation(
-                    .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.reveal)
-                        .delay(reduceMotion ? 0 : delay)
-                ) {
+                let animation: Animation? = reduceMotion
+                    ? nil
+                    : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.reveal)
+                        .delay(delay)
+                withAnimation(animation) {
                     isVisible = true
                 }
             }

@@ -36,9 +36,7 @@ public struct SottoPermissionRow: View {
         HStack(alignment: .center, spacing: theme.spacing.md) {
             SottoIcon(systemImage, size: 14)
                 .foregroundStyle(theme.colors.mutedForeground)
-                .frame(width: 28, height: 28)
-                .background(theme.colors.field)
-                .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+                .frame(width: 20, height: 20)
 
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                 Text(title)
@@ -72,9 +70,9 @@ public struct SottoPermissionRow: View {
 
     private var stateIcon: String {
         switch state {
-        case .granted: "checkmark.circle.fill"
-        case .required: "exclamationmark.circle.fill"
-        case .unavailable: "minus.circle.fill"
+        case .granted: "checkmark"
+        case .required: "exclamationmark"
+        case .unavailable: "minus"
         }
     }
 

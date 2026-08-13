@@ -55,7 +55,7 @@ struct SottoApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
 
-        MenuBarExtra("Sotto", systemImage: model.isListening ? "mic.fill" : "waveform") {
+        MenuBarExtra("Sotto", systemImage: model.isListening ? "mic" : "waveform") {
             SottoMenuBarView(model: model)
                 .sottoTheme(.standard)
         }

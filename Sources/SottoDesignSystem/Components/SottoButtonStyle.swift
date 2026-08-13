@@ -85,23 +85,21 @@ private struct SottoButtonBody<Label: View>: View {
             .frame(maxWidth: expands ? .infinity : nil, minHeight: controlHeight)
             .background(backgroundColor)
             .overlay {
-                RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                Capsule()
                     .strokeBorder(borderColor, lineWidth: variant == .ghost ? 0 : 1)
             }
-            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
-            .shadow(
-                color: castsShadow ? Color.black.opacity(0.18) : .clear,
-                radius: castsShadow ? 1 : 0,
-                y: castsShadow ? 1 : 0
-            )
+            .clipShape(Capsule())
+            .contentShape(Capsule())
             .opacity(isEnabled ? 1 : 0.4)
             .scaleEffect(isPressed && !reduceMotion ? 0.97 : 1)
             .animation(
                 reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
                 value: isPressed
             )
-            .animation(.easeOut(duration: theme.motion.fast), value: isHovered)
+            .animation(
+                reduceMotion ? nil : .easeOut(duration: theme.motion.fast),
+                value: isHovered
+            )
             .onHover { isHovered = $0 }
     }
 
@@ -118,7 +116,7 @@ private struct SottoButtonBody<Label: View>: View {
         case .primary:
             isPressed || isHovered ? theme.colors.accentInk : theme.colors.actionBackground
         case .secondary:
-            isPressed || isHovered ? theme.colors.hover : theme.colors.surface
+            isPressed || isHovered ? theme.colors.hoverStrong : theme.colors.field
         case .ghost:
             isPressed || isHovered ? theme.colors.hover : .clear
         case .destructive:
@@ -128,15 +126,11 @@ private struct SottoButtonBody<Label: View>: View {
 
     private var borderColor: Color {
         switch variant {
-        case .primary: theme.colors.accentInk
+        case .primary: .clear
         case .secondary: theme.colors.strongBorder
-        case .destructive: theme.colors.destructive
+        case .destructive: .clear
         case .ghost: .clear
         }
-    }
-
-    private var castsShadow: Bool {
-        variant == .secondary || variant == .primary || variant == .destructive
     }
 }
 

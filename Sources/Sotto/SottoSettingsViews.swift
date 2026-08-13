@@ -10,29 +10,20 @@ struct SottoModelsView: View {
 
     var body: some View {
         SottoSettingsPage(
-            title: "Modelo de voz",
-            description: "Sotto usa una única instalación local y verificable de Parakeet."
+            title: "Motor de voz",
+            description: "Configura el motor que convierte tu voz en texto."
         ) {
             SottoCard(style: .raised) {
                 VStack(alignment: .leading, spacing: theme.spacing.lg) {
                     HStack(spacing: theme.spacing.md) {
-                        SottoIcon("waveform.badge.mic", size: 17)
-                            .foregroundStyle(theme.colors.accentInk)
-                            .frame(width: 38, height: 38)
-                            .background(theme.colors.accentTint)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: theme.radii.medium)
-                                    .strokeBorder(theme.colors.accent.opacity(0.24))
-                            }
-                            .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+                        SottoIcon("waveform", size: 17)
+                            .foregroundStyle(theme.colors.subtleForeground)
+                            .frame(width: 22, height: 22)
 
                         VStack(alignment: .leading, spacing: theme.spacing.xs) {
-                            HStack {
-                                Text("Parakeet TDT 0.6B v3")
-                                    .font(theme.typography.sectionTitle)
-                                SottoBadge(model.modelState.title, tone: model.modelState.tone)
-                            }
-                            Text("Reconocimiento multilingüe Core ML optimizado para Apple Silicon.")
+                            Text("Motor de voz")
+                                .font(theme.typography.sectionTitle)
+                            Text("Convierte tus dictados en texto.")
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
@@ -49,7 +40,7 @@ struct SottoModelsView: View {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                             Text("Idioma del dictado")
                                 .font(theme.typography.label)
-                            Text("Automático funciona bien; fijarlo ayuda a evitar alfabetos incorrectos.")
+                            Text("Detectar automáticamente suele funcionar. Elige un idioma si el resultado no es correcto.")
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
@@ -63,45 +54,32 @@ struct SottoModelsView: View {
                         .frame(width: 205)
                     }
 
-                    SottoDivider()
-
-                    LabeledContent("Idiomas", value: "25 idiomas europeos")
-                    LabeledContent("Ejecución", value: "Core ML · Neural Engine")
-                    LabeledContent("Licencia del modelo", value: "CC BY 4.0")
-                    if let size = model.modelSizeDescription {
-                        LabeledContent("Espacio utilizado", value: size)
-                    }
-
-                    Text("El audio no se envía a ningún servidor. La conexión sólo se utiliza para descargar el modelo desde FluidInference en Hugging Face.")
-                        .font(theme.typography.caption)
-                        .foregroundStyle(theme.colors.mutedForeground)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
         .confirmationDialog(
-            "¿Eliminar Parakeet de este Mac?",
+            "¿Eliminar el motor?",
             isPresented: $confirmsModelDeletion,
             titleVisibility: .visible
         ) {
-            Button("Eliminar modelo", role: .destructive) {
+            Button("Eliminar motor", role: .destructive) {
                 model.deleteModel()
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Podrás volver a descargarlo. Tus ajustes, vocabulario e historial no se borrarán.")
+            Text("Puedes instalarlo de nuevo. Tus ajustes, vocabulario e historial no se borrarán.")
         }
         .confirmationDialog(
-            "¿Reinstalar Parakeet?",
+            "¿Reinstalar el motor?",
             isPresented: $confirmsModelRepair,
             titleVisibility: .visible
         ) {
-            Button("Eliminar y volver a descargar", role: .destructive) {
+            Button("Reinstalar motor", role: .destructive) {
                 model.reinstallModel()
             }
             Button("Cancelar", role: .cancel) {}
         } message: {
-            Text("Sotto eliminará sólo la caché fija de Parakeet y descargará una copia limpia.")
+            Text("Se eliminarán los archivos actuales y se instalará una copia nueva.")
         }
     }
 
@@ -113,12 +91,9 @@ struct SottoModelsView: View {
                 VStack(alignment: .leading, spacing: theme.spacing.xs) {
                     Text(model.modelState.detail)
                         .font(theme.typography.body)
-                    Text("La descarga puede ocupar varios cientos de MB.")
-                        .font(theme.typography.caption)
-                        .foregroundStyle(theme.colors.mutedForeground)
                 }
                 Spacer()
-                Button("Descargar modelo") {
+                Button("Instalar motor") {
                     model.installModel()
                 }
                 .buttonStyle(.sotto())
@@ -129,12 +104,9 @@ struct SottoModelsView: View {
                 VStack(alignment: .leading, spacing: theme.spacing.xs) {
                     Text(model.modelState.detail)
                         .font(theme.typography.body)
-                    Text("La reparación elimina la copia dañada antes de descargarla de nuevo.")
-                        .font(theme.typography.caption)
-                        .foregroundStyle(theme.colors.mutedForeground)
                 }
                 Spacer()
-                Button("Reinstalar modelo") {
+                Button("Reinstalar motor") {
                     confirmsModelRepair = true
                 }
                 .buttonStyle(.sotto())
@@ -166,7 +138,7 @@ struct SottoModelsView: View {
                     .font(theme.typography.body)
                     .foregroundStyle(theme.colors.mutedForeground)
                 Spacer()
-                Button("Eliminar modelo") {
+                Button("Eliminar motor") {
                     confirmsModelDeletion = true
                 }
                 .buttonStyle(.sotto(.destructive, size: .small))
@@ -185,13 +157,13 @@ struct SottoVocabularyView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Vocabulario",
-            description: "Corrige nombres, marcas y términos después del reconocimiento local."
+            description: "Corrige nombres y términos que el dictado reconoce mal."
         ) {
             SottoCard {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
                     SottoSectionHeader(
-                        "Añadir sustitución",
-                        description: "Indica lo que Parakeet suele oír y cómo debe escribirse."
+                        "Añadir término",
+                        description: "Escribe lo que dices y cómo quieres que aparezca."
                     )
                     HStack(spacing: theme.spacing.sm) {
                         TextField("Forma hablada", text: $spokenForm)
@@ -213,9 +185,9 @@ struct SottoVocabularyView: View {
 
                     if model.vocabulary.isEmpty {
                         SottoEmptyState(
-                            systemImage: "text.book.closed",
-                            title: "Sin términos todavía",
-                            description: "Puedes empezar con nombres propios o palabras técnicas."
+                            systemImage: "book.closed",
+                            title: "Aún no hay términos",
+                            description: "Añade nombres o palabras que suelas dictar."
                         )
                     } else {
                         ForEach(model.vocabulary) { entry in
@@ -251,21 +223,19 @@ struct SottoShortcutsView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Atajos",
-            description: "Inicia el dictado sin apartar las manos del teclado."
+            description: "Inicia y detén el dictado con el teclado."
         ) {
             SottoCard {
                 VStack(spacing: theme.spacing.lg) {
                     HStack(spacing: theme.spacing.md) {
                         SottoIcon("command", size: 15)
-                            .foregroundStyle(theme.colors.accentInk)
-                            .frame(width: 30, height: 30)
-                            .background(theme.colors.accentTint)
-                            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
+                            .foregroundStyle(theme.colors.subtleForeground)
+                            .frame(width: 20, height: 20)
 
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                             Text("Atajo global")
                                 .font(theme.typography.label)
-                            Text("Funciona incluso cuando Sotto no es la aplicación activa.")
+                            Text("Funciona aunque Sotto no esté en primer plano.")
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
@@ -294,23 +264,23 @@ struct SottoShortcutsView: View {
 
                     SottoToggleRow(
                         "Mantener para dictar",
-                        description: "Suelta el atajo para detener la grabación.",
+                        description: "Suelta el atajo para terminar.",
                         systemImage: "hand.tap",
                         isOn: $model.preferences.holdToTalk
                     )
                     SottoDivider()
                     SottoToggleRow(
                         "Sonidos de estado",
-                        description: "Confirma el inicio y el final del dictado.",
+                        description: "Reproduce un sonido al empezar y terminar.",
                         systemImage: "speaker.wave.2",
                         isOn: $model.preferences.playSounds
                     )
                     SottoDivider()
                     HStack {
                         VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                            Text("Duración máxima")
+                            Text("Límite de grabación")
                                 .font(theme.typography.label)
-                            Text("Sotto detiene y transcribe automáticamente al alcanzar el límite.")
+                            Text("Sotto detendrá el dictado al alcanzarlo.")
                                 .font(theme.typography.body)
                                 .foregroundStyle(theme.colors.mutedForeground)
                         }
@@ -347,14 +317,11 @@ struct SottoAppearanceView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Apariencia",
-            description: "Un sistema source-owned inspirado en Beautiful UI."
+            description: "Elige el color de acento de la interfaz."
         ) {
             SottoCard(style: .raised) {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
-                    SottoSectionHeader(
-                        "Beautiful UI",
-                        description: "Inter, negros neutros, hairlines de un píxel y controles compactos."
-                    )
+                    SottoSectionHeader("Color de acento")
 
                     HStack(spacing: theme.spacing.sm) {
                         ForEach(Array(appearanceSwatches.enumerated()), id: \.offset) { index, swatch in
@@ -369,22 +336,6 @@ struct SottoAppearanceView: View {
                         }
                     }
 
-                    SottoDivider()
-
-                    HStack(spacing: theme.spacing.sm) {
-                        SottoBadge("Preparado", systemImage: "checkmark", tone: .success)
-                        SottoActivityLabel("Procesando")
-                        Spacer()
-                        Button("Secundario") {}
-                            .buttonStyle(.sotto(.secondary, size: .small))
-                        Button("Acción") {}
-                            .buttonStyle(.sotto(.primary, size: .small))
-                    }
-
-                    Text("Los tokens siguen viviendo en SottoTheme y pueden reemplazarse sin modificar las pantallas.")
-                        .font(theme.typography.caption)
-                        .tracking(theme.typography.tracking)
-                        .foregroundStyle(theme.colors.mutedForeground)
                 }
             }
         }
@@ -409,7 +360,7 @@ struct SottoPrivacyView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Privacidad",
-            description: "La voz y los textos permanecen en este Mac."
+            description: "Decide qué permisos y datos usa Sotto."
         ) {
             SottoCard {
                 VStack(spacing: theme.spacing.lg) {
@@ -443,21 +394,21 @@ struct SottoPrivacyView: View {
                     SottoDivider()
                     SottoToggleRow(
                         "Insertar automáticamente",
-                        description: "Sin Accesibilidad, el texto se copia al portapapeles.",
+                        description: "Sin este permiso, Sotto copia el texto.",
                         systemImage: "text.cursor",
                         isOn: $model.preferences.insertAutomatically
                     )
                     SottoDivider()
                     SottoToggleRow(
-                        "Guardar historial local",
-                        description: "Conserva los últimos dictados en Application Support/Sotto.",
-                        systemImage: "clock.arrow.circlepath",
+                        "Guardar historial",
+                        description: "Conserva tus últimos dictados.",
+                        systemImage: "clock",
                         isOn: $model.preferences.keepHistory
                     )
                     SottoDivider()
                     SottoToggleRow(
                         "Abrir al iniciar sesión",
-                        description: "Mantiene Sotto disponible en la barra de menús.",
+                        description: "Sotto estará disponible al iniciar el Mac.",
                         systemImage: "power",
                         isOn: launchAtLoginBinding
                     )
@@ -498,14 +449,14 @@ struct SottoHistoryView: View {
     var body: some View {
         SottoSettingsPage(
             title: "Historial",
-            description: "Tus dictados guardados localmente en este Mac."
+            description: "Revisa, copia o elimina tus dictados."
         ) {
             if model.history.isEmpty {
                 SottoCard {
                     SottoEmptyState(
-                        systemImage: "clock.arrow.circlepath",
+                        systemImage: "clock",
                         title: "Aún no hay dictados",
-                        description: "Cuando completes uno aparecerá aquí para copiarlo o revisarlo."
+                        description: "Cuando termines uno, aparecerá aquí."
                     )
                 }
             } else {
@@ -520,18 +471,22 @@ struct SottoHistoryView: View {
                     .buttonStyle(.sotto(.destructive, size: .small))
                 }
 
-                LazyVStack(spacing: theme.spacing.md) {
+                LazyVStack(spacing: 0) {
                     ForEach(model.history) { record in
                         SottoCard {
                             VStack(alignment: .leading, spacing: theme.spacing.sm) {
-                                HStack {
+                                HStack(spacing: theme.spacing.sm) {
                                     Text(record.createdAt, format: .dateTime.day().month().hour().minute())
                                         .font(theme.typography.caption)
                                         .foregroundStyle(theme.colors.mutedForeground)
                                     if let app = record.targetApplication {
-                                        SottoBadge(app, tone: .neutral)
+                                        Text(app)
+                                            .font(theme.typography.caption)
+                                            .foregroundStyle(theme.colors.subtleForeground)
                                     }
-                                    SottoBadge(record.insertionOutcome.displayName, tone: .success)
+                                    Text(record.insertionOutcome.displayName)
+                                        .font(theme.typography.caption)
+                                        .foregroundStyle(theme.colors.subtleForeground)
                                     Spacer()
                                     Button {
                                         model.copyToPasteboard(record.text)
@@ -550,10 +505,11 @@ struct SottoHistoryView: View {
                                     .font(theme.typography.body)
                                     .foregroundStyle(theme.colors.foreground)
                                     .textSelection(.enabled)
-                                Text("\(record.duration.formatted(.number.precision(.fractionLength(1)))) s de audio · \(record.processingTime.formatted(.number.precision(.fractionLength(2)))) s de proceso")
-                                    .font(theme.typography.caption)
-                                    .foregroundStyle(theme.colors.subtleForeground)
                             }
+                        }
+                        if record.id != model.history.last?.id {
+                            SottoDivider()
+                                .padding(.horizontal, theme.spacing.md)
                         }
                     }
                 }
@@ -589,13 +545,18 @@ struct SottoSettingsPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                SottoPageHeader(title: title, description: description)
-                content
+                SottoReveal {
+                    SottoPageHeader(title: title, description: description)
+                }
+
+                SottoReveal(delay: 0.04) {
+                    content
+                }
             }
             .frame(maxWidth: 760, alignment: .leading)
             .padding(theme.spacing.xxl)
         }
-        .background(theme.colors.canvas)
+        .background(theme.colors.surface)
     }
 }
 

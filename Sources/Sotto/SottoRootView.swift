@@ -17,7 +17,7 @@ enum SottoDestination: String, CaseIterable, Identifiable {
         switch self {
         case .home: "Inicio"
         case .history: "Historial"
-        case .models: "Modelos"
+        case .models: "Motor de voz"
         case .vocabulary: "Vocabulario"
         case .shortcuts: "Atajos"
         case .appearance: "Apariencia"
@@ -25,17 +25,6 @@ enum SottoDestination: String, CaseIterable, Identifiable {
         }
     }
 
-    var systemImage: String {
-        switch self {
-        case .home: "waveform"
-        case .history: "clock.arrow.circlepath"
-        case .models: "cpu"
-        case .vocabulary: "text.book.closed"
-        case .shortcuts: "command"
-        case .appearance: "paintpalette"
-        case .privacy: "lock.shield"
-        }
-    }
 }
 
 struct SottoRootView: View {
@@ -50,7 +39,7 @@ struct SottoRootView: View {
 
             destinationView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(theme.colors.canvas)
+                .background(theme.colors.surface)
         }
         .background(theme.colors.canvas)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
@@ -103,13 +92,12 @@ private struct SottoSidebar: View {
                 .padding(.horizontal, theme.spacing.md)
                 .padding(.bottom, theme.spacing.lg)
 
-            SottoSidebarSection(title: "ESPACIO DE TRABAJO", destinations: workspace, selection: $selection)
+            SottoSidebarSection(title: "Espacio de trabajo", destinations: workspace, selection: $selection)
 
-            SottoSidebarSection(title: "CONFIGURACIÓN", destinations: configuration, selection: $selection)
+            SottoSidebarSection(title: "Configuración", destinations: configuration, selection: $selection)
                 .padding(.top, theme.spacing.lg)
 
             Spacer(minLength: theme.spacing.lg)
-            SottoSidebarFooter(model: model)
         }
         .padding(.horizontal, theme.spacing.md)
         .padding(.bottom, theme.spacing.md)
@@ -131,8 +119,8 @@ private struct SottoSidebarSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(theme.typography.micro)
-                .tracking(0.9)
+                .font(theme.typography.caption)
+                .tracking(0.1)
                 .foregroundStyle(theme.colors.subtleForeground)
                 .padding(.horizontal, theme.spacing.sm)
                 .padding(.bottom, 5)
@@ -160,10 +148,7 @@ private struct SottoSidebarRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
-                SottoIcon(destination.systemImage, size: 13)
-                    .foregroundStyle(isSelected ? theme.colors.foreground : theme.colors.mutedForeground)
-
+            HStack {
                 Text(destination.title)
                     .font(theme.typography.label)
                     .tracking(theme.typography.tracking)
@@ -196,53 +181,18 @@ private struct SottoSidebarHeader: View {
 
     var body: some View {
         HStack(spacing: theme.spacing.sm) {
-            SottoIcon("waveform", size: 15, weight: .medium)
+            SottoIcon("waveform", size: 16, weight: .medium)
                 .foregroundStyle(theme.colors.accentInk)
-                .frame(width: 32, height: 32)
-                .background(theme.colors.accentTint)
-                .overlay {
-                    RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
-                        .strokeBorder(theme.colors.accent.opacity(0.28))
-                }
-                .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Sotto")
                     .font(theme.typography.sectionTitle)
                     .tracking(theme.typography.tracking)
-                Text("LOCAL VOICE")
-                    .font(theme.typography.micro)
-                    .tracking(0.8)
-                    .foregroundStyle(theme.colors.mutedForeground)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, theme.spacing.sm)
         .padding(.top, theme.spacing.xl)
         .padding(.bottom, theme.spacing.lg)
-    }
-}
-
-private struct SottoSidebarFooter: View {
-    @ObservedObject var model: SottoAppModel
-    @Environment(\.sottoTheme) private var theme
-
-    var body: some View {
-        HStack(spacing: theme.spacing.sm) {
-            SottoIcon("lock", size: 12)
-                .foregroundStyle(theme.colors.mutedForeground)
-            SottoBadge(
-                model.modelState.isReady ? "100 % local" : model.modelState.title,
-                tone: model.modelState.tone
-            )
-            Spacer()
-        }
-        .padding(theme.spacing.sm)
-        .background(theme.colors.mutedSurface)
-        .overlay {
-            RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
-                .strokeBorder(theme.colors.border)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
     }
 }

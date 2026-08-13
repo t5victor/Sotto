@@ -36,13 +36,9 @@ public struct SottoBadge: View {
         .tracking(theme.typography.tracking)
         .foregroundStyle(toneForeground)
         .padding(.horizontal, 7)
-        .padding(.vertical, 3)
+        .padding(.vertical, 2)
         .background(toneBackground)
-        .overlay {
-            RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
-                .strokeBorder(toneBorder)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+        .clipShape(Capsule())
         .accessibilityElement(children: .combine)
     }
 
@@ -58,7 +54,7 @@ public struct SottoBadge: View {
 
     private var toneBackground: Color {
         switch tone {
-        case .neutral: theme.colors.surface
+        case .neutral: .clear
         case .accent: theme.colors.accentTint
         case .success: theme.colors.successBackground
         case .warning: theme.colors.warningBackground
@@ -66,13 +62,4 @@ public struct SottoBadge: View {
         }
     }
 
-    private var toneBorder: Color {
-        switch tone {
-        case .neutral: theme.colors.strongBorder
-        case .accent: theme.colors.accent.opacity(0.28)
-        case .success: theme.colors.success.opacity(0.24)
-        case .warning: theme.colors.warning.opacity(0.24)
-        case .destructive: theme.colors.destructive.opacity(0.24)
-        }
-    }
 }

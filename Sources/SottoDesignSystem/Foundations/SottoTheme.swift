@@ -434,7 +434,7 @@ public struct SottoTheme: Sendable {
             colors: Colors(
                 canvas: adaptiveColor(light: SottoPalette.Light.page, dark: SottoPalette.Dark.page),
                 surface: adaptiveColor(light: SottoPalette.Light.surface, dark: SottoPalette.Dark.surface),
-                raisedSurface: adaptiveColor(light: SottoPalette.Light.surface, dark: SottoPalette.Dark.surface),
+                raisedSurface: adaptiveColor(light: SottoPalette.Light.canvas, dark: SottoPalette.Dark.canvas),
                 mutedSurface: adaptiveColor(light: SottoPalette.Light.inset, dark: SottoPalette.Dark.inset),
                 field: adaptiveColor(light: SottoPalette.Light.field, dark: SottoPalette.Dark.field),
                 hover: adaptiveColor(light: SottoPalette.Light.hover, dark: SottoPalette.Dark.hover),

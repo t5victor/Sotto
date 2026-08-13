@@ -117,27 +117,25 @@ private struct SottoOverlayView: View {
     private var stateIcon: some View {
         let (icon, color): (String, Color) = switch model.dictationState {
         case .preparing: ("mic", theme.colors.accent)
-        case .listening: ("mic.fill", theme.colors.accent)
-        case .transcribing: ("waveform.badge.magnifyingglass", theme.colors.accent)
+        case .listening: ("mic", theme.colors.accent)
+        case .transcribing: ("waveform", theme.colors.accent)
         case .inserting: ("text.cursor", theme.colors.accent)
         case .completed: ("checkmark", theme.colors.success)
         case .failed: ("exclamationmark", theme.colors.destructive)
         case .idle: ("waveform", theme.colors.overlayMutedForeground)
         }
 
-        SottoIcon(icon, size: 13, weight: .medium)
+        SottoIcon(icon, size: 14, weight: .medium)
             .foregroundStyle(color)
-            .frame(width: 28, height: 28)
-            .background(theme.colors.overlayBorder.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .frame(width: 20, height: 20)
     }
 
     private var title: String {
         switch model.dictationState {
-        case .idle: "Sotto está listo"
+        case .idle: "Listo para dictar"
         case .preparing: "Preparando micrófono"
         case .listening: "Escuchando"
-        case .transcribing: "Transcribiendo en este Mac"
+        case .transcribing: "Transcribiendo"
         case .inserting: "Insertando texto"
         case .completed(_, let outcome): outcome.displayName
         case .failed: "No se pudo completar el dictado"
@@ -149,7 +147,7 @@ private struct SottoOverlayView: View {
         case .idle: model.preferences.shortcut.displayName
         case .preparing: "Un momento…"
         case .listening: model.preferences.holdToTalk ? "Suelta el atajo para terminar" : "Pulsa el atajo para terminar"
-        case .transcribing: "Parakeet TDT 0.6B v3"
+        case .transcribing: "Transcribiendo"
         case .inserting: "Volviendo a la aplicación anterior"
         case .completed(let text, _): text
         case .failed(let message): message

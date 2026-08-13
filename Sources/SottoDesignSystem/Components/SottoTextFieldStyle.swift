@@ -16,10 +16,9 @@ public struct SottoTextFieldStyle: TextFieldStyle {
             .background(theme.colors.field)
             .overlay {
                 RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
-                    .strokeBorder(theme.colors.strongBorder)
+                    .strokeBorder(theme.colors.border)
             }
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
-            .shadow(color: Color.black.opacity(0.18), radius: 1, y: 1)
     }
 }
 

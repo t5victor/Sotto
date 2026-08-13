@@ -24,7 +24,6 @@ public struct SottoSwitchStyle: ToggleStyle {
                     .fill(configuration.isOn ? theme.colors.accentForeground : theme.colors.mutedForeground)
                     .frame(width: 13, height: 13)
                     .padding(3)
-                    .shadow(color: .black.opacity(0.24), radius: 1, y: 1)
             }
             .frame(width: 32, height: 19)
             .contentShape(Capsule())

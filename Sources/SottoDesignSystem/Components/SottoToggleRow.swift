@@ -23,11 +23,9 @@ public struct SottoToggleRow: View {
     public var body: some View {
         HStack(alignment: .center, spacing: theme.spacing.md) {
             if let systemImage {
-                SottoIcon(systemImage, size: 14)
-                    .foregroundStyle(theme.colors.accentInk)
-                    .frame(width: 28, height: 28)
-                    .background(theme.colors.accentTint)
-                    .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+                SottoIcon(systemImage, size: 13, weight: .medium)
+                    .foregroundStyle(theme.colors.subtleForeground)
+                    .frame(width: 20, height: 20)
             }
 
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {

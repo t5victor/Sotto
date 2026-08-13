@@ -12,7 +12,7 @@ struct SottoHomeView: View {
                 SottoReveal {
                     SottoPageHeader(
                         title: "Habla. Sotto escribe.",
-                        description: "Dictado rápido y privado en cualquier aplicación de tu Mac."
+                        description: "Dicta en cualquier aplicación de tu Mac."
                     )
                 }
 
@@ -32,10 +32,7 @@ struct SottoHomeView: View {
                 }
 
                 SottoReveal(delay: 0.08) {
-                    HStack(alignment: .top, spacing: theme.spacing.lg) {
-                        modelCard
-                        behaviorCard
-                    }
+                    behaviorCard
                 }
 
                 if let first = model.history.first {
@@ -47,19 +44,13 @@ struct SottoHomeView: View {
             .frame(maxWidth: 820, alignment: .leading)
             .padding(theme.spacing.xxl)
         }
-        .background(theme.colors.canvas)
+        .background(theme.colors.surface)
     }
 
     private var dictationCard: some View {
         SottoCard(style: .raised, padding: 20) {
             HStack(alignment: .center, spacing: 20) {
                 VStack(alignment: .leading, spacing: theme.spacing.md) {
-                    SottoBadge(
-                        statusLabel,
-                        systemImage: statusIcon,
-                        tone: statusTone
-                    )
-
                     Text(dictationTitle)
                         .font(.custom("Inter", size: 18).weight(.semibold))
                         .tracking(-0.22)
@@ -94,46 +85,13 @@ struct SottoHomeView: View {
         switch model.dictationState {
         case .preparing:
             SottoActivityLabel("Preparando")
+        case .listening:
+            SottoRecordingPill(state: .listening, level: model.audioLevel)
         case .transcribing:
             SottoActivityLabel("Transcribiendo")
         case .inserting:
             SottoActivityLabel("Insertando")
-        default:
-            SottoRecordingPill(
-                state: recordingVisualState,
-                level: model.audioLevel
-            )
-        }
-    }
-
-    private var modelCard: some View {
-        SottoCard {
-            VStack(alignment: .leading, spacing: theme.spacing.md) {
-                SottoSectionHeader(
-                    "Motor de voz",
-                    description: "El reconocimiento ocurre en este Mac."
-                )
-                SottoDivider()
-                HStack(spacing: theme.spacing.md) {
-                    SottoIcon("cpu", size: 15)
-                        .foregroundStyle(theme.colors.accentInk)
-                        .frame(width: 30, height: 30)
-                        .background(theme.colors.accentTint)
-                        .clipShape(RoundedRectangle(cornerRadius: theme.radii.small))
-
-                    VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                        Text("Parakeet TDT 0.6B v3")
-                            .font(theme.typography.label)
-                            .tracking(theme.typography.tracking)
-                        Text(model.modelSizeDescription.map { "25 idiomas · \($0)" } ?? "25 idiomas · Apple Silicon")
-                            .font(theme.typography.caption)
-                            .tracking(theme.typography.tracking)
-                            .foregroundStyle(theme.colors.mutedForeground)
-                    }
-                    Spacer()
-                    SottoBadge(model.modelState.title, tone: model.modelState.tone)
-                }
-            }
+        default: EmptyView()
         }
     }
 
@@ -168,7 +126,6 @@ struct SottoHomeView: View {
                 HStack {
                     SottoSectionHeader("Último dictado")
                     Spacer()
-                    SottoBadge(record.insertionOutcome.displayName, tone: .success)
                     Button {
                         model.copyToPasteboard(record.text)
                     } label: {
@@ -187,44 +144,15 @@ struct SottoHomeView: View {
         }
     }
 
-    private var statusLabel: String {
-        switch model.dictationState {
-        case .idle: model.modelState.isReady ? "Preparado" : model.modelState.title
-        case .preparing: "Preparando"
-        case .listening: "Micrófono activo"
-        case .transcribing: "Transcribiendo"
-        case .inserting: "Insertando"
-        case .completed(_, let outcome): outcome.displayName
-        case .failed: "Error"
-        }
-    }
-
-    private var statusIcon: String {
-        switch model.dictationState {
-        case .listening: "mic.fill"
-        case .transcribing: "waveform.badge.magnifyingglass"
-        case .failed: "exclamationmark.triangle.fill"
-        default: "checkmark.circle.fill"
-        }
-    }
-
-    private var statusTone: SottoBadgeTone {
-        switch model.dictationState {
-        case .failed: .destructive
-        case .listening, .transcribing, .inserting: .accent
-        default: model.modelState.isReady ? .success : model.modelState.tone
-        }
-    }
-
     private var dictationTitle: String {
         switch model.dictationState {
-        case .idle: model.modelState.isReady ? "Listo para dictar" : "Prepara el motor de voz"
+        case .idle: model.modelState.isReady ? "Listo para dictar" : "Prepara el dictado"
         case .preparing: "Preparando el micrófono"
-        case .listening: "Te estoy escuchando"
-        case .transcribing: "Convirtiendo voz en texto"
-        case .inserting: "Enviando el texto"
+        case .listening: "Escuchando"
+        case .transcribing: "Transcribiendo"
+        case .inserting: "Insertando"
         case .completed: "Dictado completado"
-        case .failed: "El dictado necesita atención"
+        case .failed: "No se pudo completar el dictado"
         }
     }
 
@@ -237,14 +165,6 @@ struct SottoHomeView: View {
         return model.modelState.detail
     }
 
-    private var recordingVisualState: SottoRecordingState {
-        switch model.dictationState {
-        case .listening: .listening
-        case .transcribing, .inserting: .transcribing
-        default: .idle
-        }
-    }
-
     private var primaryActionTitle: String {
         if model.isListening { return "Detener" }
         if model.dictationState.canCancel { return "Cancelar" }
@@ -252,8 +172,8 @@ struct SottoHomeView: View {
         if case .downloading = model.modelState { return "Descargando…" }
         if case .loading = model.modelState { return "Cargando…" }
         if case .validating = model.modelState { return "Validando…" }
-        if case .failed = model.modelState { return "Reinstalar Parakeet" }
-        return "Descargar Parakeet"
+        if case .failed = model.modelState { return "Reinstalar motor" }
+        return "Instalar motor"
     }
 
     private var primaryActionDisabled: Bool {
@@ -370,9 +290,8 @@ private struct SottoShortcutKey: View {
             .background(theme.colors.field)
             .overlay {
                 RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
-                    .strokeBorder(theme.colors.strongBorder)
+                    .strokeBorder(theme.colors.border)
             }
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
-            .shadow(color: .black.opacity(0.16), radius: 1, y: 1)
     }
 }

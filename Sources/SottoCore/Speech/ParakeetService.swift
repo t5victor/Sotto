@@ -13,9 +13,9 @@ public actor ParakeetService {
         public var errorDescription: String? {
             switch self {
             case .unsupportedHardware:
-                "Parakeet requiere un Mac con Apple Silicon."
+                "Esta versión de Sotto requiere un Mac compatible."
             case .modelNotInstalled:
-                "Descarga Parakeet antes de iniciar el dictado."
+                "Instala el motor antes de iniciar el dictado."
             case .unreadableAudio(let url):
                 "No se pudo leer la grabación \(url.lastPathComponent)."
             case .emptyAudio:
@@ -237,10 +237,9 @@ public actor ParakeetService {
         case .downloading(let completed, let total):
             detail = total > 0
                 ? "Descargando archivo \(min(completed + 1, total)) de \(total)"
-                : "Comprobando la caché local"
-        case .compiling(let modelName):
-            let name = modelName.replacingOccurrences(of: ".mlmodelc", with: "")
-            detail = name.isEmpty ? "Finalizando el modelo" : "Preparando \(name)"
+                : "Comprobando archivos"
+        case .compiling:
+            detail = "Preparando archivos"
         }
         maximumDownloadProgress = max(
             maximumDownloadProgress,

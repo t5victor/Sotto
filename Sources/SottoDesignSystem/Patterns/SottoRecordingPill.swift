@@ -22,9 +22,6 @@ public struct SottoRecordingPill: View {
         HStack(spacing: theme.spacing.sm) {
             SottoIcon(stateIcon, size: 13, weight: .medium)
                 .foregroundStyle(stateColor)
-                .frame(width: 26, height: 26)
-                .background(stateBackground)
-                .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
 
             Text(stateLabel)
                 .font(theme.typography.label)
@@ -37,14 +34,9 @@ public struct SottoRecordingPill: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(theme.colors.surface)
-        .overlay {
-            RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous)
-                .strokeBorder(theme.colors.strongBorder)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium, style: .continuous))
-        .shadow(color: Color.black.opacity(0.18), radius: 2, y: 1)
+        .padding(.vertical, 5)
+        .background(stateBackground)
+        .clipShape(Capsule())
         .animation(
             reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.regular),
             value: state
@@ -64,7 +56,7 @@ public struct SottoRecordingPill: View {
     private var stateIcon: String {
         switch state {
         case .idle: "waveform"
-        case .listening: "mic.fill"
+        case .listening: "mic"
         case .transcribing: "text.cursor"
         }
     }

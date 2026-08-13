@@ -13,25 +13,14 @@ struct SottoMenuBarView: View {
             HStack(spacing: theme.spacing.sm) {
                 SottoIcon("waveform", size: 14, weight: .medium)
                     .foregroundStyle(theme.colors.accentInk)
-                    .frame(width: 30, height: 30)
-                    .background(theme.colors.accentTint)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: theme.radii.medium)
-                            .strokeBorder(theme.colors.accent.opacity(0.24))
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: theme.radii.medium))
+                    .frame(width: 20, height: 20)
 
                 VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                     Text("Sotto")
                         .font(theme.typography.sectionTitle)
                         .tracking(theme.typography.tracking)
-                    Text("Parakeet TDT 0.6B v3 · Local")
-                        .font(theme.typography.caption)
-                        .tracking(theme.typography.tracking)
-                        .foregroundStyle(theme.colors.mutedForeground)
                 }
                 Spacer()
-                SottoBadge(statusLabel, tone: statusTone)
             }
 
             if model.dictationState == .transcribing || model.dictationState == .inserting {
@@ -40,7 +29,7 @@ struct SottoMenuBarView: View {
                         model.dictationState == .inserting ? "Insertando texto" : "Transcribiendo"
                     )
                 }
-            } else {
+            } else if model.modelState.isReady {
                 SottoRecordingPill(
                     state: recordingState,
                     level: model.audioLevel
@@ -93,24 +82,7 @@ struct SottoMenuBarView: View {
         }
         .padding(theme.spacing.lg)
         .frame(width: 320)
-        .background(theme.colors.canvas)
-    }
-
-    private var statusLabel: String {
-        switch model.dictationState {
-        case .listening: "Escuchando"
-        case .transcribing, .inserting: "Procesando"
-        case .failed: "Error"
-        default: model.modelState.title
-        }
-    }
-
-    private var statusTone: SottoBadgeTone {
-        switch model.dictationState {
-        case .failed: .destructive
-        case .listening, .transcribing, .inserting: .accent
-        default: model.modelState.tone
-        }
+        .background(theme.colors.surface)
     }
 
     private var recordingState: SottoRecordingState {

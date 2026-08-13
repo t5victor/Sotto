@@ -106,15 +106,6 @@ final class SottoAppModel: ObservableObject {
         modelState.isReady && !dictationState.isBusy
     }
 
-    var modelSizeDescription: String? {
-        let bytes: Int64
-        switch modelState {
-        case .installed(let value), .ready(let value): bytes = value
-        default: return nil
-        }
-        return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
-    }
-
     func attachOverlayPresenter(_ presenter: SottoOverlayPresenting) {
         overlayPresenter = presenter
     }
@@ -358,8 +349,8 @@ final class SottoAppModel: ObservableObject {
         guard !dictationState.isBusy else { return }
         guard modelState.isReady else {
             let message = modelState.isInstalled
-                ? "Parakeet todavía se está preparando."
-                : "Descarga Parakeet para empezar a dictar."
+                ? "El motor todavía se está preparando."
+                : "Instala el motor para empezar a dictar."
             presentFailure(message, hideAfter: 2)
             return
         }

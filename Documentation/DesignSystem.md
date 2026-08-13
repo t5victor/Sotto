@@ -42,8 +42,14 @@ and the destructive action uses a darker red derivative so 12.5 px labels keep
 WCAG AA and APCA normal-text contrast. Status backgrounds retain the reference
 tints while their text colors are accessibility-safe semantic pairs.
 
-Cards use a 10 px radius, fields and selectors 8 px, chips 6 px, and compact
-controls range from 28 to 38 px. Borders are one-pixel semantic hairlines.
+Cards use a 10 px radius, fields and selectors 8 px, status badges and actions
+use capsules, and compact controls range from 28 to 38 px. Borders are
+one-pixel semantic hairlines.
+The main window uses one continuous surface: standard cards are transparent
+layout wrappers, raised cards use the canvas tone once, and muted cards are
+reserved for secondary context. Controls use flat fills and capsules instead
+of shadows, and navigation relies on text-first rows with icons only where
+they clarify state or action.
 
 ## Typography and icons
 
@@ -62,7 +68,7 @@ Motion is limited to places where it explains state or confirms input:
 
 - buttons scale to 0.97 for 100 ms on press;
 - hover and selected surfaces transition in 100–150 ms;
-- first presentation of the home hierarchy uses an 8 px, 350 ms strong
+- first presentation of each destination hierarchy uses an 8 px, 350 ms strong
   ease-out reveal with a short stagger;
 - local model work uses the Beautiful UI-inspired 3×3 pixel loader and a
   restrained text shimmer;
