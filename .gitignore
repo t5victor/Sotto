@@ -10,3 +10,8 @@ Documentation/
 private/
 *.private.md
 *.internal.md
+
+# Personal SwiftUI previews and local design experiments
+Sources/Sotto/DevTools/
+DevTools/
+.sotto-preview/
