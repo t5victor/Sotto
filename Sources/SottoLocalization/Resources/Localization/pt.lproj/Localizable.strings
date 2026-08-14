@@ -54,6 +54,27 @@
 
 "home.title" = "Fale. Sotto escreve.";
 "home.description" = "Dite em qualquer app do Mac.";
+"home.welcome_title" = "Sobre o que você quer falar hoje?";
+"home.suggestion.explore" = "Informal";
+"home.suggestion.create" = "Formal";
+"home.suggestion.review" = "Organizado";
+"home.suggestion.fix" = "Muito desorganizado";
+"home.composer.title" = "O que você quer capturar?";
+"home.composer.description" = "Pressione o microfone e fale. O Sotto transcreverá o que você disser.";
+"home.composer.placeholder" = "Peça o que quiser";
+"home.composer.ready_hint" = "Pressione o microfone para começar";
+"home.composer.shortcut_hint" = "ou use";
+"home.composer.listening" = "Ouvindo";
+"home.composer.listening_hint" = "Fale naturalmente. Pressione novamente quando terminar.";
+"home.composer.transcribing" = "Preparando sua transcrição";
+"home.composer.transcribing_hint" = "O Sotto está transformando sua voz em texto.";
+"home.composer.inserting" = "Salvando seu ditado";
+"home.composer.inserting_hint" = "O Sotto está concluindo o ditado.";
+"home.composer.completed_hint" = "Seu ditado foi salvo no Histórico.";
+"home.composer.failed_hint" = "Você pode tentar novamente.";
+"home.composer.add_to_project" = "Selecionar projeto";
+"home.composer.no_project" = "Sem projeto";
+"home.composer.create_project" = "Novo projeto";
 "home.activity.preparing" = "Preparando";
 "home.activity.transcribing" = "Transcrevendo";
 "home.activity.inserting" = "Inserindo";
@@ -108,6 +129,10 @@
 "project.search_placeholder" = "Digite para buscar…";
 "project.search_no_results" = "Nenhum resultado";
 "project.search_no_results_description" = "Tente outras palavras.";
+
+"history.record.copied" = "Copiado";
+"history.record.delete_confirmation" = "Excluir este ditado?";
+"history.record.delete_message" = "Esta ação não pode ser desfeita.";
 
 "onboarding.startup_title" = "Preparando Sotto";
 "onboarding.startup_activity" = "Verificando a instalação…";

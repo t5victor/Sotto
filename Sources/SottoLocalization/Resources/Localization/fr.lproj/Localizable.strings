@@ -54,6 +54,27 @@
 
 "home.title" = "Parlez. Sotto écrit.";
 "home.description" = "Dictez dans n’importe quelle app Mac.";
+"home.welcome_title" = "De quoi voulez-vous parler aujourd’hui ?";
+"home.suggestion.explore" = "Informel";
+"home.suggestion.create" = "Formel";
+"home.suggestion.review" = "Structuré";
+"home.suggestion.fix" = "Très désordonné";
+"home.composer.title" = "Que voulez-vous capturer ?";
+"home.composer.description" = "Appuyez sur le microphone et parlez. Sotto transcrira vos paroles.";
+"home.composer.placeholder" = "Demandez ce que vous voulez";
+"home.composer.ready_hint" = "Appuyez sur le microphone pour commencer";
+"home.composer.shortcut_hint" = "ou utilisez";
+"home.composer.listening" = "Écoute";
+"home.composer.listening_hint" = "Parlez naturellement. Appuyez à nouveau pour terminer.";
+"home.composer.transcribing" = "Préparation de la transcription";
+"home.composer.transcribing_hint" = "Sotto transforme votre voix en texte.";
+"home.composer.inserting" = "Enregistrement de la dictée";
+"home.composer.inserting_hint" = "Sotto termine la dictée.";
+"home.composer.completed_hint" = "Votre dictée a été enregistrée dans l’Historique.";
+"home.composer.failed_hint" = "Vous pouvez réessayer.";
+"home.composer.add_to_project" = "Sélectionner un projet";
+"home.composer.no_project" = "Aucun projet";
+"home.composer.create_project" = "Nouveau projet";
 "home.activity.preparing" = "Préparation";
 "home.activity.transcribing" = "Transcription";
 "home.activity.inserting" = "Insertion";
@@ -108,6 +129,10 @@
 "project.search_placeholder" = "Saisissez votre recherche…";
 "project.search_no_results" = "Aucun résultat";
 "project.search_no_results_description" = "Essayez avec d’autres mots.";
+
+"history.record.copied" = "Copié";
+"history.record.delete_confirmation" = "Supprimer cette dictée ?";
+"history.record.delete_message" = "Cette action est irréversible.";
 
 "onboarding.startup_title" = "Préparation de Sotto";
 "onboarding.startup_activity" = "Vérification de l’installation…";

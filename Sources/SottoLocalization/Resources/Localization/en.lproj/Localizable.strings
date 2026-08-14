@@ -54,6 +54,27 @@
 
 "home.title" = "Speak. Sotto writes.";
 "home.description" = "Dictate in any Mac app.";
+"home.welcome_title" = "What do you want to talk about today?";
+"home.suggestion.explore" = "Informal";
+"home.suggestion.create" = "Formal";
+"home.suggestion.review" = "Structured";
+"home.suggestion.fix" = "Very loose";
+"home.composer.title" = "What do you want to capture?";
+"home.composer.description" = "Press the microphone and speak. Sotto will transcribe what you say.";
+"home.composer.placeholder" = "Ask anything";
+"home.composer.ready_hint" = "Press the microphone to start";
+"home.composer.shortcut_hint" = "or use";
+"home.composer.listening" = "Listening";
+"home.composer.listening_hint" = "Speak naturally. Press again when you are done.";
+"home.composer.transcribing" = "Preparing your transcription";
+"home.composer.transcribing_hint" = "Sotto is turning your voice into text.";
+"home.composer.inserting" = "Saving your dictation";
+"home.composer.inserting_hint" = "Sotto is finishing the dictation.";
+"home.composer.completed_hint" = "Your dictation was saved to History.";
+"home.composer.failed_hint" = "You can try again.";
+"home.composer.add_to_project" = "Select project";
+"home.composer.no_project" = "No project";
+"home.composer.create_project" = "New project";
 "home.activity.preparing" = "Preparing";
 "home.activity.transcribing" = "Transcribing";
 "home.activity.inserting" = "Inserting";
@@ -108,6 +129,10 @@
 "project.search_placeholder" = "Type to search…";
 "project.search_no_results" = "No results";
 "project.search_no_results_description" = "Try different words.";
+
+"history.record.copied" = "Copied";
+"history.record.delete_confirmation" = "Delete this dictation?";
+"history.record.delete_message" = "This action cannot be undone.";
 
 "onboarding.startup_title" = "Preparing Sotto";
 "onboarding.startup_activity" = "Checking installation…";
