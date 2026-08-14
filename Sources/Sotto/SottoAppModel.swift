@@ -29,6 +29,7 @@ final class SottoAppModel: ObservableObject {
     @Published private(set) var audioLevel: Double = 0
     @Published private(set) var history: [TranscriptionRecord] = []
     @Published private(set) var projects: [SottoProject] = []
+    @Published private(set) var captureProjectID: UUID? = nil
     @Published private(set) var vocabulary: [VocabularyEntry] = []
     @Published private(set) var lastTranscript: String?
     @Published private(set) var hotKeyError: String?
@@ -113,6 +114,16 @@ final class SottoAppModel: ObservableObject {
 
     var canStartDictation: Bool {
         modelState.isReady && !dictationState.isBusy
+    }
+
+    func setCaptureProject(_ projectID: UUID?) {
+        guard let projectID else {
+            captureProjectID = nil
+            return
+        }
+
+        guard projects.contains(where: { $0.id == projectID }) else { return }
+        captureProjectID = projectID
     }
 
     var shouldShowOnboarding: Bool {
@@ -365,6 +376,10 @@ final class SottoAppModel: ObservableObject {
     }
 
     func deleteProject(id: UUID) {
+        if captureProjectID == id {
+            captureProjectID = nil
+        }
+
         Task { [weak self] in
             guard let self else { return }
             do {
@@ -554,7 +569,8 @@ final class SottoAppModel: ObservableObject {
                 processingTime: transcript.processingTime,
                 confidence: transcript.confidence,
                 targetApplication: targetApplication,
-                insertionOutcome: outcome
+                insertionOutcome: outcome,
+                projectID: captureProjectID
             )
 
             do {

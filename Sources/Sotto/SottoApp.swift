@@ -53,8 +53,7 @@ struct SottoApp: App {
                 }
         }
         .defaultSize(width: 1_040, height: 700)
-        .windowStyle(.hiddenTitleBar)
-        .windowToolbarStyle(.unified(showsTitle: false))
+        .windowStyle(.titleBar)
 
         MenuBarExtra(SottoLocalization.string("app.name"), systemImage: model.isListening ? "mic" : "waveform") {
             SottoMenuBarView(model: model)

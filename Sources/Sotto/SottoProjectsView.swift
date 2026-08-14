@@ -116,85 +116,248 @@ struct SottoTranscriptRow: View {
     let projectID: UUID?
 
     @Environment(\.sottoTheme) private var theme
+    @State private var isConfirmingDeletion = false
+    @State private var didCopy = false
+    @State private var copyResetTask: Task<Void, Never>?
+
+    private var recordProject: SottoProject? {
+        model.projects.first(where: { $0.id == record.projectID })
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: theme.spacing.sm) {
-            HStack(spacing: theme.spacing.sm) {
-                Text(record.createdAt, format: .dateTime.day().month().hour().minute())
-                    .font(theme.typography.caption)
-                    .foregroundStyle(theme.colors.mutedForeground)
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
+            HStack(alignment: .top, spacing: theme.spacing.lg) {
+                VStack(alignment: .leading, spacing: theme.spacing.sm) {
+                    recordMetadata
 
-                if let app = record.targetApplication {
-                    Text(app)
-                        .font(theme.typography.caption)
-                        .foregroundStyle(theme.colors.subtleForeground)
+                    Text(record.text)
+                        .font(theme.typography.body)
+                        .tracking(theme.typography.tracking)
+                        .foregroundStyle(theme.colors.foreground)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Text(record.insertionOutcome.displayName)
+                Spacer(minLength: theme.spacing.md)
+
+                actionBar
+            }
+        }
+        .padding(.vertical, theme.spacing.xl)
+        .confirmationDialog(
+            SottoLocalization.string("history.record.delete_confirmation"),
+            isPresented: $isConfirmingDeletion,
+            titleVisibility: .visible
+        ) {
+            Button(SottoLocalization.string("common.delete"), role: .destructive) {
+                model.removeHistory(id: record.id)
+            }
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(SottoLocalization.string("history.record.delete_message"))
+        }
+        .onDisappear {
+            copyResetTask?.cancel()
+        }
+    }
+
+    private var recordMetadata: some View {
+        HStack(spacing: theme.spacing.sm) {
+            Text(record.createdAt, format: .dateTime.day().month().hour().minute())
+                .font(theme.typography.caption)
+                .foregroundStyle(theme.colors.mutedForeground)
+
+            if let app = record.targetApplication {
+                Text(app)
                     .font(theme.typography.caption)
                     .foregroundStyle(theme.colors.subtleForeground)
-
-                Spacer(minLength: theme.spacing.sm)
-
-                Button {
-                    model.toggleHistoryPin(id: record.id)
-                } label: {
-                    SottoIcon(record.isPinned ? "pin.fill" : "pin", size: 13)
-                        .foregroundStyle(record.isPinned ? theme.colors.accentInk : theme.colors.subtleForeground)
-                }
-                .buttonStyle(.sotto(.ghost, size: .small))
-                .help(
-                    SottoLocalization.string(
-                        record.isPinned ? "project.unpin" : "project.pin"
-                    )
-                )
-
-                Menu {
-                    Button(SottoLocalization.string("project.unassigned")) {
-                        model.moveHistory(id: record.id, to: nil)
-                    }
-
-                    if !model.projects.isEmpty {
-                        Divider()
-                        ForEach(model.projects.filter { $0.id != projectID }) { project in
-                            Button {
-                                model.moveHistory(id: record.id, to: project.id)
-                            } label: {
-                                Label(project.name, systemImage: project.icon)
-                            }
-                        }
-                    }
-                } label: {
-                    SottoIcon("folder", size: 13)
-                }
-                .menuStyle(.borderlessButton)
-                .frame(width: 26, height: 26)
-                .help(SottoLocalization.string("project.move"))
-
-                Button {
-                    model.copyToPasteboard(record.text)
-                } label: {
-                    SottoIcon("doc.on.doc", size: 13)
-                }
-                .buttonStyle(.sotto(.ghost, size: .small))
-                .help(SottoLocalization.string("common.copy"))
-
-                Button {
-                    model.removeHistory(id: record.id)
-                } label: {
-                    SottoIcon("trash", size: 13)
-                }
-                .buttonStyle(.sotto(.ghost, size: .small))
-                .help(SottoLocalization.string("common.delete"))
             }
 
-            Text(record.text)
-                .font(theme.typography.body)
-                .foregroundStyle(theme.colors.foreground)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(record.insertionOutcome.displayName)
+                .font(theme.typography.caption)
+                .foregroundStyle(theme.colors.subtleForeground)
+
+            if let recordProject {
+                HStack(spacing: theme.spacing.xxs) {
+                    SottoIcon(recordProject.icon, size: 11)
+                        .foregroundStyle(recordProject.accent.color)
+                    Text(recordProject.name)
+                }
+                .font(theme.typography.caption)
+                .foregroundStyle(theme.colors.subtleForeground)
+            }
         }
-        .padding(.vertical, theme.spacing.md)
+        .lineLimit(1)
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: 2) {
+            SottoHistoryActionButton(
+                systemImage: record.isPinned ? "pin.fill" : "pin",
+                help: SottoLocalization.string(record.isPinned ? "project.unpin" : "project.pin"),
+                isActive: record.isPinned,
+                activeColor: theme.colors.accentInk
+            ) {
+                model.toggleHistoryPin(id: record.id)
+            }
+
+            moveMenu
+
+            SottoHistoryActionButton(
+                systemImage: didCopy ? "checkmark" : "doc.on.doc",
+                help: SottoLocalization.string(didCopy ? "history.record.copied" : "common.copy"),
+                isActive: didCopy,
+                activeColor: theme.colors.successForeground
+            ) {
+                copyRecord()
+            }
+
+            SottoHistoryActionButton(
+                systemImage: "trash",
+                help: SottoLocalization.string("common.delete"),
+                isDestructive: true
+            ) {
+                isConfirmingDeletion = true
+            }
+        }
+        .padding(3)
+        .background(theme.colors.field)
+        .overlay {
+            Capsule()
+                .strokeBorder(theme.colors.border, lineWidth: 1)
+        }
+        .clipShape(Capsule())
+    }
+
+    private var moveMenu: some View {
+        Menu {
+            Button {
+                model.moveHistory(id: record.id, to: nil)
+            } label: {
+                historyProjectMenuLabel(
+                    name: SottoLocalization.string("project.unassigned"),
+                    systemImage: "tray",
+                    isSelected: record.projectID == nil
+                )
+            }
+
+            if !model.projects.isEmpty {
+                Divider()
+
+                ForEach(model.projects.filter { $0.id != projectID }) { project in
+                    Button {
+                        model.moveHistory(id: record.id, to: project.id)
+                    } label: {
+                        historyProjectMenuLabel(
+                            name: project.name,
+                            systemImage: project.icon,
+                            isSelected: record.projectID == project.id
+                        )
+                    }
+                }
+            }
+        } label: {
+            SottoHistoryActionLabel(
+                systemImage: "folder",
+                isActive: recordProject != nil,
+                activeColor: recordProject?.accent.color ?? theme.colors.accentInk
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+        .help(SottoLocalization.string("project.move"))
+        .accessibilityLabel(SottoLocalization.string("project.move"))
+    }
+
+    private func historyProjectMenuLabel(
+        name: String,
+        systemImage: String,
+        isSelected: Bool
+    ) -> some View {
+        HStack {
+            SottoIcon(systemImage, size: 14)
+            Text(name)
+            if isSelected {
+                Spacer(minLength: theme.spacing.lg)
+                SottoIcon("checkmark", size: 12, weight: .semibold)
+            }
+        }
+    }
+
+    private func copyRecord() {
+        model.copyToPasteboard(record.text)
+        didCopy = true
+        copyResetTask?.cancel()
+        copyResetTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.4))
+            guard !Task.isCancelled else { return }
+            didCopy = false
+        }
+    }
+}
+
+private struct SottoHistoryActionButton: View {
+    let systemImage: String
+    let help: String
+    var isActive = false
+    var activeColor: Color? = nil
+    var isDestructive = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SottoHistoryActionLabel(
+                systemImage: systemImage,
+                isActive: isActive,
+                activeColor: activeColor,
+                isDestructive: isDestructive
+            )
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+private struct SottoHistoryActionLabel: View {
+    let systemImage: String
+    var isActive = false
+    var activeColor: Color? = nil
+    var isDestructive = false
+
+    @Environment(\.sottoTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovered = false
+
+    var body: some View {
+        SottoIcon(systemImage, size: 14, weight: .medium)
+            .foregroundStyle(foregroundColor)
+            .frame(width: 30, height: 30)
+            .background(backgroundColor)
+            .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
+            .scaleEffect(isHovered && !reduceMotion ? 1.02 : 1)
+            .onHover { isHovered = $0 }
+            .animation(
+                reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
+                value: isHovered
+            )
+    }
+
+    private var foregroundColor: Color {
+        if isDestructive {
+            return isHovered ? theme.colors.destructiveForeground : theme.colors.mutedForeground
+        }
+        if isActive {
+            return activeColor ?? theme.colors.accentInk
+        }
+        return isHovered ? theme.colors.foreground : theme.colors.mutedForeground
+    }
+
+    private var backgroundColor: Color {
+        if isActive { return (activeColor ?? theme.colors.accent).opacity(0.14) }
+        return isHovered ? theme.colors.hoverStrong : .clear
     }
 }
 

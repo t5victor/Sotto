@@ -66,7 +66,7 @@ struct SottoRootView: View {
     var body: some View {
         HSplitView {
             SottoSidebar(model: model, selection: $selection)
-                .frame(minWidth: 76, idealWidth: 320, maxWidth: 420, maxHeight: .infinity)
+                .frame(minWidth: 76, idealWidth: 196, maxWidth: 280, maxHeight: .infinity)
 
             destinationView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -154,7 +154,7 @@ private struct SottoSidebar: View {
                         selection = .home
                         model.toggleDictation()
                     }
-                    .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+                    .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.md)
 
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(workspace) { destination in
@@ -177,20 +177,20 @@ private struct SottoSidebar: View {
                                 }
                             }
                         }
-                        .padding(.top, theme.spacing.lg)
+                        .padding(.top, theme.spacing.md)
                     }
 
                     projectsSection(isCompact: isCompact)
 
                     recentsSection(isCompact: isCompact)
-                        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+                        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.md)
 
                     Spacer(minLength: theme.spacing.xxl)
                 }
-                .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+                .padding(.top, isCompact ? theme.spacing.xs : theme.spacing.md)
                 .padding(.bottom, theme.spacing.md)
             }
-            .padding(.horizontal, isCompact ? theme.spacing.xs : theme.spacing.lg)
+            .padding(.horizontal, isCompact ? theme.spacing.xs : theme.spacing.md)
         }
         .background(theme.colors.canvas)
         .sheet(isPresented: $isShowingSearch) {
@@ -250,7 +250,7 @@ private struct SottoSidebar: View {
             .menuIndicator(.hidden)
             .tint(theme.colors.mutedForeground)
             .buttonStyle(SottoSidebarButtonStyle())
-            .frame(width: 28, height: 28)
+            .frame(width: 24, height: 24)
             .help(SottoLocalization.string("common.settings"))
             .accessibilityLabel(SottoLocalization.string("common.settings"))
 
@@ -258,12 +258,12 @@ private struct SottoSidebar: View {
                 Spacer(minLength: 0)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 32)
+        .frame(maxWidth: .infinity, minHeight: 28)
         .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
     }
 
     private func recentsSection(isCompact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
             Button {
                 withAnimation(
                     reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast)
@@ -271,7 +271,7 @@ private struct SottoSidebar: View {
                     isRecentsExpanded.toggle()
                 }
             } label: {
-                HStack(spacing: theme.spacing.xs) {
+                HStack(alignment: .center, spacing: theme.spacing.xs) {
                     if isCompact {
                         Spacer(minLength: 0)
                     }
@@ -279,15 +279,16 @@ private struct SottoSidebar: View {
                     if !isCompact {
                         Text(SottoLocalization.string("sidebar.recents"))
                             .font(theme.typography.sidebarSection)
-                            .foregroundStyle(theme.colors.subtleForeground)
+                            .foregroundStyle(theme.colors.mutedForeground.opacity(0.88))
                     }
 
                     SottoIcon(
                         isRecentsExpanded ? "chevron.down" : "chevron.right",
-                        size: isCompact ? 14 : 11,
+                        size: isCompact ? 12 : 10,
                         weight: .semibold
                     )
-                    .foregroundStyle(theme.colors.subtleForeground)
+                    .foregroundStyle(theme.colors.mutedForeground.opacity(0.82))
+                    .frame(width: 12, height: 16)
 
                     Spacer(minLength: isCompact ? 0 : theme.spacing.sm)
 
@@ -297,8 +298,8 @@ private struct SottoSidebar: View {
                             .frame(width: 7, height: 7)
                     }
                 }
-                .padding(.horizontal, theme.spacing.sm)
-                .frame(height: 28)
+                .padding(.horizontal, theme.spacing.xs)
+                .frame(height: 26)
                 .contentShape(Rectangle())
             }
             .buttonStyle(SottoSidebarButtonStyle())
@@ -337,26 +338,21 @@ private struct SottoSidebar: View {
                 )
             }
 
-            if model.projects.isEmpty {
+            if model.projects.isEmpty, !isCompact {
                 Button {
                     beginProjectCreation()
                 } label: {
-                    HStack(spacing: theme.spacing.sm) {
-                        SottoIcon("plus", size: isCompact ? 15 : 13, weight: .regular)
-                        if !isCompact {
-                            Text(SottoLocalization.string("sidebar.first_project"))
-                        }
-                    }
+                    Text(SottoLocalization.string("sidebar.first_project"))
                     .font(theme.typography.sidebarItem)
-                    .foregroundStyle(theme.colors.foreground.opacity(0.72))
-                    .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
-                    .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
-                    .frame(height: 30)
+                    .foregroundStyle(theme.colors.mutedForeground)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, theme.spacing.xs)
+                    .frame(height: 28)
                 }
                 .buttonStyle(SottoSidebarButtonStyle())
             }
         }
-        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.lg)
+        .padding(.top, isCompact ? theme.spacing.sm : theme.spacing.md)
     }
 
     private func beginProjectCreation() {
@@ -416,12 +412,12 @@ private struct SottoSidebarSection: View {
     private let action: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack {
                 if !isCompact {
                     Text(title)
                         .font(theme.typography.sidebarSection)
-                        .foregroundStyle(theme.colors.subtleForeground)
+                        .foregroundStyle(theme.colors.mutedForeground.opacity(0.88))
 
                     Spacer(minLength: theme.spacing.sm)
                 } else {
@@ -431,7 +427,7 @@ private struct SottoSidebarSection: View {
                 if let actionTitle, let action {
                     Button(action: action) {
                         if let actionSystemImage {
-                            SottoIcon(actionSystemImage, size: isCompact ? 15 : 14, weight: .regular)
+                            SottoIcon(actionSystemImage, size: isCompact ? 14 : 13, weight: .regular)
                         } else {
                             Text(actionTitle)
                                 .font(theme.typography.sidebarItem)
@@ -447,8 +443,8 @@ private struct SottoSidebarSection: View {
                     Spacer(minLength: 0)
                 }
             }
-            .padding(.horizontal, theme.spacing.sm)
-            .frame(height: isCompact ? 28 : 30)
+            .padding(.horizontal, theme.spacing.xs)
+            .frame(height: 26)
 
             content
         }
@@ -511,9 +507,9 @@ private struct SottoSidebarIconLabel: View {
     @Environment(\.sottoTheme) private var theme
 
     var body: some View {
-        SottoIcon(systemImage, size: 16, weight: .regular)
+        SottoIcon(systemImage, size: 14, weight: .regular)
             .foregroundStyle(isHovered ? theme.colors.foreground : theme.colors.mutedForeground)
-            .frame(width: 28, height: 28)
+            .frame(width: 24, height: 24)
             .contentShape(Rectangle())
     }
 }
@@ -529,10 +525,10 @@ private struct SottoSidebarAction: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.sm) {
-                SottoIcon(systemImage, size: isCompact ? 16 : 15, weight: .regular)
+            HStack(spacing: theme.spacing.xs) {
+                SottoIcon(systemImage, size: isCompact ? 15 : 14, weight: .regular)
                     .foregroundStyle(theme.colors.foreground.opacity(0.72))
-                    .frame(width: isCompact ? 28 : 20)
+                    .frame(width: isCompact ? 24 : 18)
 
                 if !isCompact {
                     Text(title)
@@ -543,8 +539,8 @@ private struct SottoSidebarAction: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
-            .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
-            .frame(height: 30)
+            .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
+            .frame(height: 28)
             .background(isHovered ? theme.colors.hover : .clear)
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         }
@@ -570,10 +566,10 @@ private struct SottoSidebarRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.sm) {
-                SottoIcon(destination.systemImage, size: isCompact ? 16 : 15, weight: .regular)
+            HStack(spacing: theme.spacing.xs) {
+                SottoIcon(destination.systemImage, size: isCompact ? 15 : 14, weight: .regular)
                     .foregroundStyle(theme.colors.foreground.opacity(0.72))
-                    .frame(width: isCompact ? 28 : 20)
+                    .frame(width: isCompact ? 24 : 18)
 
                 if !isCompact {
                     Text(destination.title)
@@ -584,8 +580,8 @@ private struct SottoSidebarRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
-            .padding(.horizontal, isCompact ? 0 : theme.spacing.sm)
-            .frame(height: 30)
+            .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
+            .frame(height: 28)
             .background(rowBackground)
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -626,22 +622,22 @@ private struct SottoProjectRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 2) {
+            HStack(spacing: 1) {
                 if !isCompact {
                     Button(action: onToggleExpanded) {
                         SottoIcon(isExpanded ? "chevron.down" : "chevron.right", size: 10, weight: .semibold)
                             .foregroundStyle(theme.colors.subtleForeground)
-                            .frame(width: 18, height: 30)
+                            .frame(width: 16, height: 28)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(SottoSidebarButtonStyle())
                 }
 
                 Button(action: onSelect) {
-                    HStack(spacing: theme.spacing.md) {
-                        SottoIcon(project.icon, size: isCompact ? 16 : 15)
+                    HStack(spacing: theme.spacing.sm) {
+                        SottoIcon(project.icon, size: isCompact ? 15 : 14)
                             .foregroundStyle(project.accent.color)
-                            .frame(width: isCompact ? 28 : 20)
+                            .frame(width: isCompact ? 24 : 18)
 
                         if !isCompact {
                             Text(project.name)
@@ -654,7 +650,7 @@ private struct SottoProjectRow: View {
                     }
                     .frame(maxWidth: .infinity, alignment: isCompact ? .center : .leading)
                     .padding(.horizontal, isCompact ? 0 : theme.spacing.xs)
-                    .frame(height: 30)
+                    .frame(height: 28)
                     .background(rowBackground)
                     .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
                 }
@@ -672,8 +668,8 @@ private struct SottoProjectRow: View {
                     Text(SottoLocalization.string("sidebar.no_transcriptions"))
                         .font(theme.typography.sidebarItem)
                         .foregroundStyle(theme.colors.foreground.opacity(0.72))
-                        .padding(.leading, 44)
-                        .padding(.vertical, 5)
+                        .padding(.leading, 38)
+                        .padding(.vertical, 4)
                 } else {
                     ForEach(transcripts.prefix(5)) { transcript in
                         Button(action: onSelect) {
@@ -682,9 +678,9 @@ private struct SottoProjectRow: View {
                                 .foregroundStyle(theme.colors.foreground.opacity(0.72))
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 44)
-                                .padding(.trailing, theme.spacing.sm)
-                                .frame(height: 26)
+                                .padding(.leading, 38)
+                                .padding(.trailing, theme.spacing.xs)
+                                .frame(height: 24)
                         }
                         .buttonStyle(SottoSidebarButtonStyle())
                     }
@@ -721,7 +717,7 @@ private struct SottoRecentRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: theme.spacing.sm) {
+            HStack(spacing: theme.spacing.xs) {
                 Text(record.text)
                     .font(theme.typography.sidebarItem)
                     .foregroundStyle(theme.colors.foreground.opacity(0.72))
@@ -729,8 +725,8 @@ private struct SottoRecentRow: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, theme.spacing.sm)
-            .frame(height: 30)
+            .padding(.horizontal, theme.spacing.xs)
+            .frame(height: 28)
             .background(isHovered ? theme.colors.hover : .clear)
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         }
