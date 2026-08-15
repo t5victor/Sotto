@@ -36,6 +36,7 @@ final class SottoAppModel: ObservableObject {
     @Published private(set) var notice: String?
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var isBootstrapped = false
+    @Published private(set) var canRetryDictation = false
 
     private let directories: SottoDirectories
     private let settingsStore: JSONFileStore<SottoPreferences>
@@ -113,7 +114,7 @@ final class SottoAppModel: ObservableObject {
     var isBusy: Bool { dictationState.isBusy }
 
     var canStartDictation: Bool {
-        modelState.isReady && !dictationState.isBusy
+        modelState.isReady && !dictationState.isBusy && !canRetryDictation
     }
 
     func setCaptureProject(_ projectID: UUID?) {
@@ -188,7 +189,7 @@ final class SottoAppModel: ObservableObject {
             beginStopDictation()
         } else if dictationState.canCancel {
             cancelDictation()
-        } else if !dictationState.isBusy {
+        } else if !dictationState.isBusy && !canRetryDictation {
             beginStartDictation(triggeredByHold: false)
         }
     }
@@ -436,7 +437,34 @@ final class SottoAppModel: ObservableObject {
 
     func dismissFailure() {
         guard case .failed = dictationState else { return }
+        resetTask?.cancel()
+        if canRetryDictation {
+            cleanupCurrentRecording()
+        }
+        canRetryDictation = false
         dictationState = .idle
+        overlayPresenter?.hide()
+    }
+
+    func retryFailedDictation() {
+        guard canRetryDictation,
+              case .failed = dictationState,
+              let recordingURL = currentRecordingURL,
+              FileManager.default.fileExists(atPath: recordingURL.path)
+        else {
+            dismissFailure()
+            return
+        }
+
+        resetTask?.cancel()
+        canRetryDictation = false
+        dictationState = .transcribing
+        overlayPresenter?.show()
+        transcriptionTask = Task { [weak self] in
+            guard let self else { return }
+            await self.transcribeRecording(at: recordingURL)
+            self.transcriptionTask = nil
+        }
     }
 
     func dismissNotice() {
@@ -479,7 +507,7 @@ final class SottoAppModel: ObservableObject {
     }
 
     private func startDictation(triggeredByHold: Bool) async {
-        guard !dictationState.isBusy else { return }
+        guard !dictationState.isBusy, !canRetryDictation else { return }
         guard modelState.isReady else {
             let message = modelState.isInstalled
                 ? SottoLocalization.string("error.app.model_preparing")
@@ -542,9 +570,21 @@ final class SottoAppModel: ObservableObject {
             dictationState = .transcribing
             overlayPresenter?.show()
             playSound(named: "Pop")
+            await transcribeRecording(at: audio.url)
+        } catch is CancellationError {
+            cleanupCurrentRecording()
+            dictationState = .idle
+            overlayPresenter?.hide()
+        } catch {
+            cleanupCurrentRecording()
+            presentFailure(Self.userMessage(for: error), hideAfter: 2.5)
+        }
+    }
 
+    private func transcribeRecording(at audioURL: URL) async {
+        do {
             let transcript = try await parakeet.transcribe(
-                audioURL: audio.url,
+                audioURL: audioURL,
                 language: preferences.language
             )
             let processed = postProcessor.process(
@@ -574,7 +614,7 @@ final class SottoAppModel: ObservableObject {
             )
 
             do {
-                try removeRecording(at: audio.url)
+                try removeRecording(at: audioURL)
             } catch {
                 notice = SottoLocalization.format(
                     "notice.app.remove_recording",
@@ -584,6 +624,7 @@ final class SottoAppModel: ObservableObject {
             currentRecordingURL = nil
             currentTarget = nil
             inserter.clearTarget()
+            canRetryDictation = false
             dictationState = .completed(text: processed, outcome: outcome)
             playSound(named: "Glass")
             scheduleIdleReset(after: 1.25)
@@ -605,6 +646,9 @@ final class SottoAppModel: ObservableObject {
             cleanupCurrentRecording()
             dictationState = .idle
             overlayPresenter?.hide()
+        } catch let error as ParakeetService.ServiceError where error.preservesRecordingForRetry {
+            canRetryDictation = true
+            presentFailure(Self.userMessage(for: error), hideAfter: nil)
         } catch {
             cleanupCurrentRecording()
             presentFailure(Self.userMessage(for: error), hideAfter: 2.5)
@@ -613,7 +657,7 @@ final class SottoAppModel: ObservableObject {
 
     private func handleHotKeyPressed() {
         if preferences.holdToTalk {
-            guard !dictationState.isBusy else { return }
+            guard !dictationState.isBusy, !canRetryDictation else { return }
             isHoldShortcutPressed = true
             stopWhenRecorderStarts = false
             beginStartDictation(triggeredByHold: true)
@@ -721,6 +765,7 @@ final class SottoAppModel: ObservableObject {
         }
         currentRecordingURL = nil
         currentTarget = nil
+        canRetryDictation = false
         inserter.clearTarget()
         isHoldShortcutPressed = false
         stopWhenRecorderStarts = false

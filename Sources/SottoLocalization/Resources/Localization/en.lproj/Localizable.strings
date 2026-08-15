@@ -22,6 +22,7 @@
 "common.remove_model" = "Remove engine";
 "common.download" = "Download Parakeet";
 "common.retry_download" = "Retry download";
+"common.retry" = "Retry";
 "common.start_dictation" = "Start dictating";
 "common.stop_dictation" = "Stop dictation";
 "common.cancel_dictation" = "Cancel dictation";
@@ -188,7 +189,7 @@
 "settings.models.section_title" = "Voice engine";
 "settings.models.section_description" = "Turns your dictation into text.";
 "settings.models.language_title" = "Dictation language";
-"settings.models.language_description" = "Automatic detection usually works. Choose a language if the result is incorrect.";
+"settings.models.language_description" = "Automatic mode detects one language per dictation and keeps it for the whole recording. For long dictations, choose a specific language.";
 "settings.models.language_picker" = "Language";
 "settings.models.delete_confirmation" = "Remove the engine?";
 "settings.models.delete_message" = "You can install it again. Your settings, vocabulary, and history will not be deleted.";
@@ -303,6 +304,7 @@
 "error.parakeet.unreadable_audio" = "The recording %@ could not be read.";
 "error.parakeet.empty_audio" = "The recording does not contain enough audio to transcribe.";
 "error.parakeet.empty_transcript" = "No speech was detected in the recording.";
+"error.parakeet.language_mismatch" = "The dictation appears to be in %@ instead of %@. Nothing was inserted. You can retry.";
 "error.microphone.already_recording" = "A recording is already in progress.";
 "error.microphone.invalid_input_format" = "The input device does not provide a valid audio format.";
 "error.microphone.mono_format" = "The microphone's mono format could not be prepared.";

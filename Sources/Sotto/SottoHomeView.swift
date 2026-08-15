@@ -118,7 +118,10 @@ struct SottoHomeView: View {
     private func bottomComposerArea(metrics: SottoHomeLayoutMetrics) -> some View {
         VStack(spacing: theme.spacing.sm) {
             if case .failed(let message) = model.dictationState {
-                SottoErrorBanner(message: message) {
+                SottoErrorBanner(
+                    message: message,
+                    retry: model.canRetryDictation ? { model.retryFailedDictation() } : nil
+                ) {
                     model.dismissFailure()
                 }
                 .frame(maxWidth: metrics.composerWidth)
@@ -160,10 +163,29 @@ struct SottoHomeView: View {
     }
 
     private func projectSelector(metrics: SottoHomeLayoutMetrics) -> some View {
-        projectMenu
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .background(theme.colors.raisedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        ZStack(alignment: .topLeading) {
+            UnevenRoundedRectangle(
+                cornerRadii: RectangleCornerRadii(
+                    topLeading: 18,
+                    bottomLeading: 0,
+                    bottomTrailing: 0,
+                    topTrailing: 18
+                ),
+                style: .continuous
+            )
+            .fill(theme.colors.raisedSurface)
+            .frame(height: metrics.projectSelectorVisibleHeight + 1)
+
+            projectMenu
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: metrics.projectSelectorVisibleHeight,
+                    maxHeight: metrics.projectSelectorVisibleHeight,
+                    alignment: .leading
+                )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .zIndex(1)
     }
 
     private func composer(metrics: SottoHomeLayoutMetrics) -> some View {
@@ -487,7 +509,11 @@ private struct SottoHomeLayoutMetrics {
     }
 
     var projectSelectorHeight: CGFloat {
-        min(max(size.height * 0.038, 40), 48)
+        projectSelectorVisibleHeight + composerOverlap
+    }
+
+    var projectSelectorVisibleHeight: CGFloat {
+        min(max(size.height * 0.052, 44), 52)
     }
 
     var composerHeight: CGFloat {
@@ -507,7 +533,7 @@ private struct SottoHomeLayoutMetrics {
     }
 
     var composerOverlap: CGFloat {
-        min(max(projectSelectorHeight * 0.35, 12), 16)
+        min(max(size.height * 0.016, 14), 18)
     }
 }
 
@@ -690,7 +716,14 @@ struct SottoPageHeader: View {
 private struct SottoErrorBanner: View {
     @Environment(\.sottoTheme) private var theme
     let message: String
+    let retry: (() -> Void)?
     let dismiss: () -> Void
+
+    init(message: String, retry: (() -> Void)? = nil, dismiss: @escaping () -> Void) {
+        self.message = message
+        self.retry = retry
+        self.dismiss = dismiss
+    }
 
     var body: some View {
         HStack(spacing: theme.spacing.md) {
@@ -701,6 +734,10 @@ private struct SottoErrorBanner: View {
                 .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
+            if let retry {
+                Button(SottoLocalization.string("common.retry"), action: retry)
+                    .buttonStyle(.sotto(.secondary, size: .small))
+            }
             Button(SottoLocalization.string("common.close"), action: dismiss)
                 .buttonStyle(.sotto(.ghost, size: .small))
         }

@@ -94,10 +94,18 @@ private struct SottoOverlayView: View {
                 .buttonStyle(SottoOverlayIconButtonStyle())
                 .help(SottoLocalization.string("overlay.cancel_dictation"))
             } else if case .failed = model.dictationState {
-                Button(SottoLocalization.string("overlay.close")) {
-                    model.dismissFailure()
+                HStack(spacing: theme.spacing.xs) {
+                    if model.canRetryDictation {
+                        Button(SottoLocalization.string("common.retry")) {
+                            model.retryFailedDictation()
+                        }
+                        .buttonStyle(SottoOverlayTextButtonStyle())
+                    }
+                    Button(SottoLocalization.string("overlay.close")) {
+                        model.dismissFailure()
+                    }
+                    .buttonStyle(SottoOverlayTextButtonStyle())
                 }
-                .buttonStyle(SottoOverlayTextButtonStyle())
             }
         }
         .padding(.horizontal, theme.spacing.lg)

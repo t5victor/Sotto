@@ -10,6 +10,11 @@ public actor ParakeetService {
         case unreadableAudio(URL)
         case emptyAudio
         case emptyTranscript
+        case languageMismatch(expected: SottoLanguage, detected: SottoLanguage)
+
+        public var preservesRecordingForRetry: Bool {
+            if case .languageMismatch = self { true } else { false }
+        }
 
         public var errorDescription: String? {
             switch self {
@@ -23,6 +28,12 @@ public actor ParakeetService {
                 SottoLocalization.string("error.parakeet.empty_audio")
             case .emptyTranscript:
                 SottoLocalization.string("error.parakeet.empty_transcript")
+            case .languageMismatch(let expected, let detected):
+                SottoLocalization.format(
+                    "error.parakeet.language_mismatch",
+                    detected.displayName,
+                    expected.displayName
+                )
             }
         }
     }
@@ -37,6 +48,7 @@ public actor ParakeetService {
     private var lastProgressDetail = ""
     private var maximumDownloadProgress = 0.0
     private var activeDownloadID: UUID?
+    private let languageDetector = SottoLanguageDetector()
 
     public init(directories: SottoDirectories) {
         self.directories = directories
@@ -172,15 +184,30 @@ public actor ParakeetService {
         try Task.checkCancellation()
         guard let manager else { throw ServiceError.modelNotInstalled }
 
+        let resolvedLanguage = try await resolveLanguage(
+            requested: language,
+            audioFile: audioFile,
+            manager: manager
+        )
         var decoderState = try TdtDecoderState(decoderLayers: await manager.decoderLayerCount)
         let result = try await manager.transcribe(
             audioURL,
             decoderState: &decoderState,
-            language: language.fluidLanguage
+            language: resolvedLanguage.fluidLanguage
         )
         try Task.checkCancellation()
         let text = result.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !text.isEmpty else { throw ServiceError.emptyTranscript }
+
+        if let mismatch = languageDetector.clearlyMismatchedLanguage(
+            in: text,
+            expected: resolvedLanguage
+        ) {
+            throw ServiceError.languageMismatch(
+                expected: resolvedLanguage,
+                detected: mismatch.language
+            )
+        }
 
         return SottoTranscript(
             text: text,
@@ -188,6 +215,66 @@ public actor ParakeetService {
             duration: result.duration,
             processingTime: result.processingTime
         )
+    }
+
+    private func resolveLanguage(
+        requested: SottoLanguage,
+        audioFile: AVAudioFile,
+        manager: AsrManager
+    ) async throws -> SottoLanguage {
+        guard requested == .automatic else { return requested }
+        try Task.checkCancellation()
+
+        do {
+            guard let detected = try await detectLanguage(
+                in: audioFile,
+                manager: manager
+            ) else {
+                return .automatic
+            }
+            return detected
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            // A short or noisy prefix must not prevent the full transcription;
+            // automatic mode remains available as the conservative fallback.
+            return .automatic
+        }
+    }
+
+    private func detectLanguage(
+        in audioFile: AVAudioFile,
+        manager: AsrManager
+    ) async throws -> SottoLanguage? {
+        let format = audioFile.processingFormat
+        let prefixFrameLimit = AVAudioFramePosition(
+            (format.sampleRate * 6).rounded(.down)
+        )
+        let prefixFrames = min(audioFile.length, prefixFrameLimit)
+        guard prefixFrames >= AVAudioFramePosition(format.sampleRate) else {
+            return nil
+        }
+
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: format,
+            frameCapacity: AVAudioFrameCount(prefixFrames)
+        ) else {
+            return nil
+        }
+        audioFile.framePosition = 0
+        try audioFile.read(into: buffer, frameCount: AVAudioFrameCount(prefixFrames))
+        guard buffer.frameLength > 0 else { return nil }
+
+        let samples = try AudioConverter().resampleBuffer(buffer)
+        guard samples.count >= 16_000 else { return nil }
+
+        var decoderState = try TdtDecoderState(decoderLayers: await manager.decoderLayerCount)
+        let prefixResult = try await manager.transcribe(
+            samples,
+            decoderState: &decoderState
+        )
+        try Task.checkCancellation()
+        return languageDetector.detect(prefixResult.text)?.language
     }
 
     public func unload() async {

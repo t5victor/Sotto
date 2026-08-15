@@ -22,6 +22,7 @@
 "common.remove_model" = "Eliminar motor";
 "common.download" = "Descargar Parakeet";
 "common.retry_download" = "Reintentar descarga";
+"common.retry" = "Reintentar";
 "common.start_dictation" = "Empezar a dictar";
 "common.stop_dictation" = "Detener dictado";
 "common.cancel_dictation" = "Cancelar dictado";
@@ -188,7 +189,7 @@
 "settings.models.section_title" = "Motor de voz";
 "settings.models.section_description" = "Convierte tus dictados en texto.";
 "settings.models.language_title" = "Idioma del dictado";
-"settings.models.language_description" = "Detectar automáticamente suele funcionar. Elige un idioma si el resultado no es correcto.";
+"settings.models.language_description" = "En automático se detecta una vez por dictado y ese idioma se mantiene durante toda la grabación. Para dictados largos, elige un idioma concreto.";
 "settings.models.language_picker" = "Idioma";
 "settings.models.delete_confirmation" = "¿Eliminar el motor?";
 "settings.models.delete_message" = "Puedes instalarlo de nuevo. Tus ajustes, vocabulario e historial no se borrarán.";
@@ -303,6 +304,7 @@
 "error.parakeet.unreadable_audio" = "No se pudo leer la grabación %@.";
 "error.parakeet.empty_audio" = "La grabación no contiene audio suficiente para transcribir.";
 "error.parakeet.empty_transcript" = "No se detectó voz en la grabación.";
+"error.parakeet.language_mismatch" = "El dictado parece estar en %@ en lugar de %@. No se ha insertado nada. Puedes reintentarlo.";
 "error.microphone.already_recording" = "Ya hay una grabación en curso.";
 "error.microphone.invalid_input_format" = "El dispositivo de entrada no ofrece un formato de audio válido.";
 "error.microphone.mono_format" = "No se pudo preparar el formato mono del micrófono.";
