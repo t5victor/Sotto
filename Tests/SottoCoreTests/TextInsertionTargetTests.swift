@@ -1,4 +1,5 @@
 import Foundation
+import SottoLocalization
 import XCTest
 @testable import SottoCore
 
@@ -49,7 +50,10 @@ final class TextInsertionTargetTests: XCTestCase {
     }
 
     func testPasteAttemptIsDistinctFromVerifiedInsertionAndLegacyPaste() {
-        XCTAssertEqual(TextInsertionOutcome.pasteAttempted.displayName, "Pegado solicitado")
+        XCTAssertEqual(
+            TextInsertionOutcome.pasteAttempted.displayName,
+            SottoLocalization.string("outcome.paste_attempted")
+        )
         XCTAssertNotEqual(TextInsertionOutcome.pasteAttempted, .inserted)
         XCTAssertNotEqual(TextInsertionOutcome.pasteAttempted, .pasted)
     }

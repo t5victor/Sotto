@@ -27,6 +27,10 @@ final class LocalizationTests: XCTestCase {
             SottoLocalization.string("outcome.paste_attempted", locale: Locale(identifier: "en")),
             "Paste requested"
         )
+        XCTAssertEqual(
+            SottoLocalization.string("outcome.paste_attempted", locale: Locale(identifier: "es")),
+            "Pegado solicitado"
+        )
         XCTAssertFalse(SottoLanguage.english.displayName.isEmpty)
     }
 }
