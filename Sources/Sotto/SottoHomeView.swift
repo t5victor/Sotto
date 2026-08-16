@@ -7,10 +7,6 @@ struct SottoHomeView: View {
     @ObservedObject var model: SottoAppModel
     @Environment(\.sottoTheme) private var theme
 
-    @State private var isCreatingProject = false
-    @State private var projectDraftName = ""
-    @State private var projectDraftIcon = "folder"
-    @State private var projectDraftAccent: SottoAccent = .blue
     @State private var selectedVoiceStyle: SottoVoiceStyle = .informal
 
     var body: some View {
@@ -33,27 +29,6 @@ struct SottoHomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(theme.colors.canvas)
-        }
-        .sheet(isPresented: $isCreatingProject, onDismiss: resetProjectDraft) {
-            SottoProjectCreationSheet(
-                name: $projectDraftName,
-                icon: $projectDraftIcon,
-                accent: $projectDraftAccent,
-                onCancel: {
-                    isCreatingProject = false
-                },
-                onCreate: createProject
-            )
-            .sottoTheme(theme)
-            .frame(width: 520, height: 360)
-            .fixedSize()
-            .modifier(SottoHomeFittedSheetSizing())
-        }
-        .onChange(of: model.projects) { _, projects in
-            guard let captureProjectID = model.captureProjectID,
-                  !projects.contains(where: { $0.id == captureProjectID })
-            else { return }
-            model.setCaptureProject(nil)
         }
     }
 
@@ -145,48 +120,9 @@ struct SottoHomeView: View {
     }
 
     private func composerGrid(metrics: SottoHomeLayoutMetrics) -> some View {
-        GeometryReader { proxy in
-            SottoHomeComposerLayout(
-                composerWidth: metrics.composerWidth,
-                selectorWidth: metrics.projectSelectorWidth,
-                selectorInset: metrics.projectSelectorInset,
-                selectorHeight: metrics.projectSelectorHeight,
-                composerHeight: metrics.composerHeight,
-                overlap: metrics.composerOverlap
-            ) {
-                projectSelector(metrics: metrics)
-                composer(metrics: metrics)
-            }
-            .frame(width: proxy.size.width, height: metrics.composerStackHeight)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: metrics.composerStackHeight)
-    }
-
-    private func projectSelector(metrics: SottoHomeLayoutMetrics) -> some View {
-        ZStack(alignment: .topLeading) {
-            UnevenRoundedRectangle(
-                cornerRadii: RectangleCornerRadii(
-                    topLeading: 18,
-                    bottomLeading: 0,
-                    bottomTrailing: 0,
-                    topTrailing: 18
-                ),
-                style: .continuous
-            )
-            .fill(theme.colors.raisedSurface)
-            .frame(height: metrics.projectSelectorVisibleHeight + 1)
-
-            projectMenu
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: metrics.projectSelectorVisibleHeight,
-                    maxHeight: metrics.projectSelectorVisibleHeight,
-                    alignment: .leading
-                )
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .zIndex(1)
+        composer(metrics: metrics)
+            .frame(width: metrics.composerWidth)
+            .frame(maxWidth: .infinity)
     }
 
     private func composer(metrics: SottoHomeLayoutMetrics) -> some View {
@@ -242,74 +178,6 @@ struct SottoHomeView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private var projectMenu: some View {
-        Menu {
-            Button {
-                model.setCaptureProject(nil)
-            } label: {
-                HStack {
-                    SottoIcon("tray", size: 14)
-                    Text(SottoLocalization.string("home.composer.no_project"))
-                    if model.captureProjectID == nil {
-                        Spacer(minLength: theme.spacing.lg)
-                        SottoIcon("checkmark", size: 12, weight: .semibold)
-                    }
-                }
-            }
-
-            if !model.projects.isEmpty {
-                Divider()
-
-                ForEach(model.projects) { project in
-                    Button {
-                        model.setCaptureProject(project.id)
-                    } label: {
-                        HStack {
-                            SottoIcon(project.icon, size: 14)
-                                .foregroundStyle(project.accent.themePalette.background.color)
-                            Text(project.name)
-                            if model.captureProjectID == project.id {
-                                Spacer(minLength: theme.spacing.lg)
-                                SottoIcon("checkmark", size: 12, weight: .semibold)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Divider()
-
-            Button {
-                beginProjectCreation()
-            } label: {
-                Label(
-                    SottoLocalization.string("home.composer.create_project"),
-                    systemImage: "plus"
-                )
-            }
-        } label: {
-            HStack(spacing: theme.spacing.sm) {
-                SottoIcon("folder", size: 18, weight: .regular)
-                Text(selectedProject?.name ?? SottoLocalization.string("home.composer.add_to_project"))
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, theme.spacing.xs)
-            .font(.system(size: 13, weight: .medium))
-            .tracking(-0.18)
-            .foregroundStyle(selectedProject == nil ? theme.colors.mutedForeground : theme.colors.foreground.opacity(0.82))
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .buttonStyle(.plain)
-        .tint(theme.colors.mutedForeground)
-        .disabled(model.isBusy)
-        .help(SottoLocalization.string("home.composer.add_to_project"))
-        .accessibilityLabel(SottoLocalization.string("home.composer.add_to_project"))
-    }
-
     private var recordButton: some View {
         Button(action: performPrimaryAction) {
             ZStack {
@@ -325,11 +193,6 @@ struct SottoHomeView: View {
         .disabled(primaryActionDisabled)
         .help(primaryActionTitle)
         .accessibilityLabel(primaryActionTitle)
-    }
-
-    private var selectedProject: SottoProject? {
-        guard let captureProjectID = model.captureProjectID else { return nil }
-        return model.projects.first(where: { $0.id == captureProjectID })
     }
 
     private var composerPrompt: String {
@@ -437,25 +300,6 @@ struct SottoHomeView: View {
         return theme.colors.foreground
     }
 
-    private func beginProjectCreation() {
-        projectDraftName = ""
-        projectDraftIcon = "folder"
-        projectDraftAccent = .blue
-        isCreatingProject = true
-    }
-
-    private func createProject(name: String, icon: String, accent: SottoAccent) {
-        if let project = model.createProject(name: name, icon: icon, accent: accent) {
-            model.setCaptureProject(project.id)
-        }
-        isCreatingProject = false
-    }
-
-    private func resetProjectDraft() {
-        projectDraftName = ""
-        projectDraftIcon = "folder"
-        projectDraftAccent = .blue
-    }
 }
 
 private enum SottoVoiceStyle: Hashable {
@@ -478,19 +322,9 @@ private struct SottoHomeLayoutMetrics {
         return min(preferredWidth, availableWidth)
     }
 
-    /// The composer uses the same centered track as the hero, but owns its
-    /// internal grid so the selector cannot drift independently from the
-    /// recording field.
+    /// The composer uses the same centered track as the hero.
     var composerWidth: CGFloat {
         contentWidth
-    }
-
-    var projectSelectorInset: CGFloat {
-        min(max(composerWidth * 0.016, 12), 16)
-    }
-
-    var projectSelectorWidth: CGFloat {
-        composerWidth - (projectSelectorInset * 2)
     }
 
     var cardColumns: Int {
@@ -509,14 +343,6 @@ private struct SottoHomeLayoutMetrics {
         min(max(size.height * 0.088, 96), 124)
     }
 
-    var projectSelectorHeight: CGFloat {
-        projectSelectorVisibleHeight + composerOverlap
-    }
-
-    var projectSelectorVisibleHeight: CGFloat {
-        min(max(size.height * 0.052, 44), 52)
-    }
-
     var composerHeight: CGFloat {
         min(max(size.height * 0.080, 106), 124)
     }
@@ -526,68 +352,7 @@ private struct SottoHomeLayoutMetrics {
     }
 
     var composerReserve: CGFloat {
-        composerStackHeight + bottomInset
-    }
-
-    var composerStackHeight: CGFloat {
-        projectSelectorHeight + composerHeight - composerOverlap
-    }
-
-    var composerOverlap: CGFloat {
-        min(max(size.height * 0.016, 14), 18)
-    }
-}
-
-private struct SottoHomeComposerLayout: Layout {
-    let composerWidth: CGFloat
-    let selectorWidth: CGFloat
-    let selectorInset: CGFloat
-    let selectorHeight: CGFloat
-    let composerHeight: CGFloat
-    let overlap: CGFloat
-
-    private var stackHeight: CGFloat {
-        selectorHeight + composerHeight - overlap
-    }
-
-    func sizeThatFits(
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) -> CGSize {
-        let width = proposal.width.flatMap { $0.isFinite ? $0 : nil } ?? composerWidth
-        return CGSize(width: width, height: stackHeight)
-    }
-
-    func placeSubviews(
-        in bounds: CGRect,
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) {
-        guard subviews.count >= 2 else { return }
-
-        let availableWidth = max(bounds.width, 0)
-        let placedComposerWidth = min(composerWidth, availableWidth)
-        let placedSelectorWidth = min(
-            selectorWidth,
-            max(placedComposerWidth - (selectorInset * 2), 0)
-        )
-        let centerX = bounds.midX
-        let composerCenterY = bounds.maxY - (composerHeight / 2)
-        let selectorBottom = bounds.maxY - composerHeight + overlap
-        let selectorCenterY = selectorBottom - (selectorHeight / 2)
-
-        subviews[0].place(
-            at: CGPoint(x: centerX, y: selectorCenterY),
-            anchor: .center,
-            proposal: ProposedViewSize(width: placedSelectorWidth, height: selectorHeight)
-        )
-        subviews[1].place(
-            at: CGPoint(x: centerX, y: composerCenterY),
-            anchor: .center,
-            proposal: ProposedViewSize(width: placedComposerWidth, height: composerHeight)
-        )
+        composerHeight + bottomInset
     }
 }
 
@@ -681,17 +446,6 @@ private struct SottoRecordButtonStyle: ButtonStyle {
                 reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: 0.14),
                 value: configuration.isPressed
             )
-    }
-}
-
-private struct SottoHomeFittedSheetSizing: ViewModifier {
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if #available(macOS 15.0, *) {
-            content.presentationSizing(.fitted)
-        } else {
-            content
-        }
     }
 }
 
