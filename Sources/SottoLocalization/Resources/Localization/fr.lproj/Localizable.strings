@@ -135,6 +135,7 @@
 "history.record.copied" = "Copié";
 "history.record.delete_confirmation" = "Supprimer cette dictée ?";
 "history.record.delete_message" = "Cette action est irréversible.";
+"transcription.detail.title" = "Transcription";
 
 "onboarding.startup_title" = "Préparation de Sotto";
 "onboarding.startup_activity" = "Vérification de l’installation…";

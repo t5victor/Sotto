@@ -13,6 +13,7 @@ enum SottoDestination: Hashable, Identifiable {
     case appearance
     case privacy
     case project(UUID)
+    case transcript(UUID)
 
     var id: String {
         switch self {
@@ -25,6 +26,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .appearance: "appearance"
         case .privacy: "privacy"
         case .project(let id): "project-\(id.uuidString)"
+        case .transcript(let id): "transcript-\(id.uuidString)"
         }
     }
 
@@ -39,6 +41,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .appearance: SottoLocalization.string("navigation.appearance")
         case .privacy: SottoLocalization.string("navigation.privacy")
         case .project: SottoLocalization.string("navigation.project")
+        case .transcript: SottoLocalization.string("transcription.detail.title")
         }
     }
 
@@ -53,6 +56,7 @@ enum SottoDestination: Hashable, Identifiable {
         case .appearance: "circle.lefthalf.filled"
         case .privacy: "lock"
         case .project: "folder"
+        case .transcript: "doc.text"
         }
     }
 
@@ -77,6 +81,12 @@ struct SottoRootView: View {
         .onChange(of: model.projects) { _, projects in
             guard case .project(let projectID) = selection,
                   !projects.contains(where: { $0.id == projectID })
+            else { return }
+            selection = .history
+        }
+        .onChange(of: model.history) { _, history in
+            guard case .transcript(let recordID) = selection,
+                  !history.contains(where: { $0.id == recordID })
             else { return }
             selection = .history
         }
@@ -107,6 +117,23 @@ struct SottoRootView: View {
         case .project(let projectID):
             if let project = model.projects.first(where: { $0.id == projectID }) {
                 SottoProjectView(model: model, project: project)
+            } else {
+                SottoHistoryView(model: model)
+            }
+        case .transcript(let recordID):
+            if let record = model.history.first(where: { $0.id == recordID }) {
+                SottoTranscriptDetailView(
+                    record: record,
+                    model: model,
+                    onBack: {
+                        if let projectID = record.projectID,
+                           model.projects.contains(where: { $0.id == projectID }) {
+                            selection = .project(projectID)
+                        } else {
+                            selection = .history
+                        }
+                    }
+                )
             } else {
                 SottoHistoryView(model: model)
             }
@@ -172,8 +199,8 @@ private struct SottoSidebar: View {
                     if !isCompact, !pinnedRecords.isEmpty {
                         SottoSidebarSection(title: SottoLocalization.string("sidebar.pinned")) {
                             ForEach(pinnedRecords.prefix(4)) { record in
-                                SottoRecentRow(record: record) {
-                                    selection = record.projectID.map(SottoDestination.project) ?? .history
+                                SottoRecentRow(record: record, isSelected: selection == .transcript(record.id)) {
+                                    selection = .transcript(record.id)
                                 }
                             }
                         }
@@ -306,8 +333,8 @@ private struct SottoSidebar: View {
 
             if isRecentsExpanded, !isCompact {
                 ForEach(model.history.prefix(4)) { record in
-                    SottoRecentRow(record: record) {
-                        selection = record.projectID.map(SottoDestination.project) ?? .history
+                    SottoRecentRow(record: record, isSelected: selection == .transcript(record.id)) {
+                        selection = .transcript(record.id)
                     }
                 }
             }
@@ -329,8 +356,12 @@ private struct SottoSidebar: View {
                     isExpanded: expandedProjects.contains(project.id),
                     transcripts: model.history.filter { $0.projectID == project.id },
                     isCompact: isCompact,
+                    selectedTranscriptID: selectedTranscriptID,
                     onSelect: {
                         selection = .project(project.id)
+                    },
+                    onSelectTranscript: { transcriptID in
+                        selection = .transcript(transcriptID)
                     },
                     onToggleExpanded: {
                         toggleProject(project.id)
@@ -382,6 +413,11 @@ private struct SottoSidebar: View {
         } else {
             expandedProjects.insert(id)
         }
+    }
+
+    private var selectedTranscriptID: UUID? {
+        guard case .transcript(let recordID) = selection else { return nil }
+        return recordID
     }
 }
 
@@ -613,7 +649,9 @@ private struct SottoProjectRow: View {
     let isExpanded: Bool
     let transcripts: [TranscriptionRecord]
     let isCompact: Bool
+    let selectedTranscriptID: UUID?
     let onSelect: () -> Void
+    let onSelectTranscript: (UUID) -> Void
     let onToggleExpanded: () -> Void
 
     @Environment(\.sottoTheme) private var theme
@@ -672,15 +710,29 @@ private struct SottoProjectRow: View {
                         .padding(.vertical, 4)
                 } else {
                     ForEach(transcripts.prefix(5)) { transcript in
-                        Button(action: onSelect) {
+                        Button {
+                            onSelectTranscript(transcript.id)
+                        } label: {
                             Text(transcript.text)
                                 .font(theme.typography.sidebarItem)
-                                .foregroundStyle(theme.colors.foreground.opacity(0.72))
+                                .foregroundStyle(
+                                    theme.colors.foreground.opacity(
+                                        selectedTranscriptID == transcript.id ? 1 : 0.72
+                                    )
+                                )
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 38)
                                 .padding(.trailing, theme.spacing.xs)
                                 .frame(height: 24)
+                                .background(
+                                    selectedTranscriptID == transcript.id
+                                        ? theme.colors.hoverStrong
+                                        : .clear
+                                )
+                                .clipShape(
+                                    RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous)
+                                )
                         }
                         .buttonStyle(SottoSidebarButtonStyle())
                     }
@@ -709,6 +761,7 @@ private struct SottoProjectRow: View {
 
 private struct SottoRecentRow: View {
     let record: TranscriptionRecord
+    let isSelected: Bool
     let action: () -> Void
 
     @Environment(\.sottoTheme) private var theme
@@ -727,7 +780,7 @@ private struct SottoRecentRow: View {
             }
             .padding(.horizontal, theme.spacing.xs)
             .frame(height: 28)
-            .background(isHovered ? theme.colors.hover : .clear)
+            .background(rowBackground)
             .clipShape(RoundedRectangle(cornerRadius: theme.radii.small, style: .continuous))
         }
         .buttonStyle(SottoSidebarButtonStyle())
@@ -736,6 +789,13 @@ private struct SottoRecentRow: View {
             reduceMotion ? nil : .timingCurve(0.23, 1, 0.32, 1, duration: theme.motion.fast),
             value: isHovered
         )
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var rowBackground: Color {
+        if isSelected { return theme.colors.hoverStrong }
+        if isHovered { return theme.colors.hover }
+        return .clear
     }
 }
 

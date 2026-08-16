@@ -135,6 +135,7 @@
 "history.record.copied" = "Copiado";
 "history.record.delete_confirmation" = "¿Eliminar este dictado?";
 "history.record.delete_message" = "Esta acción no se puede deshacer.";
+"transcription.detail.title" = "Transcripción";
 
 "onboarding.startup_title" = "Preparando Sotto";
 "onboarding.startup_activity" = "Comprobando la instalación…";

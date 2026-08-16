@@ -116,9 +116,6 @@ struct SottoTranscriptRow: View {
     let projectID: UUID?
 
     @Environment(\.sottoTheme) private var theme
-    @State private var isConfirmingDeletion = false
-    @State private var didCopy = false
-    @State private var copyResetTask: Task<Void, Never>?
 
     private var recordProject: SottoProject? {
         model.projects.first(where: { $0.id == record.projectID })
@@ -140,25 +137,10 @@ struct SottoTranscriptRow: View {
 
                 Spacer(minLength: theme.spacing.md)
 
-                actionBar
+                SottoTranscriptActionBar(record: record, model: model, projectID: projectID)
             }
         }
         .padding(.vertical, theme.spacing.xl)
-        .confirmationDialog(
-            SottoLocalization.string("history.record.delete_confirmation"),
-            isPresented: $isConfirmingDeletion,
-            titleVisibility: .visible
-        ) {
-            Button(SottoLocalization.string("common.delete"), role: .destructive) {
-                model.removeHistory(id: record.id)
-            }
-            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
-        } message: {
-            Text(SottoLocalization.string("history.record.delete_message"))
-        }
-        .onDisappear {
-            copyResetTask?.cancel()
-        }
     }
 
     private var recordMetadata: some View {
@@ -189,8 +171,23 @@ struct SottoTranscriptRow: View {
         }
         .lineLimit(1)
     }
+}
 
-    private var actionBar: some View {
+struct SottoTranscriptActionBar: View {
+    let record: TranscriptionRecord
+    @ObservedObject var model: SottoAppModel
+    let projectID: UUID?
+
+    @Environment(\.sottoTheme) private var theme
+    @State private var isConfirmingDeletion = false
+    @State private var didCopy = false
+    @State private var copyResetTask: Task<Void, Never>?
+
+    private var recordProject: SottoProject? {
+        model.projects.first(where: { $0.id == record.projectID })
+    }
+
+    var body: some View {
         HStack(spacing: 2) {
             SottoHistoryActionButton(
                 systemImage: record.isPinned ? "pin.fill" : "pin",
@@ -227,6 +224,21 @@ struct SottoTranscriptRow: View {
                 .strokeBorder(theme.colors.border, lineWidth: 1)
         }
         .clipShape(Capsule())
+        .confirmationDialog(
+            SottoLocalization.string("history.record.delete_confirmation"),
+            isPresented: $isConfirmingDeletion,
+            titleVisibility: .visible
+        ) {
+            Button(SottoLocalization.string("common.delete"), role: .destructive) {
+                model.removeHistory(id: record.id)
+            }
+            Button(SottoLocalization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(SottoLocalization.string("history.record.delete_message"))
+        }
+        .onDisappear {
+            copyResetTask?.cancel()
+        }
     }
 
     private var moveMenu: some View {
@@ -402,7 +414,7 @@ struct SottoHistorySearchView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(results) { record in
                             Button {
-                                selection = record.projectID.map(SottoDestination.project) ?? .history
+                                selection = .transcript(record.id)
                                 dismiss()
                             } label: {
                                 VStack(alignment: .leading, spacing: theme.spacing.xs) {

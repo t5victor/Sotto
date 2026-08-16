@@ -135,6 +135,7 @@
 "history.record.copied" = "Copied";
 "history.record.delete_confirmation" = "Delete this dictation?";
 "history.record.delete_message" = "This action cannot be undone.";
+"transcription.detail.title" = "Transcription";
 
 "onboarding.startup_title" = "Preparing Sotto";
 "onboarding.startup_activity" = "Checking installation…";
