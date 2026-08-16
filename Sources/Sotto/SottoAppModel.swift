@@ -37,6 +37,7 @@ final class SottoAppModel: ObservableObject {
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var isBootstrapped = false
     @Published private(set) var canRetryDictation = false
+    @Published private(set) var canPastePendingTranscript = false
 
     private let directories: SottoDirectories
     private let settingsStore: JSONFileStore<SottoPreferences>
@@ -54,6 +55,7 @@ final class SottoAppModel: ObservableObject {
     private var didLoadPreferences = false
     private var currentRecordingURL: URL?
     private var currentTarget: InsertionTargetInfo?
+    private var pendingTranscription: PendingTranscription?
     private var modelUpdatesTask: Task<Void, Never>?
     private var microphoneEventsTask: Task<Void, Never>?
     private var downloadTask: Task<Void, Never>?
@@ -63,6 +65,11 @@ final class SottoAppModel: ObservableObject {
     private var transcriptionTask: Task<Void, Never>?
     private var isHoldShortcutPressed = false
     private var stopWhenRecorderStarts = false
+
+    private struct PendingTranscription {
+        let transcript: SottoTranscript
+        let processedText: String
+    }
 
     init(directories: SottoDirectories = .live) {
         self.directories = directories
@@ -457,12 +464,33 @@ final class SottoAppModel: ObservableObject {
         }
 
         resetTask?.cancel()
+        pendingTranscription = nil
+        canPastePendingTranscript = false
         canRetryDictation = false
         dictationState = .transcribing
         overlayPresenter?.show()
         transcriptionTask = Task { [weak self] in
             guard let self else { return }
             await self.transcribeRecording(at: recordingURL)
+            self.transcriptionTask = nil
+        }
+    }
+
+    func pastePendingTranscript() {
+        guard canPastePendingTranscript,
+              case .failed = dictationState,
+              let pendingTranscription,
+              let recordingURL = currentRecordingURL
+        else { return }
+
+        resetTask?.cancel()
+        canPastePendingTranscript = false
+        canRetryDictation = false
+        dictationState = .transcribing
+        overlayPresenter?.show()
+        transcriptionTask = Task { [weak self] in
+            guard let self else { return }
+            await self.commitTranscription(pendingTranscription, audioURL: recordingURL)
             self.transcriptionTask = nil
         }
     }
@@ -595,63 +623,83 @@ final class SottoAppModel: ObservableObject {
             guard !processed.isEmpty else { throw ParakeetService.ServiceError.emptyTranscript }
             try Task.checkCancellation()
 
-            dictationState = .inserting
-            let outcome = await inserter.insert(
-                processed,
-                automatically: preferences.insertAutomatically
+            let pending = PendingTranscription(
+                transcript: transcript,
+                processedText: processed
             )
-            lastTranscript = processed
-            let targetApplication = currentTarget?.applicationName
-            let record = TranscriptionRecord(
-                text: processed,
-                rawText: transcript.text,
-                duration: transcript.duration,
-                processingTime: transcript.processingTime,
-                confidence: transcript.confidence,
-                targetApplication: targetApplication,
-                insertionOutcome: outcome,
-                projectID: captureProjectID
-            )
-
-            do {
-                try removeRecording(at: audioURL)
-            } catch {
-                notice = SottoLocalization.format(
-                    "notice.app.remove_recording",
-                    Self.userMessage(for: error)
-                )
+            if let warning = transcript.languageWarning {
+                pendingTranscription = pending
+                canPastePendingTranscript = true
+                canRetryDictation = true
+                presentFailure(Self.userMessage(for: warning), hideAfter: nil)
+                return
             }
-            currentRecordingURL = nil
-            currentTarget = nil
-            inserter.clearTarget()
-            canRetryDictation = false
-            dictationState = .completed(text: processed, outcome: outcome)
-            playSound(named: "Glass")
-            scheduleIdleReset(after: 1.25)
 
-            if preferences.keepHistory {
-                do {
-                    history = try await historyRepository.add(
-                        record,
-                        limit: preferences.historyLimit
-                    )
-                } catch {
-                    notice = SottoLocalization.format(
-                        "notice.app.save_history",
-                        Self.userMessage(for: error)
-                    )
-                }
-            }
+            await commitTranscription(pending, audioURL: audioURL)
         } catch is CancellationError {
             cleanupCurrentRecording()
             dictationState = .idle
             overlayPresenter?.hide()
-        } catch let error as ParakeetService.ServiceError where error.preservesRecordingForRetry {
-            canRetryDictation = true
-            presentFailure(Self.userMessage(for: error), hideAfter: nil)
         } catch {
             cleanupCurrentRecording()
             presentFailure(Self.userMessage(for: error), hideAfter: 2.5)
+        }
+    }
+
+    private func commitTranscription(
+        _ pending: PendingTranscription,
+        audioURL: URL
+    ) async {
+        let transcript = pending.transcript
+        let processed = pending.processedText
+        dictationState = .inserting
+        let outcome = await inserter.insert(
+            processed,
+            automatically: preferences.insertAutomatically
+        )
+        lastTranscript = processed
+        let targetApplication = currentTarget?.applicationName
+        let record = TranscriptionRecord(
+            text: processed,
+            rawText: transcript.text,
+            duration: transcript.duration,
+            processingTime: transcript.processingTime,
+            confidence: transcript.confidence,
+            targetApplication: targetApplication,
+            insertionOutcome: outcome,
+            projectID: captureProjectID
+        )
+
+        do {
+            try removeRecording(at: audioURL)
+        } catch {
+            notice = SottoLocalization.format(
+                "notice.app.remove_recording",
+                Self.userMessage(for: error)
+            )
+        }
+        currentRecordingURL = nil
+        currentTarget = nil
+        pendingTranscription = nil
+        canPastePendingTranscript = false
+        canRetryDictation = false
+        inserter.clearTarget()
+        dictationState = .completed(text: processed, outcome: outcome)
+        playSound(named: "Glass")
+        scheduleIdleReset(after: 1.25)
+
+        if preferences.keepHistory {
+            do {
+                history = try await historyRepository.add(
+                    record,
+                    limit: preferences.historyLimit
+                )
+            } catch {
+                notice = SottoLocalization.format(
+                    "notice.app.save_history",
+                    Self.userMessage(for: error)
+                )
+            }
         }
     }
 
@@ -765,6 +813,8 @@ final class SottoAppModel: ObservableObject {
         }
         currentRecordingURL = nil
         currentTarget = nil
+        pendingTranscription = nil
+        canPastePendingTranscript = false
         canRetryDictation = false
         inserter.clearTarget()
         isHoldShortcutPressed = false
@@ -858,5 +908,13 @@ final class SottoAppModel: ObservableObject {
             return description
         }
         return error.localizedDescription
+    }
+
+    private static func userMessage(for warning: SottoLanguageWarning) -> String {
+        SottoLocalization.format(
+            "warning.parakeet.language_mismatch",
+            warning.detected.displayName,
+            warning.expected.displayName
+        )
     }
 }

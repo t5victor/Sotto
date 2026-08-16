@@ -120,6 +120,7 @@ struct SottoHomeView: View {
             if case .failed(let message) = model.dictationState {
                 SottoErrorBanner(
                     message: message,
+                    accept: model.canPastePendingTranscript ? { model.pastePendingTranscript() } : nil,
                     retry: model.canRetryDictation ? { model.retryFailedDictation() } : nil
                 ) {
                     model.dismissFailure()
@@ -716,11 +717,18 @@ struct SottoPageHeader: View {
 private struct SottoErrorBanner: View {
     @Environment(\.sottoTheme) private var theme
     let message: String
+    let accept: (() -> Void)?
     let retry: (() -> Void)?
     let dismiss: () -> Void
 
-    init(message: String, retry: (() -> Void)? = nil, dismiss: @escaping () -> Void) {
+    init(
+        message: String,
+        accept: (() -> Void)? = nil,
+        retry: (() -> Void)? = nil,
+        dismiss: @escaping () -> Void
+    ) {
         self.message = message
+        self.accept = accept
         self.retry = retry
         self.dismiss = dismiss
     }
@@ -734,9 +742,13 @@ private struct SottoErrorBanner: View {
                 .tracking(theme.typography.tracking)
                 .foregroundStyle(theme.colors.foreground)
             Spacer()
+            if let accept {
+                Button(SottoLocalization.string("common.use_full_text"), action: accept)
+                    .buttonStyle(.sotto(.secondary, size: .small))
+            }
             if let retry {
                 Button(SottoLocalization.string("common.retry"), action: retry)
-                    .buttonStyle(.sotto(.secondary, size: .small))
+                    .buttonStyle(.sotto(.ghost, size: .small))
             }
             Button(SottoLocalization.string("common.close"), action: dismiss)
                 .buttonStyle(.sotto(.ghost, size: .small))

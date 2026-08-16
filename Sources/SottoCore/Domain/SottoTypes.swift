@@ -265,22 +265,35 @@ public struct VocabularyEntry: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+public struct SottoLanguageWarning: Codable, Equatable, Sendable {
+    public let expected: SottoLanguage
+    public let detected: SottoLanguage
+
+    public init(expected: SottoLanguage, detected: SottoLanguage) {
+        self.expected = expected
+        self.detected = detected
+    }
+}
+
 public struct SottoTranscript: Codable, Equatable, Sendable {
     public let text: String
     public let confidence: Float
     public let duration: TimeInterval
     public let processingTime: TimeInterval
+    public let languageWarning: SottoLanguageWarning?
 
     public init(
         text: String,
         confidence: Float,
         duration: TimeInterval,
-        processingTime: TimeInterval
+        processingTime: TimeInterval,
+        languageWarning: SottoLanguageWarning? = nil
     ) {
         self.text = text
         self.confidence = confidence
         self.duration = duration
         self.processingTime = processingTime
+        self.languageWarning = languageWarning
     }
 
     public var realTimeFactor: Double {

@@ -23,6 +23,7 @@
 "common.download" = "Descargar Parakeet";
 "common.retry_download" = "Reintentar descarga";
 "common.retry" = "Reintentar";
+"common.use_full_text" = "Pegar todo";
 "common.start_dictation" = "Empezar a dictar";
 "common.stop_dictation" = "Detener dictado";
 "common.cancel_dictation" = "Cancelar dictado";
@@ -304,7 +305,7 @@
 "error.parakeet.unreadable_audio" = "No se pudo leer la grabación %@.";
 "error.parakeet.empty_audio" = "La grabación no contiene audio suficiente para transcribir.";
 "error.parakeet.empty_transcript" = "No se detectó voz en la grabación.";
-"error.parakeet.language_mismatch" = "El dictado parece estar en %@ en lugar de %@. No se ha insertado nada. Puedes reintentarlo.";
+"warning.parakeet.language_mismatch" = "Se han detectado palabras en %@ además de %@. Puedes pegar todo el texto, reintentarlo o cerrar este aviso.";
 "error.microphone.already_recording" = "Ya hay una grabación en curso.";
 "error.microphone.invalid_input_format" = "El dispositivo de entrada no ofrece un formato de audio válido.";
 "error.microphone.mono_format" = "No se pudo preparar el formato mono del micrófono.";

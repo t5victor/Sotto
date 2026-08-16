@@ -95,6 +95,12 @@ private struct SottoOverlayView: View {
                 .help(SottoLocalization.string("overlay.cancel_dictation"))
             } else if case .failed = model.dictationState {
                 HStack(spacing: theme.spacing.xs) {
+                    if model.canPastePendingTranscript {
+                        Button(SottoLocalization.string("common.use_full_text")) {
+                            model.pastePendingTranscript()
+                        }
+                        .buttonStyle(SottoOverlayTextButtonStyle())
+                    }
                     if model.canRetryDictation {
                         Button(SottoLocalization.string("common.retry")) {
                             model.retryFailedDictation()

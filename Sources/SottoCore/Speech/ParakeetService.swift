@@ -10,11 +10,6 @@ public actor ParakeetService {
         case unreadableAudio(URL)
         case emptyAudio
         case emptyTranscript
-        case languageMismatch(expected: SottoLanguage, detected: SottoLanguage)
-
-        public var preservesRecordingForRetry: Bool {
-            if case .languageMismatch = self { true } else { false }
-        }
 
         public var errorDescription: String? {
             switch self {
@@ -28,12 +23,6 @@ public actor ParakeetService {
                 SottoLocalization.string("error.parakeet.empty_audio")
             case .emptyTranscript:
                 SottoLocalization.string("error.parakeet.empty_transcript")
-            case .languageMismatch(let expected, let detected):
-                SottoLocalization.format(
-                    "error.parakeet.language_mismatch",
-                    detected.displayName,
-                    expected.displayName
-                )
             }
         }
     }
@@ -199,13 +188,13 @@ public actor ParakeetService {
         let text = result.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !text.isEmpty else { throw ServiceError.emptyTranscript }
 
-        if let mismatch = languageDetector.clearlyMismatchedLanguage(
+        let languageWarning = languageDetector.languageWarning(
             in: text,
             expected: resolvedLanguage
-        ) {
-            throw ServiceError.languageMismatch(
+        ).map {
+            SottoLanguageWarning(
                 expected: resolvedLanguage,
-                detected: mismatch.language
+                detected: $0.language
             )
         }
 
@@ -213,7 +202,8 @@ public actor ParakeetService {
             text: text,
             confidence: result.confidence,
             duration: result.duration,
-            processingTime: result.processingTime
+            processingTime: result.processingTime,
+            languageWarning: languageWarning
         )
     }
 
