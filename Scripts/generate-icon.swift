@@ -13,11 +13,11 @@ let iconset = FileManager.default.temporaryDirectory.appendingPathComponent(
 defer { try? FileManager.default.removeItem(at: iconset) }
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 let output = root.appendingPathComponent("Sources/Sotto/Resources/AppIcon.icns")
-let backgroundURL = root.appendingPathComponent("Assets/Sotto-icon-background.png")
-guard let imageSource = CGImageSourceCreateWithURL(backgroundURL as CFURL, nil),
-      let backgroundImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+let artworkURL = root.appendingPathComponent("Assets/Sotto-icon-background.png")
+guard let imageSource = CGImageSourceCreateWithURL(artworkURL as CFURL, nil),
+      let artworkImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
 else {
-    fatalError("Unable to load icon background at \(backgroundURL.path)")
+    fatalError("Unable to load icon artwork at \(artworkURL.path)")
 }
 
 let outputs: [(String, Int)] = [
@@ -55,8 +55,8 @@ for (name, size) in outputs {
     context.addPath(CGPath(roundedRect: plate, cornerWidth: corner, cornerHeight: corner, transform: nil))
     context.clip()
 
-    let imageWidth = CGFloat(backgroundImage.width)
-    let imageHeight = CGFloat(backgroundImage.height)
+    let imageWidth = CGFloat(artworkImage.width)
+    let imageHeight = CGFloat(artworkImage.height)
     let scale = max(side / imageWidth, side / imageHeight)
     let scaledSize = CGSize(width: imageWidth * scale, height: imageHeight * scale)
     let imageRect = CGRect(
@@ -66,28 +66,8 @@ for (name, size) in outputs {
         height: scaledSize.height
     )
     context.interpolationQuality = .high
-    context.draw(backgroundImage, in: imageRect)
+    context.draw(artworkImage, in: imageRect)
     context.restoreGState()
-
-    context.setShadow(
-        offset: CGSize(width: 0, height: -side * 0.012),
-        blur: side * 0.028,
-        color: CGColor(red: 0.03, green: 0.12, blue: 0.01, alpha: 0.46)
-    )
-    context.setStrokeColor(CGColor(gray: 1, alpha: 0.95))
-    context.setLineCap(.round)
-    context.setLineWidth(side * 0.067)
-    let heights: [CGFloat] = [0.22, 0.40, 0.61, 0.80, 0.58, 0.74, 0.43, 0.26]
-    let spacing = side * 0.082
-    let startX = side * 0.213
-    for (index, height) in heights.enumerated() {
-        let x = startX + CGFloat(index) * spacing
-        let half = side * height * 0.255
-        context.move(to: CGPoint(x: x, y: side * 0.5 - half))
-        context.addLine(to: CGPoint(x: x, y: side * 0.5 + half))
-        context.strokePath()
-    }
-    context.setShadow(offset: .zero, blur: 0, color: nil)
 
     guard let image = context.makeImage() else { fatalError("Unable to render icon") }
     let destinationURL = iconset.appendingPathComponent(name) as CFURL
