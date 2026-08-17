@@ -1,25 +1,25 @@
 # Sotto Design System
 
-Sotto follows the ownership model of shadcn/ui: the component source belongs to
-the application, stays intentionally small, and can be changed without waiting
-for an external UI framework. Its default visual direction is derived from
-[Beautiful UI](https://www.beautifului.dev/), translated into native SwiftUI
-rather than embedding web code or importing its component implementation.
+Sotto keeps its component source in the application. The components are small,
+native SwiftUI views that can change with the product without pulling in a
+separate UI framework or web implementation. The default visual direction comes
+from the current Sotto v1 reference and is implemented in SwiftUI.
 
 ## Architecture
 
-- `SottoTheme` contains semantic colors, spacing, radii, control heights,
-  typography and motion.
-- `EnvironmentValues.sottoTheme` is the single runtime injection point.
-- `Components` contains domain-neutral building blocks such as buttons, cards,
-  badges, fields, switches, icons and dividers.
+- `SottoTheme` contains colors, spacing, radii, control heights, typography and
+  motion using semantic names.
+- `EnvironmentValues.sottoTheme` is the runtime injection point.
+- `Components` contains reusable building blocks such as buttons, cards, badges,
+  fields, switches, icons and dividers.
 - `Patterns` contains Sotto-specific compositions such as the recording pill,
   permission row and pixel activity indicator.
-- Product screens compose those sources and do not own brand constants.
+- Product screens compose these sources instead of defining brand constants.
 
 ## Reference tokens
 
-The neutral scale is explicit instead of depending on AppKit system colors:
+The neutral scale is explicit, so the app does not depend on AppKit system
+colors:
 
 | Role | Light | Dark |
 | --- | --- | --- |
@@ -37,26 +37,27 @@ The neutral scale is explicit instead of depending on AppKit system colors:
 | Tertiary ink | `#9A9DA3` | `#6C6F75` |
 | Accent | `#0285FF` | `#3D9AFF` |
 
-The visual accent remains exact. Text-bearing primary actions use `accentInk`
-and the destructive action uses a darker red derivative so 12.5 px labels keep
-WCAG AA and APCA normal-text contrast. Status backgrounds retain the reference
-tints while their text colors are accessibility-safe semantic pairs.
+The accent is fixed. Primary action labels use `accentInk`, and the destructive
+action uses a darker red derivative so 12.5 px labels meet WCAG AA and APCA
+normal-text contrast. Status backgrounds keep their reference tints, with
+foreground colors chosen as accessible pairs.
 
-Cards use a 10 px radius, fields and selectors 8 px, status badges and actions
-use capsules, and compact controls range from 28 to 38 px. Borders are
-one-pixel semantic hairlines.
-The main window uses one continuous surface: standard cards are transparent
+Cards use a 10 px radius; fields and selectors use 8 px. Status badges and
+actions use capsules, and compact controls range from 28 to 38 px. Borders are
+one-pixel hairlines.
+
+The main window uses one continuous surface. Standard cards are transparent
 layout wrappers, raised cards use the canvas tone once, and muted cards are
 reserved for secondary context. Controls use flat fills and capsules instead
-of shadows, and navigation relies on text-first rows with icons only where
-they clarify state or action.
+of shadows. Navigation uses text-first rows, with icons where they clarify state
+or action.
 
 ## Typography and icons
 
-Inter Variable is the interface family and JetBrains Mono Variable is used for
+Inter Variable is the interface font. JetBrains Mono Variable is used for
 keyboard shortcuts and compact machine-readable values. Both fonts and their
-SIL Open Font License 1.1 texts are bundled in the SwiftPM application resource
-bundle and registered for the process before the first view is created.
+SIL Open Font License 1.1 files are bundled in the SwiftPM application resource
+bundle and registered before the first view is created.
 
 `SottoIcon` centralizes a 24-point monochrome outline language at 11–17 px
 rendering sizes. Individual screens choose semantic symbols, but no longer
@@ -68,16 +69,15 @@ Motion is limited to places where it explains state or confirms input:
 
 - buttons scale to 0.97 for 100 ms on press;
 - hover and selected surfaces transition in 100–150 ms;
-- first presentation of each destination hierarchy uses an 8 px, 350 ms strong
-  ease-out reveal with a short stagger;
-- local model work uses the Beautiful UI-inspired 3×3 pixel loader and a
-  restrained text shimmer;
+- the first appearance of each destination uses an 8 px, 350 ms ease-out reveal
+  with a short stagger;
+- local model work uses a 3×3 pixel loader and a restrained text shimmer;
 - listening uses the real microphone level rather than decorative looping
   motion.
 
-The hotkey-triggered overlay itself appears immediately because it is a
-high-frequency keyboard action. All decorative movement respects macOS Reduce
-Motion; meaningful color and opacity feedback remains available.
+The hotkey-triggered overlay appears immediately because it is a frequent
+keyboard action. Decorative movement follows macOS Reduce Motion; meaningful
+color and opacity feedback remains available.
 
 ## Change the theme
 
@@ -98,16 +98,16 @@ compact.radii = .init(small: 5, medium: 7, large: 9)
 compact = compact.withAccent(.indigo, foreground: .white)
 ```
 
-Every component consuming semantic tokens updates automatically. Legacy accent
-values remain decodable in preferences, while the shipped v1 visual baseline is
-the fixed Beautiful UI blue.
+Every component that reads these tokens updates automatically. Older accent
+values still decode from preferences. The shipped v1 baseline uses the fixed
+blue accent.
 
 ## Validation
 
-Action and status colors are stored as explicit foreground/background pairs.
-The automated design-system tests pin the measured reference tokens and check
-every text-bearing pair against WCAG AA (at least 4.5:1) and APCA normal-text
-guidance (absolute Lc at least 60).
+Action and status colors are stored as foreground/background pairs. The design
+system tests pin the reference tokens and check every text-bearing pair against
+WCAG AA (at least 4.5:1) and APCA normal-text guidance (absolute Lc at least
+60).
 
 When adding a component:
 

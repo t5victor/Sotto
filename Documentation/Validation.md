@@ -10,25 +10,26 @@ Validation date: 2026-08-13. Host: Apple M4, 16 GB RAM, arm64, macOS 26.5.2.
   processing, vocabulary identity, schema migration, corrupt JSON recovery,
   bounded history, stale recording cleanup, symlink-parent attacks, offline
   model inspection, safe model deletion and invalid-audio preflight.
-- Local bundle: valid ad-hoc hardened-runtime signature, arm64 Mach-O, version
-  1.0.0, microphone entitlement and valid Info.plist.
+- The local bundle has a valid ad-hoc hardened-runtime signature, arm64 Mach-O,
+  version 1.0.0, microphone entitlement and valid Info.plist.
 - `unzip -t dist/Sotto-1.0.0.zip`: no errors.
 - The ZIP contains no `__MACOSX`/AppleDouble duplicates; the app extracted from
   it passes `codesign --verify --deep --strict`.
-- The linked `fastcluster_compute_centroid_linkage` symbol and complete
-  fastcluster BSD notice are both present in the local bundle.
+- The local bundle contains the linked
+  `fastcluster_compute_centroid_linkage` symbol and the complete fastcluster BSD
+  notice.
 - The packaged resource bundle contains the Inter and JetBrains Mono variable
-  fonts together with both OFL license texts; it contains no stale duplicate
-  app icon or third-party-notice resources.
+  fonts with both OFL license files. It contains no stale duplicate app icon or
+  third-party-notice resources.
 
 ## Model and transcription
 
 - Parakeet TDT 0.6B v3 int8 downloaded and loaded from the Sotto application
   support directory: 483,256,769 bytes.
 - Core ML selected CPU for preprocessing and CPU + Neural Engine for the encoder.
-- A 4.373 s Spanish fixture transcribed in 0.131 s (33.4x realtime) with 0.985
-  confidence. Raw `Soto` became final `Sotto` through the default editable
-  vocabulary.
+- A 4.373-second Spanish fixture took 0.131 seconds to transcribe (33.4x
+  realtime) with 0.985 confidence. The default editable vocabulary changed raw
+  `Soto` to `Sotto`.
 - `SottoDoctor validate-model` found the complete 483,256,769-byte local cache,
   performed no download, loaded the 8,192-token vocabulary and all Core ML
   artifacts, and reached `MODEL ready`.
@@ -42,27 +43,26 @@ Validation date: 2026-08-13. Host: Apple M4, 16 GB RAM, arm64, macOS 26.5.2.
   valid frames (2.100 s), 403,200 audio bytes and peak level 0.655. The
   incidental test audio was deleted immediately after format validation.
 
-The following full-UI checks were completed on 2026-08-12, before the corrective
-patch, and remain useful historical evidence rather than proof of the final
-notarized candidate:
+These full-UI checks ran on 2026-08-12, before the corrective patch. They remain
+historical evidence, not proof of the final notarized candidate:
 
 - `dist/Sotto.app` launched successfully with bundle identifier
   `com.sotto.desktop` and remained running after model initialization.
 - A live dictation from the packaged app captured 14.6 s of microphone audio,
   transcribed it in 0.179 s (about 81.8x realtime) at 0.935 confidence, removed
-  the temporary CAF and persisted the completed record. Because Sotto itself was
-  the active target, the safety route correctly reported `copied`.
+  the temporary CAF and persisted the completed record. Sotto itself was the
+  active target, so the safety route reported `copied`.
 - The Accessibility route was exercised separately against a temporary TextEdit
   document and reported `TARGET=TextEdit`, `OUTCOME=inserted`.
 
-The final visual redesign was inspected on 2026-08-13 from a separately launched
+On 2026-08-13, the final visual redesign was inspected in a separately launched
 instance of the rebuilt local application. Home, Appearance and Models rendered
-with the bundled Inter typography, Beautiful UI-derived light/dark tokens,
-compact controls, hairline borders and custom navigation selectors. No clipping,
-overflow or layout breakage was observed, and the Models screen reported
-Parakeet ready. This visual pass did not repeat microphone capture, global-hotkey
+with the bundled Inter typography, the current light/dark tokens, compact
+controls, hairline borders and custom navigation selectors. The inspection found
+no clipping, overflow or layout breakage, and the Models screen reported
+Parakeet ready. This pass did not repeat microphone capture, global-hotkey
 dictation or overlay insertion; the runtime evidence above covers those flows
-before the visual-only redesign.
+from before the visual-only redesign.
 
 ## Current local artifact
 

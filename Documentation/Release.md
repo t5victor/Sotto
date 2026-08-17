@@ -11,10 +11,10 @@ codesign --verify --deep --strict --verbose=2 dist/Sotto.app
 spctl --assess --type execute --verbose=4 dist/Sotto.app
 ```
 
-The script builds the release executable, constructs the standard macOS bundle,
-copies the icon and legal notices, applies the microphone entitlement, performs
-an ad-hoc hardened-runtime signature, verifies it, creates
-`dist/Sotto-1.0.0.zip` and writes its exact digest beside it as
+The script builds the release executable and assembles the standard macOS
+bundle. It copies the icon and legal notices, applies the microphone
+entitlement, creates an ad-hoc hardened-runtime signature and verifies it. It
+then creates `dist/Sotto-1.0.0.zip` and writes its exact digest beside it as
 `dist/Sotto-1.0.0.zip.sha256`.
 
 An ad-hoc build is appropriate for local development. Gatekeeper assessment of
@@ -34,10 +34,10 @@ SOTTO_NOTARY_PROFILE="NOTARY_PROFILE" \
 ```
 
 Certificate names and the notary profile are publisher credentials, not project
-configuration, and are intentionally not stored in the repository. The script
-refuses a public build when either value is missing. Until this command
-completes with real publisher credentials, an artifact is a local build and is
-not ready for public distribution.
+configuration, so they are not stored in the repository. The script refuses a
+public build when either value is missing. Until this command completes with
+real publisher credentials, an artifact is a local build and is not ready for
+public distribution.
 
 ## Runtime acceptance
 
@@ -48,8 +48,8 @@ Before publishing a build:
 2. Grant Microphone and record a dictation longer than 0.18 seconds.
 3. Verify insertion in a native text field with Accessibility enabled.
 4. Revoke Accessibility and verify the clipboard fallback.
-5. With Accessibility enabled, an empty pasteboard and a control that rejects
-   AX selected text, verify the UI reports **Pegado solicitado**, not a verified
-   insertion.
+5. With Accessibility enabled, use an empty pasteboard and a control that
+   rejects AX selected text. The UI should report **Pegado solicitado**, not a
+   verified insertion.
 6. Quit, relaunch offline and dictate again without a model download.
 7. Run `swift run SottoDoctor doctor` and the automated test suite.

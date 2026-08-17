@@ -1,14 +1,14 @@
 # Privacy model
 
-Sotto performs recognition on the Mac. The application contains no analytics,
+Sotto performs recognition on the Mac. It contains no analytics,
 advertising SDK, account system, telemetry endpoint or cloud transcription API.
 
 ## Network behavior
 
-The network is used when the user selects **Download model**. FluidAudio obtains
-the converted Parakeet Core ML artifacts from the FluidInference repository on
-Hugging Face. After a complete model has loaded, Sotto enables FluidAudio's
-offline mode; dictation itself does not make a network request.
+The network is used when the user selects **Download model**. FluidAudio
+downloads the converted Parakeet Core ML artifacts from the FluidInference
+repository on Hugging Face. After the model loads, Sotto enables FluidAudio's
+offline mode. Dictation itself does not make a network request.
 
 ## Local data
 
@@ -26,8 +26,7 @@ All application data is under `~/Library/Application Support/Sotto`:
   cancellation and removes crash leftovers older than 24 hours at startup.
 
 The user can delete the model and history from the app. Disabling history stops
-new records; existing records remain visible so deletion is deliberate rather
-than surprising.
+new records, but existing records remain visible until the user deletes them.
 
 ## Permissions
 
@@ -39,17 +38,17 @@ than surprising.
 The Command-V fallback temporarily uses the system pasteboard only when it is
 empty. macOS provides no trustworthy size metadata for existing pasteboard
 values, so Sotto never materializes strings, images, files, rich text or
-promised/lazy values on the main actor merely to snapshot them. When the
-pasteboard already contains something, Sotto uses the explicit clipboard-copy
-fallback instead of simulating a paste. Because macOS exposes no API that
-confirms a synthetic Command-V changed the destination, history records that
-fallback as **Pegado solicitado**, not as a verified insertion.
+promised/lazy values on the main actor just to snapshot them. When the pasteboard
+already contains something, Sotto copies the text instead of simulating a paste.
+Because macOS exposes no API that confirms a synthetic Command-V changed the
+destination, history records that fallback as **Pegado solicitado**, not as a
+verified insertion.
 
 ## Retention and recovery
 
-Recordings stop automatically at the duration selected in Settings (five
-minutes by default, configurable between two and thirty minutes). The user can
-cancel both capture and local transcription. Sotto deletes the temporary CAF on
-success, failure or cancellation and removes crash leftovers older than 24
-hours at startup. Managed state/model/recording paths reject symbolic links
-before reading, writing or deleting data.
+Recordings stop automatically at the duration selected in Settings (five minutes
+by default, configurable between two and thirty minutes). The user can cancel
+both capture and local transcription. Sotto deletes the temporary CAF after
+success, failure or cancellation and removes crash leftovers older than 24 hours
+at startup. Managed state, model and recording paths reject symbolic links before
+reading, writing or deleting data.
